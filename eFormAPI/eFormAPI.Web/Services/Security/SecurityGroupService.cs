@@ -1,7 +1,7 @@
 ﻿/*
 The MIT License (MIT)
 
-Copyright (c) 2007 - 2019 Microting A/S
+Copyright (c) 2007 - 2020 Microting A/S
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -37,6 +37,7 @@ using Microting.eFormApi.BasePn.Infrastructure.Models.API;
 namespace eFormAPI.Web.Services.Security
 {
     using Infrastructure.Database.Entities.Permissions;
+    using Microting.eFormApi.BasePn.Infrastructure.Models.Common;
 
     public class SecurityGroupService : ISecurityGroupService
     {
@@ -56,6 +57,26 @@ namespace eFormAPI.Web.Services.Security
             _claimsService = claimsService;
         }
 
+        public async Task<OperationDataResult<List<CommonDictionaryModel>>> GetSecurityGroupsDictionary()
+        {
+            try
+            {
+                var result = await _dbContext.SecurityGroups.Select(x => new CommonDictionaryModel
+                {
+                    Id = x.Id,
+                    Name = x.Name
+                })
+                 .ToListAsync();
+
+                return new OperationDataResult<List<CommonDictionaryModel>>(true, result);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e.Message);
+                return new OperationDataResult<List<CommonDictionaryModel>>(false,
+                    _localizationService.GetString("ErrorWhileObtainingSecurityGroups"));
+            }
+        }
         public async Task<OperationDataResult<SecurityGroupsModel>> GetSecurityGroups(
             SecurityGroupRequestModel requestModel)
         {
@@ -95,6 +116,7 @@ namespace eFormAPI.Web.Services.Security
                 {
                     Id = x.Id,
                     Name = x.Name,
+                    RedirectLink = x.RedirectLink,
                     UserAmount = x.SecurityGroupUsers.Count,
                     UsersList = x.SecurityGroupUsers.Select(u => new SecurityGroupUserModel()
                     {
@@ -126,6 +148,7 @@ namespace eFormAPI.Web.Services.Security
                     {
                         Id = x.Id,
                         Name = x.Name,
+                        RedirectLink = x.RedirectLink,
                         UserAmount = x.SecurityGroupUsers.Count,
                         UsersList = x.SecurityGroupUsers.Select(u => new SecurityGroupUserModel()
                         {
@@ -251,6 +274,34 @@ namespace eFormAPI.Web.Services.Security
             }
         }
 
+        public async Task<OperationResult> UpdateSecurityGroupSettings(SecurityGroupSettingsUpdateModel requestModel)
+        {
+            try
+            {
+                SecurityGroup securityGroup = await _dbContext.SecurityGroups
+                    .FirstOrDefaultAsync(x => x.Id == requestModel.Id);
+
+                if (securityGroup == null)
+                {
+                    return new OperationDataResult<SecurityGroupsModel>(false,
+                        _localizationService.GetString("SecurityGroupNotFound"));
+                }
+
+                securityGroup.RedirectLink = requestModel.RedirectLink;
+
+                _dbContext.SecurityGroups.Update(securityGroup);
+                await _dbContext.SaveChangesAsync();
+
+                return new OperationResult(true,
+                    _localizationService.GetString("SecurityGroupUpdatedSuccessfully"));
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e.Message);
+                return new OperationDataResult<SecurityGroupsModel>(false,
+                    _localizationService.GetString("ErrorWhileUpdatingSecurityGroup"));
+            }
+        }
 
         public async Task<OperationResult> DeleteSecurityGroup(int id)
         {

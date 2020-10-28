@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2007 - 2019 Microting A/S
+Copyright (c) 2007 - 2020 Microting A/S
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -25,12 +25,15 @@ SOFTWARE.
 using System;
 using System.Globalization;
 using System.IO;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using eFormAPI.Web.Abstractions;
 using eFormAPI.Web.Abstractions.Security;
 using eFormAPI.Web.Infrastructure;
+using eFormAPI.Web.Infrastructure.Database;
 using ICSharpCode.SharpZipLib.Zip;
+using ImageMagick;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -41,8 +44,6 @@ using Microting.eFormApi.BasePn.Abstractions;
 using Microting.eFormApi.BasePn.Infrastructure.Helpers;
 using Microting.eFormApi.BasePn.Infrastructure.Models.API;
 using OpenStack.NetCoreSwiftClient.Extensions;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Processing;
 using Settings = Microting.eForm.Dto.Settings;
 
 namespace eFormAPI.Web.Controllers.Eforms
@@ -58,16 +59,22 @@ namespace eFormAPI.Web.Controllers.Eforms
         private readonly IEformPermissionsService _permissionsService;
         private readonly ILocalizationService _localizationService;
         private readonly IEformExcelExportService _eformExcelExportService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly BaseDbContext _dbContext;
 
         public TemplateFilesController(IEFormCoreService coreHelper,
             ILocalizationService localizationService,
             IEformPermissionsService permissionsService,
-            IEformExcelExportService eformExcelExportService)
+            IEformExcelExportService eformExcelExportService,
+            BaseDbContext dbContext,
+            IHttpContextAccessor httpContextAccessor)
         {
             _coreHelper = coreHelper;
+            _dbContext = dbContext;
             _localizationService = localizationService;
             _permissionsService = permissionsService;
             _eformExcelExportService = eformExcelExportService;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         [HttpGet]
@@ -85,7 +92,23 @@ namespace eFormAPI.Web.Controllers.Eforms
             var fileName = $"{id}_{DateTime.Now.Ticks}.csv";
             var filePath = PathHelper.GetOutputPath(fileName);
             CultureInfo cultureInfo = new CultureInfo("de-DE");
-            TimeZoneInfo timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById("Europe/Copenhagen");
+            var value = _httpContextAccessor?.HttpContext.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            var timeZone = _dbContext.Users.Single(x => x.Id == int.Parse(value)).TimeZone;
+            if (string.IsNullOrEmpty(timeZone))
+            {
+                timeZone = "Europe/Copenhagen";
+            }
+
+            TimeZoneInfo timeZoneInfo;
+
+            try
+            {
+                timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(timeZone);
+            }
+            catch
+            {
+                timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById("E. Europe Standard Time");
+            }
             string fullPath = "";
             if (!string.IsNullOrEmpty(start) && !string.IsNullOrEmpty(end))
             {
@@ -362,6 +385,11 @@ namespace eFormAPI.Web.Controllers.Eforms
                 return Forbid();
             }
 
+            if (!uploadModel.File.FileName.Contains(".zip"))
+            {
+                return BadRequest(_localizationService.GetString("InvalidRequest"));
+            }
+
             try
             {
                 var core = await _coreHelper.GetCore();
@@ -413,58 +441,20 @@ namespace eFormAPI.Web.Controllers.Eforms
                     var extractPath = Path.Combine(saveFolder);
                     if (System.IO.File.Exists(filePath))
                     {
-                        if (!Directory.Exists(extractPath))
-                        {
-                            Directory.CreateDirectory(extractPath);
-                        }
-                        else
-                        {
-                            FoldersHelper.ClearFolder(extractPath);
-                        }
+                        Directory.CreateDirectory(extractPath);
 
                         // extract
                         var fastZip = new FastZip();
                         // Will always overwrite if target filenames already exist
                         fastZip.ExtractZip(filePath, extractPath, null);
-                        if (core.GetSdkSetting(Settings.swiftEnabled).Result.ToLower() == "true" || core.GetSdkSetting(Settings.s3Enabled).Result.ToLower() == "true")
-                        {
-                            await core.PutFileToStorageSystem(filePath, templateId.ToString() + "_" + uploadModel.File.FileName);
-                        }
+                        string reportType = "";
+                        bool statusOk = false;
                         
-                        // Find excel file
-                        string excelSaveFolder = null;
-                        var excelFilePath = Directory.GetFiles(extractPath, "*.xlsx").FirstOrDefault();
-                        if (!string.IsNullOrEmpty(excelFilePath))
-                        {
-                            var excelFileName = $"{templateId}_eform_excel.xlsx";
-                            excelSaveFolder =
-                                Path.Combine(await core.GetSdkSetting(Settings.fileLocationPicture),
-                                    Path.Combine("excel", excelFileName));
-
-                            if (!Directory.Exists(Path.GetDirectoryName(excelSaveFolder)))
-                            {
-                                Directory.CreateDirectory(Path.GetDirectoryName(excelSaveFolder));
-                            }
-
-                            if (core.GetSdkSetting(Settings.swiftEnabled).Result.ToLower() == "true" || core.GetSdkSetting(Settings.s3Enabled).Result.ToLower() == "true")
-                            {
-                                await core.PutFileToStorageSystem(excelFilePath, excelFileName);
-                            }
-                            else
-                            {
-                                System.IO.File.Copy(excelFilePath, excelSaveFolder, true);
-                            }
-                        }
-
                         using (var dbContext = core.dbContextHelper.GetDbContext())
                         {
                             var compactPath = Path.Combine(extractPath, "compact");
-                            if (!Directory.Exists(compactPath))
-                            {
-                                Directory.CreateDirectory(compactPath);
-                            }
 
-                            if (Directory.GetFiles(compactPath, "*.docx").Length == 0)
+                            if (Directory.GetFiles(compactPath, "*.jrxml").Length != 0)
                             {
                                 var cl = await dbContext.check_lists.SingleAsync(x => x.Id == templateId);
                                 cl.JasperExportEnabled = true;
@@ -474,38 +464,51 @@ namespace eFormAPI.Web.Controllers.Eforms
                                 {
                                     System.IO.File.Delete(file);
                                 }
+
+                                reportType = "jasper";
+
+                                statusOk = true;
                             }
-                            else
+                            if (Directory.GetFiles(compactPath, "*.docx").Length != 0)
                             {
                                 var cl = await dbContext.check_lists.SingleAsync(x => x.Id == templateId);
                                 cl.JasperExportEnabled = false;
                                 cl.DocxExportEnabled = true;
                                 await cl.Update(dbContext);
+
+                                reportType = "docx";
+
+                                statusOk = true;
                             }
 
-                            if (!string.IsNullOrEmpty(excelSaveFolder))
+                            var files = Directory.GetFiles(compactPath, "*.xlsx");
+                            if (files.Length != 0)
                             {
-                                if (!Directory.Exists(Path.GetDirectoryName(excelSaveFolder)))
-                                {
-                                    Directory.CreateDirectory(Path.GetDirectoryName(excelSaveFolder));
-                                }
-
                                 var cl = await dbContext.check_lists.SingleAsync(x => x.Id == templateId);
                                 cl.ExcelExportEnabled = true;
                                 await cl.Update(dbContext);
+
+                                reportType = "xlxs";
+
+                                statusOk = true;
                             }
-
-
                         }
-                        return Ok();
+
+                        if (statusOk)
+                        {
+                            if (core.GetSdkSetting(Settings.swiftEnabled).Result.ToLower() == "true" || core.GetSdkSetting(Settings.s3Enabled).Result.ToLower() == "true")
+                            {
+                                await core.PutFileToStorageSystem(filePath, $"{templateId}_{reportType}_{uploadModel.File.FileName}");
+                            }
+                            return Ok();
+                        }
                     }
                 }
-
                 return BadRequest(_localizationService.GetString("InvalidRequest"));
             }
             catch (Exception e)
             {
-                return BadRequest("Invalid Request!");
+                return BadRequest($"Invalid Request! Exception: {e.Message}");
             }
         }
 
@@ -524,10 +527,11 @@ namespace eFormAPI.Web.Controllers.Eforms
             result.ObjectStreamContent.Dispose();
             try
             {
-                var img = Image.Load(filePath);
-                img.Mutate(x => x.Rotate(RotateMode.Rotate90));
-                img.Save(filePath);
-                img.Dispose();
+                using (var image = new MagickImage(filePath))
+                {
+                    image.Rotate(90);
+                    image.Write(filePath);
+                }
                 await core.PutFileToStorageSystem(filePath, fileName);
             }
             catch (Exception e)
@@ -562,10 +566,11 @@ namespace eFormAPI.Web.Controllers.Eforms
             result.ResponseStream.Dispose();
             try
             {
-                var img = Image.Load(filePath);
-                img.Mutate(x => x.Rotate(RotateMode.Rotate90));
-                img.Save(filePath);
-                img.Dispose();
+                using (var image = new MagickImage(filePath))
+                {
+                    image.Rotate(90);
+                    image.Write(filePath);
+                }
                 await core.PutFileToStorageSystem(filePath, fileName);
             }
             catch (Exception e)
@@ -595,10 +600,11 @@ namespace eFormAPI.Web.Controllers.Eforms
 
             try
             {
-                var img = Image.Load(filePath);
-                img.Mutate(x => x.Rotate(RotateMode.Rotate90));
-                img.Save(filePath);
-                img.Dispose();
+                using (var image = new MagickImage(filePath))
+                {
+                    image.Rotate(90);
+                    image.Write(filePath);
+                }
             }
             catch (Exception e)
             {

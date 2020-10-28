@@ -1,7 +1,7 @@
 ﻿/*
 The MIT License (MIT)
 
-Copyright (c) 2007 - 2019 Microting A/S
+Copyright (c) 2007 - 2020 Microting A/S
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -48,7 +48,8 @@ namespace eFormAPI.Web
     {
         private static CancellationTokenSource _cancelTokenSource = new CancellationTokenSource();
         private static bool _shouldBeRestarted;
-        public static List<IEformPlugin> Plugins = new List<IEformPlugin>();
+        public static List<IEformPlugin> EnabledPlugins = new List<IEformPlugin>();
+        public static List<IEformPlugin> DisabledPlugins = new List<IEformPlugin>();
 
         public static void Main(string[] args)
         {
@@ -154,11 +155,12 @@ namespace eFormAPI.Web
                     var defaultConnectionString = mainSettings?.ConnectionStrings?.DefaultConnection;
                     config.AddEfConfiguration(defaultConnectionString);
 
-                    Plugins = PluginHelper.GetPlugins(defaultConnectionString);
+                    EnabledPlugins = PluginHelper.GetPlugins(defaultConnectionString);
+                    DisabledPlugins = PluginHelper.GetDisablePlugins(defaultConnectionString);
                     var contextFactory = new BaseDbContextFactory();
                     using (var dbContext = contextFactory.CreateDbContext(new[] {defaultConnectionString}))
                     {
-                        foreach (var plugin in Plugins)
+                        foreach (var plugin in EnabledPlugins)
                         {
                             var pluginEntity = dbContext.EformPlugins
                                 .FirstOrDefault(x => x.PluginId == plugin.PluginId);

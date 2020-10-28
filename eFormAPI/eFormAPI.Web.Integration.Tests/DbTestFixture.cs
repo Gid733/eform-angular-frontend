@@ -1,7 +1,7 @@
 ﻿/*
 The MIT License (MIT)
 
-Copyright (c) 2007 - 2019 Microting A/S
+Copyright (c) 2007 - 2020 Microting A/S
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -43,14 +43,14 @@ namespace eFormAPI.Web.Integration.Tests
 
             DbContextOptionsBuilder<BaseDbContext> dbContextOptionsBuilder = new DbContextOptionsBuilder<BaseDbContext>();
 
-            if (ConnectionString.ToLower().Contains("convert zero datetime"))
-            {
+            // if (ConnectionString.ToLower().Contains("convert zero datetime"))
+            // {
                 dbContextOptionsBuilder.UseMySql(connectionStr);
-            }
-            else
-            {
-                dbContextOptionsBuilder.UseSqlServer(connectionStr);
-            }
+            // }
+            // else
+            // {
+                // dbContextOptionsBuilder.UseSqlServer(connectionStr);
+            // }
             dbContextOptionsBuilder.UseLazyLoadingProxies(true);
             DbContext = new BaseDbContext(dbContextOptionsBuilder.Options);
 

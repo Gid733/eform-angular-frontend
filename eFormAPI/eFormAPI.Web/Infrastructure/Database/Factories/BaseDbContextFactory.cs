@@ -1,7 +1,7 @@
 ﻿/*
 The MIT License (MIT)
 
-Copyright (c) 2007 - 2019 Microting A/S
+Copyright (c) 2007 - 2020 Microting A/S
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +25,7 @@ using System;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 
 namespace eFormAPI.Web.Infrastructure.Database.Factories
 {
@@ -32,28 +33,30 @@ namespace eFormAPI.Web.Infrastructure.Database.Factories
     {
         public BaseDbContext CreateDbContext(string[] args)
         {
-            // args = new[] { "Data Source=.\\SQLEXPRESS;Database=eform-angular-migration;Integrated Security=True" };
             var optionsBuilder = new DbContextOptionsBuilder<BaseDbContext>();
             if (args.Any())
             {
-                if (args.FirstOrDefault().ToLower().Contains("convert zero datetime"))
+                if (!args.FirstOrDefault().Equals("..."))
                 {
-                    optionsBuilder.UseMySql(args.FirstOrDefault());
+                    optionsBuilder.UseMySql(args.FirstOrDefault(), mysqlOptions =>
+                    {
+                        mysqlOptions.ServerVersion(new Version(10, 4, 0), ServerType.MariaDb);
+                    });
+
+                    optionsBuilder.UseLazyLoadingProxies();
+                    return new BaseDbContext(optionsBuilder.Options);
                 }
                 else
                 {
-                    optionsBuilder.UseSqlServer(args.FirstOrDefault());
+                    return new BaseDbContext(optionsBuilder.Options);
                 }
             }
             else
             {
                 throw new ArgumentNullException("Connection string not present");
             }
-
-//            optionsBuilder.UseSqlServer(@"data source=(LocalDb)\SharedInstance;Initial catalog=eform-angular-tests;Integrated Security=True");
+//            optionsBuilder.UseMySql(@"Server = localhost; port = 3306; Database = eform-angular-migration; user = root; Convert Zero Datetime = true;");
 //            dotnet ef migrations add InitialCreate --project eFormAPI.Web --startup-project DBMigrator
-            optionsBuilder.UseLazyLoadingProxies();
-            return new BaseDbContext(optionsBuilder.Options);
         }
     }
 }

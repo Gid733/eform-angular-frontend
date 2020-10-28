@@ -3,7 +3,6 @@ export class Navbar {
     $('#advanced').waitForDisplayed({timeout: 60000});
     this.clickOnHeaderMenuItem('Avanceret').click();
     // return $('#advanced');
-
   }
 
   public applicationSettingsBtn() {
@@ -39,6 +38,12 @@ export class Navbar {
   }
   public get sitesBtn() {
     return $(`//*[contains(@class, 'fadeInDropdown')]//*[contains(text(), 'Lokationer')]`);
+  }
+  public get foldersBtn() {
+    return $(`//*[contains(@class, 'fadeInDropdown')]//*[contains(text(), 'Folders')]`);
+  }
+  public get pluginsBtn() {
+    return $(`//*[contains(@class, 'fadeInDropdown')]//*[contains(text(), 'Plugins')]`);
   }
   public get deviceUsersBtn() {
     const ele = this.clickOnHeaderMenuItem2(' Enhedsbrugere ');
@@ -113,5 +118,17 @@ export class Navbar {
     this.advancedDropdown();
     this.entitySearchBtn.click();
     $('#spinner-animation').waitForDisplayed({timeout: 90000, reverse: true});
+  }
+  public goToFolderPage() {
+    this.advancedDropdown();
+    this.foldersBtn.click();
+    // browser.pause(15000);
+    $('#spinner-animation').waitForDisplayed({timeout: 30000, reverse: true});
+  }
+  public goToPluginsPage() {
+    this.advancedDropdown();
+    this.pluginsBtn.click();
+    // browser.pause(15000);
+    $('#spinner-animation').waitForDisplayed({timeout: 30000, reverse: true});
   }
 }
