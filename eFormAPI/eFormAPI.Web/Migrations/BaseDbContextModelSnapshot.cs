@@ -724,11 +724,17 @@ namespace eFormAPI.Web.Migrations
                     b.Property<int>("CreatedByUserId")
                         .HasColumnType("int");
 
+                    b.Property<string>("E2EId")
+                        .HasColumnType("longtext CHARACTER SET utf8mb4");
+
                     b.Property<string>("Link")
                         .HasColumnType("longtext CHARACTER SET utf8mb4");
 
                     b.Property<int?>("MenuTemplateId")
                         .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("longtext CHARACTER SET utf8mb4");
 
                     b.Property<int?>("ParentId")
                         .HasColumnType("int");
@@ -766,8 +772,10 @@ namespace eFormAPI.Web.Migrations
                             Id = 1,
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
+                            E2EId = "my-eforms",
                             Link = "/",
                             MenuTemplateId = 1,
+                            Name = "My Eforms",
                             Position = 0,
                             Type = 1,
                             UpdatedByUserId = 0,
@@ -778,8 +786,10 @@ namespace eFormAPI.Web.Migrations
                             Id = 2,
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
+                            E2EId = "device-users",
                             Link = "/device-users",
                             MenuTemplateId = 2,
+                            Name = "Device Users",
                             Position = 1,
                             Type = 1,
                             UpdatedByUserId = 0,
@@ -790,8 +800,10 @@ namespace eFormAPI.Web.Migrations
                             Id = 3,
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
+                            E2EId = "advanced",
                             Link = "",
                             MenuTemplateId = 3,
+                            Name = "Dropdown",
                             Position = 2,
                             Type = 3,
                             UpdatedByUserId = 0,
@@ -802,8 +814,10 @@ namespace eFormAPI.Web.Migrations
                             Id = 4,
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
+                            E2EId = "sites",
                             Link = "/advanced/sites",
                             MenuTemplateId = 4,
+                            Name = "Sites",
                             ParentId = 3,
                             Position = 0,
                             Type = 1,
@@ -815,8 +829,10 @@ namespace eFormAPI.Web.Migrations
                             Id = 5,
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
+                            E2EId = "workers",
                             Link = "/advanced/workers",
                             MenuTemplateId = 5,
+                            Name = "Workers",
                             ParentId = 3,
                             Position = 1,
                             Type = 1,
@@ -828,8 +844,10 @@ namespace eFormAPI.Web.Migrations
                             Id = 6,
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
+                            E2EId = "units",
                             Link = "/advanced/units",
                             MenuTemplateId = 6,
+                            Name = "Units",
                             ParentId = 3,
                             Position = 2,
                             Type = 1,
@@ -841,8 +859,10 @@ namespace eFormAPI.Web.Migrations
                             Id = 7,
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
+                            E2EId = "search",
                             Link = "/advanced/entity-search",
                             MenuTemplateId = 7,
+                            Name = "Searchable List",
                             ParentId = 3,
                             Position = 3,
                             Type = 1,
@@ -854,8 +874,10 @@ namespace eFormAPI.Web.Migrations
                             Id = 8,
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
+                            E2EId = "selectable-list",
                             Link = "/advanced/entity-select",
                             MenuTemplateId = 8,
+                            Name = "Selectable List",
                             ParentId = 3,
                             Position = 4,
                             Type = 1,
@@ -867,8 +889,10 @@ namespace eFormAPI.Web.Migrations
                             Id = 9,
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
-                            Link = "/advanced/application-settings",
+                            E2EId = "application-settings",
+                            Link = "/application-settings",
                             MenuTemplateId = 9,
+                            Name = "Application Settings",
                             ParentId = 3,
                             Position = 6,
                             Type = 1,
@@ -880,8 +904,10 @@ namespace eFormAPI.Web.Migrations
                             Id = 10,
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
-                            Link = "/advanced/plugins-settings",
+                            E2EId = "plugins-settings",
+                            Link = "/plugins-settings",
                             MenuTemplateId = 10,
+                            Name = "Plugin Settings",
                             ParentId = 3,
                             Position = 8,
                             Type = 1,
@@ -893,8 +919,10 @@ namespace eFormAPI.Web.Migrations
                             Id = 11,
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
+                            E2EId = "folders",
                             Link = "/advanced/folders",
                             MenuTemplateId = 11,
+                            Name = "Folders",
                             ParentId = 3,
                             Position = 5,
                             Type = 1,
@@ -906,8 +934,10 @@ namespace eFormAPI.Web.Migrations
                             Id = 12,
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
+                            E2EId = "email-recipients",
                             Link = "/email-recipients",
                             MenuTemplateId = 12,
+                            Name = "Email Recipients",
                             ParentId = 3,
                             Position = 7,
                             Type = 1,
@@ -1013,6 +1043,30 @@ namespace eFormAPI.Web.Migrations
                         },
                         new
                         {
+                            Id = 14,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "Danish",
+                            LocaleName = "da-DK",
+                            MenuItemId = 1,
+                            Name = "Mine eForms",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
+                            Id = 27,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "German",
+                            LocaleName = "de-DE",
+                            MenuItemId = 1,
+                            Name = "Meine eForms",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
                             Id = 2,
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
@@ -1020,6 +1074,30 @@ namespace eFormAPI.Web.Migrations
                             LocaleName = "en-US",
                             MenuItemId = 2,
                             Name = "Device Users",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
+                            Id = 15,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "Danish",
+                            LocaleName = "da-DK",
+                            MenuItemId = 2,
+                            Name = "Enhedsbrugere",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
+                            Id = 28,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "German",
+                            LocaleName = "de-DE",
+                            MenuItemId = 2,
+                            Name = "Gerätebenutzer ",
                             UpdatedByUserId = 0,
                             Version = 0
                         },
@@ -1037,6 +1115,30 @@ namespace eFormAPI.Web.Migrations
                         },
                         new
                         {
+                            Id = 16,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "Danish",
+                            LocaleName = "da-DK",
+                            MenuItemId = 3,
+                            Name = "Avanceret",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
+                            Id = 29,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "German",
+                            LocaleName = "de-DE",
+                            MenuItemId = 3,
+                            Name = "Fortgeschritten",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
                             Id = 4,
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
@@ -1044,6 +1146,30 @@ namespace eFormAPI.Web.Migrations
                             LocaleName = "en-US",
                             MenuItemId = 4,
                             Name = "Sites",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
+                            Id = 17,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "Danish",
+                            LocaleName = "da-DK",
+                            MenuItemId = 4,
+                            Name = "Lokationer",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
+                            Id = 30,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "German",
+                            LocaleName = "de-DE",
+                            MenuItemId = 4,
+                            Name = "Standorte",
                             UpdatedByUserId = 0,
                             Version = 0
                         },
@@ -1061,6 +1187,30 @@ namespace eFormAPI.Web.Migrations
                         },
                         new
                         {
+                            Id = 18,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "Danish",
+                            LocaleName = "da-DK",
+                            MenuItemId = 5,
+                            Name = "Medarbejder",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
+                            Id = 31,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "German",
+                            LocaleName = "de-DE",
+                            MenuItemId = 5,
+                            Name = "Mitarbeiter",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
                             Id = 6,
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
@@ -1068,6 +1218,30 @@ namespace eFormAPI.Web.Migrations
                             LocaleName = "en-US",
                             MenuItemId = 6,
                             Name = "Units",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
+                            Id = 19,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "Danish",
+                            LocaleName = "da-DK",
+                            MenuItemId = 6,
+                            Name = "Enheder",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
+                            Id = 32,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "German",
+                            LocaleName = "de-DE",
+                            MenuItemId = 6,
+                            Name = "Einheiten",
                             UpdatedByUserId = 0,
                             Version = 0
                         },
@@ -1085,6 +1259,30 @@ namespace eFormAPI.Web.Migrations
                         },
                         new
                         {
+                            Id = 20,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "Danish",
+                            LocaleName = "da-DK",
+                            MenuItemId = 7,
+                            Name = "Søgbar Lister",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
+                            Id = 33,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "German",
+                            LocaleName = "de-DE",
+                            MenuItemId = 7,
+                            Name = "Durchsuchbare Listen",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
                             Id = 8,
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
@@ -1092,6 +1290,30 @@ namespace eFormAPI.Web.Migrations
                             LocaleName = "en-US",
                             MenuItemId = 8,
                             Name = "Selectable list",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
+                            Id = 21,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "Danish",
+                            LocaleName = "da-DK",
+                            MenuItemId = 8,
+                            Name = "Valgbar Liste",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
+                            Id = 34,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "German",
+                            LocaleName = "de-DE",
+                            MenuItemId = 8,
+                            Name = "Auswählbare Liste",
                             UpdatedByUserId = 0,
                             Version = 0
                         },
@@ -1109,6 +1331,30 @@ namespace eFormAPI.Web.Migrations
                         },
                         new
                         {
+                            Id = 22,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "Danish",
+                            LocaleName = "da-DK",
+                            MenuItemId = 9,
+                            Name = "Applikationsindstillinger",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
+                            Id = 35,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "German",
+                            LocaleName = "de-DE",
+                            MenuItemId = 9,
+                            Name = "Anwendungseinstellungen",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
                             Id = 10,
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
@@ -1121,11 +1367,59 @@ namespace eFormAPI.Web.Migrations
                         },
                         new
                         {
+                            Id = 23,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "Danish",
+                            LocaleName = "da-DK",
+                            MenuItemId = 10,
+                            Name = "Plugins",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
+                            Id = 36,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "German",
+                            LocaleName = "de-DE",
+                            MenuItemId = 10,
+                            Name = "Plugins",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
                             Id = 11,
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
                             Language = "English",
                             LocaleName = "en-US",
+                            MenuItemId = 11,
+                            Name = "Folders",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
+                            Id = 24,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "Danish",
+                            LocaleName = "da-DK",
+                            MenuItemId = 11,
+                            Name = "Folders",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
+                            Id = 37,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "German",
+                            LocaleName = "de-DE",
                             MenuItemId = 11,
                             Name = "Folders",
                             UpdatedByUserId = 0,
@@ -1145,139 +1439,7 @@ namespace eFormAPI.Web.Migrations
                         },
                         new
                         {
-                            Id = 13,
-                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = 0,
-                            Language = "Danish",
-                            LocaleName = "da-DK",
-                            MenuItemId = 1,
-                            Name = "Mine eForms",
-                            UpdatedByUserId = 0,
-                            Version = 0
-                        },
-                        new
-                        {
-                            Id = 14,
-                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = 0,
-                            Language = "Danish",
-                            LocaleName = "da-DK",
-                            MenuItemId = 2,
-                            Name = "Enhedsbrugere",
-                            UpdatedByUserId = 0,
-                            Version = 0
-                        },
-                        new
-                        {
-                            Id = 15,
-                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = 0,
-                            Language = "Danish",
-                            LocaleName = "da-DK",
-                            MenuItemId = 3,
-                            Name = "Avanceret",
-                            UpdatedByUserId = 0,
-                            Version = 0
-                        },
-                        new
-                        {
-                            Id = 16,
-                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = 0,
-                            Language = "Danish",
-                            LocaleName = "da-DK",
-                            MenuItemId = 4,
-                            Name = "Lokationer",
-                            UpdatedByUserId = 0,
-                            Version = 0
-                        },
-                        new
-                        {
-                            Id = 17,
-                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = 0,
-                            Language = "Danish",
-                            LocaleName = "da-DK",
-                            MenuItemId = 5,
-                            Name = "Medarbejder",
-                            UpdatedByUserId = 0,
-                            Version = 0
-                        },
-                        new
-                        {
-                            Id = 18,
-                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = 0,
-                            Language = "Danish",
-                            LocaleName = "da-DK",
-                            MenuItemId = 6,
-                            Name = "Enheder",
-                            UpdatedByUserId = 0,
-                            Version = 0
-                        },
-                        new
-                        {
-                            Id = 19,
-                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = 0,
-                            Language = "Danish",
-                            LocaleName = "da-DK",
-                            MenuItemId = 7,
-                            Name = "Søgbar Lister",
-                            UpdatedByUserId = 0,
-                            Version = 0
-                        },
-                        new
-                        {
-                            Id = 20,
-                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = 0,
-                            Language = "Danish",
-                            LocaleName = "da-DK",
-                            MenuItemId = 8,
-                            Name = "Valgbar Liste",
-                            UpdatedByUserId = 0,
-                            Version = 0
-                        },
-                        new
-                        {
-                            Id = 21,
-                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = 0,
-                            Language = "Danish",
-                            LocaleName = "da-DK",
-                            MenuItemId = 9,
-                            Name = "Applikationsindstillinger",
-                            UpdatedByUserId = 0,
-                            Version = 0
-                        },
-                        new
-                        {
-                            Id = 22,
-                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = 0,
-                            Language = "Danish",
-                            LocaleName = "da-DK",
-                            MenuItemId = 10,
-                            Name = "Plugins",
-                            UpdatedByUserId = 0,
-                            Version = 0
-                        },
-                        new
-                        {
-                            Id = 23,
-                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = 0,
-                            Language = "Danish",
-                            LocaleName = "da-DK",
-                            MenuItemId = 11,
-                            Name = "Folders",
-                            UpdatedByUserId = 0,
-                            Version = 0
-                        },
-                        new
-                        {
-                            Id = 24,
+                            Id = 25,
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
                             Language = "Danish",
@@ -1289,139 +1451,7 @@ namespace eFormAPI.Web.Migrations
                         },
                         new
                         {
-                            Id = 25,
-                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = 0,
-                            Language = "German",
-                            LocaleName = "de-DE",
-                            MenuItemId = 1,
-                            Name = "Meine eForms",
-                            UpdatedByUserId = 0,
-                            Version = 0
-                        },
-                        new
-                        {
-                            Id = 26,
-                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = 0,
-                            Language = "German",
-                            LocaleName = "de-DE",
-                            MenuItemId = 2,
-                            Name = "Gerätebenutzer ",
-                            UpdatedByUserId = 0,
-                            Version = 0
-                        },
-                        new
-                        {
-                            Id = 27,
-                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = 0,
-                            Language = "German",
-                            LocaleName = "de-DE",
-                            MenuItemId = 3,
-                            Name = "Fortgeschritten",
-                            UpdatedByUserId = 0,
-                            Version = 0
-                        },
-                        new
-                        {
-                            Id = 28,
-                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = 0,
-                            Language = "German",
-                            LocaleName = "de-DE",
-                            MenuItemId = 4,
-                            Name = "Standorte",
-                            UpdatedByUserId = 0,
-                            Version = 0
-                        },
-                        new
-                        {
-                            Id = 29,
-                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = 0,
-                            Language = "German",
-                            LocaleName = "de-DE",
-                            MenuItemId = 5,
-                            Name = "Mitarbeiter",
-                            UpdatedByUserId = 0,
-                            Version = 0
-                        },
-                        new
-                        {
-                            Id = 30,
-                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = 0,
-                            Language = "German",
-                            LocaleName = "de-DE",
-                            MenuItemId = 6,
-                            Name = "Einheiten",
-                            UpdatedByUserId = 0,
-                            Version = 0
-                        },
-                        new
-                        {
-                            Id = 31,
-                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = 0,
-                            Language = "German",
-                            LocaleName = "de-DE",
-                            MenuItemId = 7,
-                            Name = "Durchsuchbare Listen",
-                            UpdatedByUserId = 0,
-                            Version = 0
-                        },
-                        new
-                        {
-                            Id = 32,
-                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = 0,
-                            Language = "German",
-                            LocaleName = "de-DE",
-                            MenuItemId = 8,
-                            Name = "Auswählbare Liste",
-                            UpdatedByUserId = 0,
-                            Version = 0
-                        },
-                        new
-                        {
-                            Id = 33,
-                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = 0,
-                            Language = "German",
-                            LocaleName = "de-DE",
-                            MenuItemId = 9,
-                            Name = "Anwendungseinstellungen",
-                            UpdatedByUserId = 0,
-                            Version = 0
-                        },
-                        new
-                        {
-                            Id = 34,
-                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = 0,
-                            Language = "German",
-                            LocaleName = "de-DE",
-                            MenuItemId = 10,
-                            Name = "Plugins",
-                            UpdatedByUserId = 0,
-                            Version = 0
-                        },
-                        new
-                        {
-                            Id = 35,
-                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = 0,
-                            Language = "German",
-                            LocaleName = "de-DE",
-                            MenuItemId = 11,
-                            Name = "Folders",
-                            UpdatedByUserId = 0,
-                            Version = 0
-                        },
-                        new
-                        {
-                            Id = 36,
+                            Id = 38,
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
                             Language = "German",
@@ -1454,6 +1484,9 @@ namespace eFormAPI.Web.Migrations
                     b.Property<int?>("EformPluginId")
                         .HasColumnType("int");
 
+                    b.Property<string>("Name")
+                        .HasColumnType("longtext CHARACTER SET utf8mb4");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime(6)");
 
@@ -1481,6 +1514,7 @@ namespace eFormAPI.Web.Migrations
                             CreatedByUserId = 0,
                             DefaultLink = "/",
                             E2EId = "my-eforms",
+                            Name = "My Eforms",
                             UpdatedByUserId = 0,
                             Version = 0
                         },
@@ -1491,6 +1525,7 @@ namespace eFormAPI.Web.Migrations
                             CreatedByUserId = 0,
                             DefaultLink = "/device-users",
                             E2EId = "device-users",
+                            Name = "Device Users",
                             UpdatedByUserId = 0,
                             Version = 0
                         },
@@ -1501,6 +1536,7 @@ namespace eFormAPI.Web.Migrations
                             CreatedByUserId = 0,
                             DefaultLink = "",
                             E2EId = "advanced",
+                            Name = "Advanced",
                             UpdatedByUserId = 0,
                             Version = 0
                         },
@@ -1511,6 +1547,7 @@ namespace eFormAPI.Web.Migrations
                             CreatedByUserId = 0,
                             DefaultLink = "/advanced/sites",
                             E2EId = "sites",
+                            Name = "Sites",
                             UpdatedByUserId = 0,
                             Version = 0
                         },
@@ -1521,6 +1558,7 @@ namespace eFormAPI.Web.Migrations
                             CreatedByUserId = 0,
                             DefaultLink = "/advanced/workers",
                             E2EId = "workers",
+                            Name = "Workers",
                             UpdatedByUserId = 0,
                             Version = 0
                         },
@@ -1531,6 +1569,7 @@ namespace eFormAPI.Web.Migrations
                             CreatedByUserId = 0,
                             DefaultLink = "/advanced/units",
                             E2EId = "units",
+                            Name = "Units",
                             UpdatedByUserId = 0,
                             Version = 0
                         },
@@ -1541,6 +1580,7 @@ namespace eFormAPI.Web.Migrations
                             CreatedByUserId = 0,
                             DefaultLink = "/advanced/entity-search",
                             E2EId = "search",
+                            Name = "Searchable List",
                             UpdatedByUserId = 0,
                             Version = 0
                         },
@@ -1551,6 +1591,7 @@ namespace eFormAPI.Web.Migrations
                             CreatedByUserId = 0,
                             DefaultLink = "/advanced/entity-select",
                             E2EId = "selectable-list",
+                            Name = "Selectable List",
                             UpdatedByUserId = 0,
                             Version = 0
                         },
@@ -1561,6 +1602,7 @@ namespace eFormAPI.Web.Migrations
                             CreatedByUserId = 0,
                             DefaultLink = "/application-settings",
                             E2EId = "application-settings",
+                            Name = "Application Settings",
                             UpdatedByUserId = 0,
                             Version = 0
                         },
@@ -1571,6 +1613,7 @@ namespace eFormAPI.Web.Migrations
                             CreatedByUserId = 0,
                             DefaultLink = "/plugins-settings",
                             E2EId = "plugins-settings",
+                            Name = "Plugins Settings",
                             UpdatedByUserId = 0,
                             Version = 0
                         },
@@ -1581,6 +1624,7 @@ namespace eFormAPI.Web.Migrations
                             CreatedByUserId = 0,
                             DefaultLink = "/advanced/folders",
                             E2EId = "folders",
+                            Name = "Folders",
                             UpdatedByUserId = 0,
                             Version = 0
                         },
@@ -1591,6 +1635,7 @@ namespace eFormAPI.Web.Migrations
                             CreatedByUserId = 0,
                             DefaultLink = "/email-recipients",
                             E2EId = "email-recipients",
+                            Name = "Email Recipients",
                             UpdatedByUserId = 0,
                             Version = 0
                         });
@@ -2542,6 +2587,36 @@ namespace eFormAPI.Web.Migrations
                         },
                         new
                         {
+                            Id = 28,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            PermissionId = 49,
+                            SecurityGroupId = 2,
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
+                            Id = 29,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            PermissionId = 50,
+                            SecurityGroupId = 2,
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
+                            Id = 30,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            PermissionId = 51,
+                            SecurityGroupId = 2,
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
                             Id = 23,
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
@@ -3123,6 +3198,39 @@ namespace eFormAPI.Web.Migrations
                             PermissionTypeId = 9,
                             UpdatedByUserId = 0,
                             Version = 0
+                        },
+                        new
+                        {
+                            Id = 49,
+                            ClaimName = "email_recipient_create",
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            PermissionName = "Create e-mail recipients",
+                            PermissionTypeId = 10,
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
+                            Id = 50,
+                            ClaimName = "email_recipient_delete",
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            PermissionName = "Delete e-mail recipients",
+                            PermissionTypeId = 10,
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
+                            Id = 51,
+                            ClaimName = "email_recipient_read",
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            PermissionName = "Read e-mail recipients",
+                            PermissionTypeId = 10,
+                            UpdatedByUserId = 0,
+                            Version = 0
                         });
                 });
 
@@ -3241,6 +3349,15 @@ namespace eFormAPI.Web.Migrations
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
                             Name = "Eforms",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
+                            Id = 10,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Name = "EmailRecipients",
                             UpdatedByUserId = 0,
                             Version = 0
                         });

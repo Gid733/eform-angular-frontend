@@ -50,6 +50,7 @@ namespace eFormAPI.Web.Controllers.Eforms
 {
     using System.Linq;
     using eFormAPI.Web.Infrastructure.Models;
+    using Infrastructure.Models.Import;
     using Services.Export;
 
     [Authorize]
@@ -128,7 +129,7 @@ namespace eFormAPI.Web.Controllers.Eforms
         }
 
         [HttpGet]
-        [AllowAnonymous]
+        //[AllowAnonymous]
         [Route("api/template-files/get-image/{fileName}.{ext}")]
         public async Task<IActionResult> GetImage(string fileName, string ext, string noCache = "noCache")
         {
@@ -136,7 +137,7 @@ namespace eFormAPI.Web.Controllers.Eforms
         }
 
         [HttpGet]
-        [AllowAnonymous]
+        //[AllowAnonymous]
         [Route("api/template-files/get-pdf/{fileName}.{ext}")]
         public async Task<IActionResult> GetPdf(string fileName, string ext, string noCache = "noCache")
         {
@@ -619,11 +620,5 @@ namespace eFormAPI.Web.Controllers.Eforms
             return new OperationResult(true, _localizationService.GetString("ImageRotatedSuccessfully"));
         }
 
-    }
-
-    public class EformZipUploadModel
-    {
-        public IFormFile File { get; set; }
-        public int TemplateId { get; set; }
     }
 }

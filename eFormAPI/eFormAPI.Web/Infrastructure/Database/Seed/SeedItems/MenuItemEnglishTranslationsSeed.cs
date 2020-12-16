@@ -27,12 +27,17 @@ namespace eFormAPI.Web.Infrastructure.Database.Seed.SeedItems
     using Const;
     using Entities.Menu;
     using Microsoft.EntityFrameworkCore;
+    using Microting.eFormApi.BasePn.Infrastructure.Consts;
     using System.Collections.Generic;
+    using System.Linq;
 
     public static class MenuItemEnglishTranslationsSeed
     {
         public static ModelBuilder AddDefaultMenuEnglishTranslations(this ModelBuilder modelBuilder)
         {
+            var translation = DefaultMenuStorage.GetDefaultMenu()
+                .SelectMany(x => x.Translations)
+                .ToList();
             var entities = new List<MenuItemTranslation>()
             {
                 new MenuItemTranslation

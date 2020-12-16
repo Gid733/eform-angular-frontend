@@ -27,10 +27,15 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using Castle.Core.Internal;
+using eFormAPI.Web.Abstractions;
 using eFormAPI.Web.Hosting.Helpers;
 using eFormAPI.Web.Hosting.Settings;
+using eFormAPI.Web.Infrastructure.Const;
 using eFormAPI.Web.Infrastructure.Database;
+using eFormAPI.Web.Infrastructure.Database.Entities.Menu;
 using eFormAPI.Web.Infrastructure.Database.Factories;
+using eFormAPI.Web.Services.PluginsManagement;
+using eFormAPI.Web.Services.PluginsManagement.MenuItemsLoader;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -55,6 +60,7 @@ namespace eFormAPI.Web
         {
             var host = BuildWebHost(args);
             MigrateDb(host);
+            LoadNavigationMenuEnabledPlugins(host);
             host.RunAsync(_cancelTokenSource.Token)
                 .Wait();
 
@@ -83,7 +89,43 @@ namespace eFormAPI.Web
             _cancelTokenSource.Cancel();
         }
 
-       // public static ReloadDbConfiguration ReloadDbConfigurationDelegate { get; set; }
+        // public static ReloadDbConfiguration ReloadDbConfigurationDelegate { get; set; }
+
+        public static async void LoadNavigationMenuEnabledPlugins(IWebHost webHost)
+        {
+            using (var scope = webHost.Services.GetService<IServiceScopeFactory>().CreateScope())
+            {
+                BaseDbContext dbContext = null;
+                try
+                {
+                    dbContext = scope.ServiceProvider.GetRequiredService<BaseDbContext>();
+                }
+                catch
+                {
+                }
+
+                if (dbContext != null)
+                {
+                    using (dbContext = scope.ServiceProvider.GetRequiredService<BaseDbContext>())
+                    {
+                        try
+                        {
+                            foreach(var enablePlugin in Program.EnabledPlugins)
+                            {
+                                var pluginManagmentService = scope.ServiceProvider.GetRequiredService<IPluginsManagementService>();
+
+                                await pluginManagmentService.LoadNavigationMenuDuringStartProgram(enablePlugin.PluginId);
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+                            logger.LogError(e, "Error while loading navigation menu from enabled plugins");
+                        }
+                    }
+                }
+            }
+        }
 
         public static void MigrateDb(IWebHost webHost)
         {
@@ -131,9 +173,11 @@ namespace eFormAPI.Web
                 .AddCommandLine(args)
                 .AddEnvironmentVariables(prefix: "ASPNETCORE_")
                 .Build();
+
             var port = defaultConfig.GetValue("port", 5000);
+            var connectionString = defaultConfig.GetValue("connectionstring", "");
             return WebHost.CreateDefaultBuilder(args)
-                .UseUrls($"http://localhost:{port}")
+                .UseUrls($"http://0.0.0.0:{port}")
                 .UseIISIntegration()
                 .ConfigureAppConfiguration((hostContext, config) =>
                 {
@@ -143,9 +187,15 @@ namespace eFormAPI.Web
 
                     var filePath = Path.Combine(hostContext.HostingEnvironment.ContentRootPath,
                         "connection.json");
+
                     if (!File.Exists(filePath))
                     {
-                        ConnectionStringManager.CreateDefalt(filePath);
+                        ConnectionStringManager.CreateDefault(filePath);
+                    }
+
+                    if (!string.IsNullOrEmpty(connectionString))
+                    {
+                        ConnectionStringManager.CreateWithConnectionString(filePath, connectionString);
                     }
 
                     config.AddJsonFile("connection.json",

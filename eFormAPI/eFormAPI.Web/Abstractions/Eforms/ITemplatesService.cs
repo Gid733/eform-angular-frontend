@@ -31,9 +31,13 @@ using Microting.eForm.Infrastructure.Models;
 
 namespace eFormAPI.Web.Abstractions.Eforms
 {
+    using System.IO;
+    using Infrastructure.Models.Import;
+
     public interface ITemplatesService
     {
         Task<OperationResult> Create(EFormXmlModel eFormXmlModel);
+        Task<OperationDataResult<ExcelParseResult>> Import(Stream excelStream);
         Task<OperationResult> Delete(int id);
         Task<OperationResult> Deploy(DeployModel deployModel);
         Task<OperationDataResult<DeployToModel>> DeployTo(int id);

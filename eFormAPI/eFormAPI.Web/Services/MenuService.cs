@@ -41,8 +41,11 @@ namespace eFormAPI.Web.Services
     using eFormAPI.Web.Infrastructure.Const;
     using eFormAPI.Web.Services.NavigationMenu;
     using eFormAPI.Web.Services.NavigationMenu.Builder;
+    using eFormAPI.Web.Services.PluginsManagement.MenuItemsLoader;
     using Infrastructure.Database.Entities.Menu;
     using Microting.eFormApi.BasePn.Abstractions;
+    using Microting.eFormApi.BasePn.Infrastructure.Consts;
+    using Microting.eFormApi.BasePn.Infrastructure.Models.Application.NavigationMenu;
 
     public class MenuService : IMenuService
     {
@@ -68,7 +71,7 @@ namespace eFormAPI.Web.Services
             _serviceProvider = serviceProvider;
         }
 
-        public async Task<OperationResult> UpdateCurrentUserMenu(List<NavigationMenuItemModel> menuItemModels)
+        public async Task<OperationDataResult<NavigationMenuModel>> UpdateCurrentUserMenu(List<NavigationMenuItemModel> menuItemModels)
         {
             // Step 1. Firstly remove all menu items from database
             var actualMenu = await _dbContext.MenuItems.ToListAsync();
@@ -84,7 +87,8 @@ namespace eFormAPI.Web.Services
                 menuItemBuilder.Build();
             }
 
-            return new OperationResult(true);
+            return new OperationDataResult<NavigationMenuModel>(true,
+                _localizationService.GetString("NavigationMenuUpdate")); 
         }
 
         public async Task<OperationDataResult<NavigationMenuModel>> GetCurrentNavigationMenu()
@@ -116,27 +120,29 @@ namespace eFormAPI.Web.Services
                         .Select(p => new NavigationMenuTemplateItemModel
                         {
                             Id = p.Id,
+                            Name = p.Name,
                             E2EId = p.E2EId,
                             Link = p.DefaultLink,
                             Translations = _dbContext.MenuTemplateTranslations
                                 .Where(x => x.MenuTemplateId == p.Id)
-                                .Select(p => new NavigationMenuTranslationModel
+                                .Select(e => new NavigationMenuTranslationModel
                                 {
-                                    Id = p.Id,
-                                    Name = p.Name,
-                                    LocaleName = p.LocaleName,
-                                    Language = p.Language,
+                                    Id = e.Id,
+                                    Name = e.Name,
+                                    LocaleName = e.LocaleName,
+                                    Language = e.Language,
        
                                  })
                                 .ToList(),
+                            RelatedTemplateItemId = 1
                         })
                         .ToList()
                     }
                 };
 
-                var enablePlugins = _dbContext.EformPlugins
+                var enablePlugins = await _dbContext.EformPlugins
                     .Where(x => x.Status == (int)PluginStatus.Enabled)
-                    .ToList();
+                    .ToListAsync();
 
                 if (enablePlugins.Any())
                 {
@@ -149,18 +155,20 @@ namespace eFormAPI.Web.Services
                             .Select(p => new NavigationMenuTemplateItemModel
                             {
                                 Id = p.Id,
+                                Name = p.Name,
                                 E2EId = p.E2EId,
                                 Link = p.DefaultLink,
                                 Translations = _dbContext.MenuTemplateTranslations
-                                .Where(x => x.MenuTemplateId == p.Id)
-                                .Select(p => new NavigationMenuTranslationModel
+                                .Where(y => y.MenuTemplateId == p.Id)
+                                .Select(e => new NavigationMenuTranslationModel
                                 {
-                                    Id = p.Id,
-                                    Name = p.Name,
-                                    LocaleName = p.LocaleName,
-                                    Language = p.Language,
+                                    Id = e.Id,
+                                    Name = e.Name,
+                                    LocaleName = e.LocaleName,
+                                    Language = e.Language,
                                 })
                                 .ToList(),
+                                RelatedTemplateItemId = p.Id
                             })
                             .ToList()
                     }));
@@ -172,6 +180,8 @@ namespace eFormAPI.Web.Services
                     .Select(x => new NavigationMenuItemModel
                     {
                         Id = x.Id,
+                        E2EId = x.E2EId,
+                        Name = x.Name,
                         Type = x.Type,
                         Link = x.Link,
                         RelatedTemplateItemId = x.MenuTemplateId,
@@ -196,6 +206,8 @@ namespace eFormAPI.Web.Services
                             .Select(p => new NavigationMenuItemModel
                             {
                                 Id = p.Id,
+                                E2EId = x.E2EId,
+                                Name = p.Name,
                                 Type = p.Type,
                                 Link = p.Link,
                                 RelatedTemplateItemId = p.MenuTemplateId,
@@ -246,11 +258,11 @@ namespace eFormAPI.Web.Services
                         .ThenInclude(x => x.EformPlugin)
                     .ToListAsync();
 
-                var currentUser = await _userService.GetCurrentUserAsync();
+                var locale = await _userService.GetCurrentUserLocale();
 
-                var currentLocale = string.IsNullOrEmpty(currentUser.Locale) 
+                var currentLocale = string.IsNullOrEmpty(locale)
                     ? LocaleNames.English 
-                    : currentUser.Locale;
+                    : locale;
 
                 // Get all user claims and filter menu for user
                 var userClaims = await _claimsService.GetUserClaimsNames(_userService.UserId);
@@ -267,13 +279,13 @@ namespace eFormAPI.Web.Services
                     {
                         Name = _dbContext.MenuItemTranslations.First(d => d.MenuItemId == x.Id && d.LocaleName == currentLocale).Name,
                         LocaleName = currentLocale,
-                        E2EId = x.MenuTemplateId != null ? x.MenuTemplate.E2EId : null,
+                        E2EId = x.E2EId,
                         Link = x.Link,
                         Guards = x.Type == MenuItemTypeEnum.Link
                             ? _dbContext.MenuTemplatePermissions
-                                    .Include(x => x.Permission)
+                                    .Include(y => y.Permission)
                                     .Where(d => d.MenuTemplateId == x.MenuTemplateId)
-                                    .Select(x => x.Permission.ClaimName)
+                                    .Select(y => y.Permission.ClaimName)
                                     .ToList()
                             : new List<string>(),
                         Position = x.Position,
@@ -286,13 +298,13 @@ namespace eFormAPI.Web.Services
                             Name = _dbContext.MenuItemTranslations.First(d => d.MenuItemId == p.Id && d.LocaleName == currentLocale).Name,
                             //LocaleName = _dbContext.MenuItemTranslations.First(d => d.MenuItemId == p.Id && d.LocaleName == currentLocale).LocaleName,
                             LocaleName = currentLocale,
-                            E2EId = p.MenuTemplateId != null ? p.MenuTemplate.E2EId : null,
+                            E2EId = p.E2EId,
                             Link = p.Link,
                             Guards = p.Type == MenuItemTypeEnum.Link
                             ? _dbContext.MenuTemplatePermissions
-                                    .Include(x => x.Permission)
+                                    .Include(y => y.Permission)
                                     .Where(d => d.MenuTemplateId == p.MenuTemplateId)
-                                    .Select(x => x.Permission.ClaimName)
+                                    .Select(y => y.Permission.ClaimName)
                                     .ToList()
                             : new List<string>(),
                             Position = p.Position,
@@ -303,26 +315,22 @@ namespace eFormAPI.Web.Services
 
                 var orderedRightMenu = RightMenuStorage.GetRightMenu().Select(x => new MenuItemModel
                 {
-                    Name = x.Translations.FirstOrDefault(x => x.LocaleName == currentLocale)?.Name ?? x.Name,
+                    Name = x.Translations.FirstOrDefault(y => y.LocaleName == currentLocale)?.Name ?? x.Name,
                     LocaleName = currentLocale,
-                    E2EId = x.MenuTemplate != null
-                            ? x.MenuTemplate.E2EId
-                            : null,
+                    E2EId = x.E2EId,
                     Link = x.Link,
                     Guards = x.Type == MenuItemTypeEnum.Link
-                            ? x.MenuTemplate.Permissions.Select(x => x.ClaimName).ToList()
+                            ? x.MenuTemplate.Permissions.Select(y => y.ClaimName).ToList()
                             : new List<string>(),
                     Position = x.Position,
                     MenuItems = x.ChildItems.Select(d => new MenuItemModel
                     {
-                        Name = d.Translations.First(x => x.LocaleName == currentLocale).Name,
+                        Name = d.Translations.First(y => y.LocaleName == currentLocale).Name,
                         LocaleName = currentLocale,
-                        E2EId = d.MenuTemplate != null
-                            ? d.MenuTemplate.E2EId
-                            : null,
+                        E2EId = d.E2EId,
                         Link = d.Link,
                         Guards = d.Type == MenuItemTypeEnum.Link
-                            ? d.MenuTemplate.Permissions.Select(x => x.ClaimName).ToList()
+                            ? d.MenuTemplate.Permissions.Select(y => y.ClaimName).ToList()
                             : new List<string>(),
                         Position = d.Position,
                     })
@@ -365,6 +373,109 @@ namespace eFormAPI.Web.Services
                 return new OperationDataResult<MenuModel>(false,
                     _localizationService.GetString("ErrorWhileObtainingUserMenu"));
             }
+        }
+
+        public async Task<OperationResult> ResetCurrentUserMenu()
+        {
+            // Step 1. Firstly remove all menu items from database
+            var actualMenu = await _dbContext.MenuItems.ToListAsync();
+
+            _dbContext.MenuItems.RemoveRange(actualMenu);
+            _dbContext.SaveChanges();
+
+            var defaultMenu = DefaultMenuStorage.GetDefaultMenu();
+
+            _dbContext.MenuItems.AddRange(defaultMenu);
+            _dbContext.SaveChanges();
+
+            foreach(var plugin in Program.EnabledPlugins)
+            {
+                var pluginMenu = plugin.GetNavigationMenu(_serviceProvider);
+
+                int currentPosition = _dbContext.MenuItems.Where(x => x.ParentId == null).Max(x => x.Position) + 1;
+                foreach(var pluginMenuItem in pluginMenu)
+                {
+                    AddToDatabase(pluginMenuItem, null, currentPosition);
+                    currentPosition++;
+                }
+            }
+
+            return new OperationResult(true);
+        }
+
+        private void AddToDatabase(PluginMenuItemModel pluginMenuItem, int? parentId, int currentPosition)
+        {
+            if (pluginMenuItem.Type == MenuItemTypeEnum.Link)
+            {
+                var newMenuItem = new MenuItem()
+                {
+                    E2EId = pluginMenuItem.E2EId,
+                    Name = pluginMenuItem.Name,
+                    Link = pluginMenuItem.Link,
+                    Type = pluginMenuItem.Type,
+                    Position = currentPosition,
+                    MenuTemplateId = _dbContext.MenuTemplates.First(x => x.E2EId == pluginMenuItem.E2EId).Id,
+                    ParentId = parentId,
+                };
+
+                _dbContext.MenuItems.Add(newMenuItem);
+                _dbContext.SaveChanges();
+
+                foreach (var menuItemTranslation in pluginMenuItem.Translations)
+                {
+                    var translation = new MenuItemTranslation
+                    {
+                        Language = menuItemTranslation.Language,
+                        LocaleName = menuItemTranslation.LocaleName,
+                        Name = menuItemTranslation.Name,
+                        MenuItemId = newMenuItem.Id,
+                    };
+
+                    _dbContext.MenuItemTranslations.Add(translation);
+                    _dbContext.SaveChanges();
+                }
+            }
+            else
+            {
+                var newMenuItem = new MenuItem()
+                {
+                    E2EId = pluginMenuItem.E2EId,
+                    Name = pluginMenuItem.Type == MenuItemTypeEnum.Dropdown ? "Dropdown" : pluginMenuItem.Name,
+                    Link = pluginMenuItem.Link,
+                    Type = pluginMenuItem.Type,
+                    Position = currentPosition,
+                    MenuTemplateId = null,
+                    ParentId = parentId
+                };
+
+                _dbContext.MenuItems.Add(newMenuItem);
+                _dbContext.SaveChanges();
+
+                foreach (var menuItemTranslation in pluginMenuItem.Translations)
+                {
+                    var translation = new MenuItemTranslation
+                    {
+                        Language = menuItemTranslation.Language,
+                        LocaleName = menuItemTranslation.LocaleName,
+                        Name = menuItemTranslation.Name,
+                        MenuItemId = newMenuItem.Id,
+                    };
+
+                    _dbContext.MenuItemTranslations.Add(translation);
+                    _dbContext.SaveChanges();
+                }
+
+                if (pluginMenuItem.ChildItems.Any())
+                {
+                    int childPosition = 0;
+                    foreach (var childMenuItem in pluginMenuItem.ChildItems)
+                    {
+                        AddToDatabase(childMenuItem, newMenuItem.Id, childPosition);
+                        childPosition++;
+                    }
+                }
+            }
+
         }
 
         private List<MenuItem> FilterMenuForUser(IEnumerable<MenuItem> items, ICollection<string> claims)
@@ -448,7 +559,6 @@ namespace eFormAPI.Web.Services
                             {
                                 newList.Add(menuItem);
                             }
-
                             break;
                         case "Plugins Settings":
                             if (_userService.IsAdmin())
@@ -462,7 +572,12 @@ namespace eFormAPI.Web.Services
                             {
                                 newList.Add(menuItem);
                             }
-
+                            break;
+                        case "Email Recipients":
+                            if (claims.Contains(AuthConsts.EformClaims.EmailRecipientsClaims.Read))
+                            {
+                                newList.Add(menuItem);
+                            }
                             break;
                         case "Security":
                             break;
@@ -472,21 +587,6 @@ namespace eFormAPI.Web.Services
                             newList.Add(menuItem);
                             break;
                     }
-
-                    //var menuItemPermissionsClaim = _dbContext.MenuTemplatePermissions
-                    //    .Include(x => x.Permission)
-                    //    .Where(x => x.MenuTemplateId == menuItem.MenuTemplateId)
-                    //    .Select(x => x.Permission.ClaimName)
-                    //    .ToList();
-
-                    //foreach (var permission in menuItemPermissionsClaim)
-                    //{
-                    //    if (claims.Contains(permission))
-                    //    {
-                    //        newList.Add(menuItem);
-                    //        break;
-                    //    }
-                    //}
                 }
             }
 

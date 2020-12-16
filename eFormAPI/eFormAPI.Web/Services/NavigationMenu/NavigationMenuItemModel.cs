@@ -24,12 +24,14 @@ SOFTWARE.
 
 namespace eFormAPI.Web.Services.NavigationMenu
 {
-    using eFormAPI.Web.Infrastructure.Database.Entities.Menu;
+    using Microting.eFormApi.BasePn.Infrastructure.Models.Application.NavigationMenu;
     using System.Collections.Generic;
 
     public class NavigationMenuItemModel
     {
         public int Id { get; set; }
+        public string E2EId { get; set;}
+        public string Name { get; set; }
         public string Link { get; set; }
         public MenuItemTypeEnum Type { get; set; }
         public int? RelatedTemplateItemId { get; set; }

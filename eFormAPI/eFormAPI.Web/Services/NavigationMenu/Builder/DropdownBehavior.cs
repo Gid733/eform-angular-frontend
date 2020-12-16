@@ -26,6 +26,7 @@ namespace eFormAPI.Web.Services.NavigationMenu.Builder
 {
     using eFormAPI.Web.Infrastructure.Database;
     using eFormAPI.Web.Infrastructure.Database.Entities.Menu;
+    using Microting.eFormApi.BasePn.Infrastructure.Models.Application.NavigationMenu;
 
     public class DropdownBehavior : AbstractBehavior
     {
@@ -39,6 +40,7 @@ namespace eFormAPI.Web.Services.NavigationMenu.Builder
 
         public override void Setup(MenuItem menuItem)
         {
+            menuItem.Name = "Dropdown";
             menuItem.MenuTemplateId = null; // because menuitem is dropdown
             menuItem.ParentId = null; // null is always
 
@@ -47,6 +49,18 @@ namespace eFormAPI.Web.Services.NavigationMenu.Builder
 
             //Set translation for menu item
             SetTranslations(menuItem.Id);
+
+            foreach (var securityGroupId in MenuItemModel.SecurityGroupsIds)
+            {
+                var menuItemSecurityGroup = new MenuItemSecurityGroup()
+                {
+                    SecurityGroupId = securityGroupId,
+                    MenuItemId = menuItem.Id,
+                };
+
+                _dbContext.MenuItemSecurityGroups.Add(menuItemSecurityGroup);
+                _dbContext.SaveChanges();
+            }
 
             for (int i = 0; i < MenuItemModel.Children.Count; i++)
             {

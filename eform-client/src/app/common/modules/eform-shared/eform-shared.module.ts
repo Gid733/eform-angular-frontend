@@ -8,12 +8,11 @@ import {
   DateFormatterComponent,
   EformCollapseToggleComponent,
   EformPageSizeComponent,
-  EformPageSubheaderComponent,
   EformPaginationComponent,
   EformTreeViewPickerComponent,
   StatusBarComponent,
 } from './components';
-import {AuthImagePipe} from 'src/app/common/pipes';
+import {AuthImagePipe, AuthAudioPipe, SafeHtmlPipe} from 'src/app/common/pipes';
 import {TreeModule} from '@circlon/angular-tree-component';
 import {FontAwesomeModule} from '@fortawesome/angular-fontawesome';
 import {WavesModule} from 'angular-bootstrap-md';
@@ -29,17 +28,17 @@ import {WavesModule} from 'angular-bootstrap-md';
     WavesModule,
   ],
   declarations: [
-    EformPageSubheaderComponent,
     EformPaginationComponent,
     EformPageSizeComponent,
     StatusBarComponent,
     DateFormatterComponent,
     AuthImagePipe,
+    AuthAudioPipe,
+    SafeHtmlPipe,
     EformTreeViewPickerComponent,
     EformCollapseToggleComponent,
   ],
   exports: [
-    EformPageSubheaderComponent,
     EformPaginationComponent,
     EformPageSizeComponent,
     StatusBarComponent,
@@ -47,6 +46,8 @@ import {WavesModule} from 'angular-bootstrap-md';
     EformTreeViewPickerComponent,
     AuthImagePipe,
     EformCollapseToggleComponent,
+    AuthAudioPipe,
+    SafeHtmlPipe
   ],
 })
 export class EformSharedModule {}

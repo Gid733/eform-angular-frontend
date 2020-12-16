@@ -38,7 +38,6 @@ describe('Delete folder', function () {
 
     // Delete
     const rowNumParentsBeforeDelete = foldersPage.rowNumParents;
-    console.log(rowNumParentsBeforeDelete);
     $('#folderTreeName').waitForDisplayed({timeout: 20000});
     $$('#folderTreeName')[rowNumParentsBeforeDelete - 1].click();
     const lastFolder = foldersPage.getFolderFromTree(rowNumParentsBeforeDelete);
@@ -52,5 +51,17 @@ describe('Delete folder', function () {
     const rowNumParentsAfterCancelDelete = foldersPage.rowNumParents;
     console.log(rowNumParentsAfterCancelDelete);
     expect(rowNumParentsBeforeDelete).equal(rowNumParentsAfterCancelDelete);
+  });
+  it('Should delete folder', function () {
+    // Create
+    myEformsPage.Navbar.goToFolderPage();
+    $('#folderTreeName').waitForDisplayed({timeout: 20000});
+    $$('#folderTreeName')[0].click();
+    const lastFolder = foldersPage.getFolder(1);
+    lastFolder.deleteBtn.waitForDisplayed({timeout: 5000});
+    lastFolder.deleteBtn.click();
+    $('#spinner-animation').waitForDisplayed({timeout: 90000, reverse: true});
+    foldersPage.saveDeleteBtn.click();
+    $('#spinner-animation').waitForDisplayed({timeout: 90000, reverse: true});
   });
 });

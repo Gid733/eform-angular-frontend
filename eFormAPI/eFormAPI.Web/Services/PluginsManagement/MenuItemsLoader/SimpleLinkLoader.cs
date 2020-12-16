@@ -27,6 +27,7 @@ namespace eFormAPI.Web.Services.PluginsManagement.MenuItemsLoader
     using eFormAPI.Web.Infrastructure.Database;
     using eFormAPI.Web.Infrastructure.Database.Entities.Menu;
     using eFormAPI.Web.Infrastructure.Database.Entities.Permissions;
+    using Microting.eFormApi.BasePn.Infrastructure.Models.Application.NavigationMenu;
     using System.Linq;
 
     public class SimpleLinkLoader : AbstractLoader
@@ -43,6 +44,7 @@ namespace eFormAPI.Web.Services.PluginsManagement.MenuItemsLoader
         {
             var menuTemplate = new MenuTemplate()
             {
+                Name = MenuItem.MenuTemplate.Name,
                 E2EId = MenuItem.MenuTemplate.E2EId,
                 DefaultLink = MenuItem.MenuTemplate.DefaultLink,
                 EformPluginId = _dbContext.EformPlugins.Single(x => x.PluginId == pluginId).Id
@@ -109,9 +111,13 @@ namespace eFormAPI.Web.Services.PluginsManagement.MenuItemsLoader
 
             var newMenuItem = new MenuItem()
             {
+                E2EId = MenuItem.E2EId,
+                Name = MenuItem.Name,
                 Link = MenuItem.Link,
                 Type = MenuItem.Type,
-                Position = MenuItem.Position,
+                Position = parentId != null 
+                    ? MenuItem.Position 
+                    : _dbContext.MenuItems.Where(x => x.ParentId == null).Max(x => x.Position) + MenuItem.Position + 1,
                 MenuTemplateId = menuTemplate.Id,
                 ParentId = parentId,
             };

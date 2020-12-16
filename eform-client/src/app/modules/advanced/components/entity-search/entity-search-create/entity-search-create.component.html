@@ -1,27 +1,38 @@
-<eform-page-subheader [title]="'Create searchable list' | translate">
+<subheader-pn [title]="'Create searchable list' | translate">
 
   <div class="p-3">
     <button mdbBtn id="entitySearchCreateSaveBtn" class="btn-success btn-small-height" (click)="createEntitySearchableGroup()">{{'Create' | translate}}</button>
     <button mdbBtn id="entitySearchCreateCancelBtn" class="btn-accent text-black-50 btn-small-height" (click)="goBack()">{{'Cancel' | translate}}</button>
   </div>
-</eform-page-subheader>
+</subheader-pn>
 <br>
 <div class="container-fluid">
   <div class="row">
     <div  class="col-md-12 col-xs-12" role="main">
       <mdb-card>
         <mdb-card-body>
-              <div class="row">
-                <div class="col-md-12">
-                  <div class="md-form">
-                    <input mdbInput
-                            required
-                           [(ngModel)]="advEntitySearchableGroupCreateModel.name"
-                           id="createName" type="text" class="form-control">
-                    <label for="createName">{{'Name' | translate}}</label>
-                  </div>
-                </div>
+          <div class="row">
+            <div class="col-md-12">
+              <div class="md-form">
+                <input mdbInput
+                        required
+                       [(ngModel)]="advEntitySearchableGroupCreateModel.name"
+                       id="createName" type="text" class="form-control">
+                <label for="createName">{{'Name' | translate}}</label>
               </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12">
+              <div class="md-form">
+                <input mdbInput
+                        required
+                       [(ngModel)]="advEntitySearchableGroupCreateModel.description"
+                       id="createDescription" type="text" class="form-control">
+                <label for="createName">{{'Description' | translate}}</label>
+              </div>
+            </div>
+          </div>
 
               <div class="row d-flex">
                 <div class="mr-auto">

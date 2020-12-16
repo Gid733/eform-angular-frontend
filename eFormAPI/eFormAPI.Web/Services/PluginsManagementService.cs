@@ -21,6 +21,7 @@ using eFormAPI.Web.Services.PluginsManagement.MenuItemsLoader;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microting.eFormApi.BasePn.Infrastructure.Models.API;
+using Microting.eFormApi.BasePn.Infrastructure.Models.Application.NavigationMenu;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -129,7 +130,7 @@ namespace eFormAPI.Web.Services
             }
         }
 
-        private async Task<OperationResult> RemoveNavigationMenuOfPlugin(string pluginId)
+        public async Task<OperationResult> RemoveNavigationMenuOfPlugin(string pluginId)
         {
             // check exists eformPlugin
             var eformPlugin = await _dbContext.EformPlugins
@@ -196,7 +197,7 @@ namespace eFormAPI.Web.Services
             return new OperationResult(true);
         }
 
-        private async Task<OperationResult> LoadNavigationMenuOfPlugin(string pluginId)
+        public async Task<OperationResult> LoadNavigationMenuDuringStartProgram(string pluginId)
         {
             var eformPlugin = await _dbContext.EformPlugins
                    .FirstOrDefaultAsync(x => x.PluginId == pluginId);
@@ -206,6 +207,148 @@ namespace eFormAPI.Web.Services
                 return new OperationDataResult<InstalledPluginsModel>(false,
                     _localizationService.GetString("PluginNotFound"));
             }
+
+            var plugin = Program.EnabledPlugins.FirstOrDefault(x => x.PluginId == pluginId);
+
+            if (plugin == null)
+            {
+                return new OperationDataResult<InstalledPluginsModel>(false,
+                _localizationService.GetString("PluginNotFound"));
+            }
+
+            var pluginMenu = plugin.GetNavigationMenu(_serviceProvider);
+
+            // get all menu templates from plugin 
+            var menuTemplatesFromPlugin = new List<PluginMenuTemplateModel>();
+
+            foreach (var pluginMenuItem in pluginMenu)
+            {
+                if(pluginMenuItem.Type == MenuItemTypeEnum.Link)
+                {
+                    menuTemplatesFromPlugin.Add(pluginMenuItem.MenuTemplate);
+                }
+                
+                if(pluginMenuItem.Type == MenuItemTypeEnum.Dropdown)
+                {
+                    foreach(var childMenuItem in pluginMenuItem.ChildItems)
+                    {
+                        if (childMenuItem.Type == MenuItemTypeEnum.Link)
+                        {
+                            menuTemplatesFromPlugin.Add(childMenuItem.MenuTemplate);
+                        }
+                    }
+                }
+            }
+
+            var menuTemplatesFromDatabase = _dbContext.MenuTemplates
+                .Where(x => x.EformPluginId == eformPlugin.Id)
+                .ToList();
+
+            if(menuTemplatesFromDatabase.Any())
+            {
+               if(menuTemplatesFromPlugin.Count() != menuTemplatesFromDatabase.Count())
+               {
+                    foreach(var menuTemplateFromPlugin in menuTemplatesFromPlugin)
+                    {
+                        // get all templates name that in database
+                        var menuTemplatesFromDatabaseNames = menuTemplatesFromDatabase.Select(x => x.E2EId).ToList();
+
+                        // if template from plugin is not contains in database
+                        if (!menuTemplatesFromDatabaseNames.Contains(menuTemplateFromPlugin.E2EId))
+                        {
+                            // add to database menu templates from plugin
+                            var menuTemplateToDatabase = new MenuTemplate()
+                            {
+                                Name = menuTemplateFromPlugin.Name,
+                                E2EId = menuTemplateFromPlugin.E2EId,
+                                DefaultLink = menuTemplateFromPlugin.DefaultLink,
+                                EformPluginId = eformPlugin.Id,
+                            };
+
+                            _dbContext.MenuTemplates.Add(menuTemplateToDatabase);
+                            _dbContext.SaveChanges();
+
+                            foreach (var translation in menuTemplateFromPlugin.Translations)
+                            {
+                                var menuTemplateTranslation = new MenuTemplateTranslation
+                                {
+                                    Language = translation.Language,
+                                    LocaleName = translation.LocaleName,
+                                    Name = translation.Name,
+                                    MenuTemplateId = menuTemplateToDatabase.Id,
+                                };
+
+                                _dbContext.MenuTemplateTranslations.Add(menuTemplateTranslation);
+                                _dbContext.SaveChanges();
+                            }
+
+                            if (menuTemplateFromPlugin.Permissions.Any())
+                            {
+                                foreach (var itemPermission in menuTemplateFromPlugin.Permissions)
+                                {
+                                    PermissionType newPermissionType = null;
+
+                                    var permissionType = _dbContext.PermissionTypes.FirstOrDefault(x => x.Name == itemPermission.PermissionTypeName);
+
+                                    if (permissionType == null)
+                                    {
+                                        newPermissionType = new PermissionType
+                                        {
+                                            Name = itemPermission.PermissionTypeName,
+                                        };
+
+                                        _dbContext.PermissionTypes.Add(newPermissionType);
+                                        _dbContext.SaveChanges();
+                                    }
+
+                                    var permission = new Permission
+                                    {
+                                        PermissionName = itemPermission.PermissionName,
+                                        ClaimName = itemPermission.ClaimName,
+                                        PermissionTypeId = newPermissionType == null
+                                            ? permissionType.Id
+                                            : newPermissionType.Id
+                                    };
+
+                                    _dbContext.Permissions.Add(permission);
+                                    _dbContext.SaveChanges();
+
+                                    var menuTemplatePermission = new MenuTemplatePermission
+                                    {
+                                        MenuTemplateId = menuTemplateToDatabase.Id,
+                                        PermissionId = permission.Id,
+                                    };
+
+                                    _dbContext.MenuTemplatePermissions.Add(menuTemplatePermission);
+                                    _dbContext.SaveChanges();
+                                }
+                            }
+                        }
+                    }
+               }
+            }
+            else
+            {
+                // Load to database all navigation menu from plugin by id
+                var pluginMenuItemsLoader = new PluginMenuItemsLoader(_dbContext, pluginId);
+
+                pluginMenuItemsLoader.Load(pluginMenu);
+            }
+
+            return new OperationResult(true);
+        }
+
+        public async Task<OperationResult> LoadNavigationMenuOfPlugin(string pluginId)
+        {
+            var eformPlugin = await _dbContext.EformPlugins
+                   .FirstOrDefaultAsync(x => x.PluginId == pluginId);
+
+            if (eformPlugin == null)
+            {
+                return new OperationDataResult<InstalledPluginsModel>(false,
+                    _localizationService.GetString("PluginNotFound"));
+            }
+
             var plugin = Program.DisabledPlugins.FirstOrDefault(x => x.PluginId == pluginId);
            
             if (plugin == null)
@@ -214,175 +357,7 @@ namespace eFormAPI.Web.Services
                 _localizationService.GetString("PluginNotFound"));
             }
 
-
-            //var pluginMenu = plugin.GetNavigationMenu(_serviceProvider);
-
-            var pluginMenu = new List<PluginMenuItemModel>()
-                {
-                    new PluginMenuItemModel
-                    {
-                        Link = "items-planning-pn",
-                        Type = MenuItemTypeEnum.Dropdown,
-                        Position = 0,
-                        Translations = new List<PluginMenuTranslationModel>()
-                        {
-                            new PluginMenuTranslationModel
-                            {
-                                 LocaleName = LocaleNames.English,
-                                 Name = "Items Planning",
-                                 Language = LanguageNames.English,
-                            },
-                            new PluginMenuTranslationModel
-                            {
-                                 LocaleName = LocaleNames.German,
-                                 Name = "Artikelplanung",
-                                 Language = LanguageNames.German,
-                            },
-                            new PluginMenuTranslationModel
-                            {
-                                 LocaleName = LocaleNames.Danish,
-                                 Name = "Elementer planlægning",
-                                 Language = LanguageNames.Danish,
-                            }
-                        },
-                        ChildItems = new List<PluginMenuItemModel>()
-                        {
-                            new PluginMenuItemModel
-                            {
-                            Link = "/plugins/items-planning-pn/plannings",
-                            Type = MenuItemTypeEnum.Link,
-                            Position = 0,
-                            MenuTemplate = new PluginMenuTemplateModel()
-                        {
-                            E2EId = "items-planning-pn-plannings",
-                            DefaultLink = "/plugins/items-planning-pn/plannings",
-                            Permissions = new List<PluginPermissionModel>()
-                            {
-                                new PluginPermissionModel
-                                {
-                                    ClaimName = "itemsPlanningPluginAccess",
-                                    PermissionName = "Access ItemsPlanning Plugin",
-                                    PermissionTypeName = "Plannings",
-                                },
-                                new PluginPermissionModel
-                                {
-                                     ClaimName = "planningsCreate",
-                                    PermissionName = "Create Notification Rules",
-                                    PermissionTypeName = "Plannings",
-                                },
-                                new PluginPermissionModel
-                                {
-                                     ClaimName = "planningEdit",
-                                    PermissionName = "Edit Planning",
-                                    PermissionTypeName = "Plannings",
-                                },
-                                new PluginPermissionModel
-                                {
-                                    ClaimName = "planningsGet",
-                                    PermissionName = "Obtain plannings",
-                                    PermissionTypeName = "Plannings",
-                                }
-                            },
-                            Translations = new List<PluginMenuTranslationModel>
-                            {
-                                new PluginMenuTranslationModel
-                                {
-                                    LocaleName = LocaleNames.English,
-                                    Name = "Planning",
-                                    Language = LanguageNames.English,
-                                },
-                                new PluginMenuTranslationModel
-                                {
-                                    LocaleName = LocaleNames.German,
-                                    Name = "Planung",
-                                    Language = LanguageNames.German,
-                                },
-                                new PluginMenuTranslationModel
-                                {
-                                    LocaleName = LocaleNames.Danish,
-                                    Name = "Planlægning",
-                                    Language = LanguageNames.Danish,
-                                },
-                            }
-                            },
-                            Translations = new List<PluginMenuTranslationModel>
-                            {
-                                new PluginMenuTranslationModel
-                                {
-                                    LocaleName = LocaleNames.English,
-                                    Name = "Planning",
-                                    Language = LanguageNames.English,
-                                },
-                                new PluginMenuTranslationModel
-                                {
-                                    LocaleName = LocaleNames.German,
-                                    Name = "German",
-                                    Language = LanguageNames.German,
-                                },
-                                new PluginMenuTranslationModel
-                                {
-                                    LocaleName = LocaleNames.Danish,
-                                    Name = "Dania",
-                                    Language = LanguageNames.Danish,
-                                },
-                            }
-                            },
-                            new PluginMenuItemModel
-                            {
-                            Link = "/plugins/items-planning-pn/reports",
-                            Type = MenuItemTypeEnum.Link,
-                            Position = 1,
-                            MenuTemplate = new PluginMenuTemplateModel()
-                            {
-                            E2EId = "items-planning-pn-reports",
-                            DefaultLink = "/plugins/items-planning-pn/reports",
-                            Translations = new List<PluginMenuTranslationModel>
-                            {
-                                new PluginMenuTranslationModel
-                                {
-                                    LocaleName = LocaleNames.English,
-                                    Name = "Reports",
-                                    Language = LanguageNames.English,
-                                },
-                                new PluginMenuTranslationModel
-                                {
-                                    LocaleName = LocaleNames.German,
-                                    Name = "Berichte",
-                                    Language = LanguageNames.German,
-                                },
-                                new PluginMenuTranslationModel
-                                {
-                                    LocaleName = LocaleNames.Danish,
-                                    Name = "Rapporter",
-                                    Language = LanguageNames.Danish,
-                                },
-                            }
-                            },
-                            Translations = new List<PluginMenuTranslationModel>
-                            {
-                                new PluginMenuTranslationModel
-                                {
-                                    LocaleName = LocaleNames.English,
-                                    Name = "Reports",
-                                    Language = LanguageNames.English,
-                                },
-                                new PluginMenuTranslationModel
-                                {
-                                    LocaleName = LocaleNames.German,
-                                    Name = "German",
-                                    Language = LanguageNames.German,
-                                },
-                                new PluginMenuTranslationModel
-                                {
-                                    LocaleName = LocaleNames.Danish,
-                                    Name = "Dania",
-                                    Language = LanguageNames.Danish,
-                                },
-                            }
-                            }
-                        }
-                    }
-                };
+            var pluginMenu = plugin.GetNavigationMenu(_serviceProvider);
 
             // Load to database all navigation menu from plugin by id
             var pluginMenuItemsLoader = new PluginMenuItemsLoader(_dbContext, pluginId);
@@ -390,129 +365,8 @@ namespace eFormAPI.Web.Services
             pluginMenuItemsLoader.Load(pluginMenu);
 
             return new OperationResult(true);
-
         }
 
-        //private void AddToDatabase(List<PluginMenuItemModel> menuItems, int? parentId, string pluginId)
-        //{
-        
-        //        foreach (var menuItem in menuItems)
-        //        {
-        //            if (menuItem.Type == MenuItemTypeEnum.Link)
-        //            {
-        //                var menuTemplate = new MenuTemplate()
-        //                {
-        //                    E2EId = menuItem.MenuTemplate.E2EId,
-        //                    DefaultLink = menuItem.MenuTemplate.DefaultLink,
-        //                    EformPluginId = _dbContext.EformPlugins.Single(x => x.PluginId == pluginId).Id
-        //                };
-
-        //                _dbContext.MenuTemplates.Add(menuTemplate);
-        //                _dbContext.SaveChanges();
-
-        //                foreach (var translation in menuItem.MenuTemplate.Translations)
-        //                {
-        //                    var menuTemplateTranslation = new MenuTemplateTranslation
-        //                    {
-        //                        Language = translation.Language,
-        //                        LocaleName = translation.LocaleName,
-        //                        Name = translation.Name,
-        //                        MenuTemplateId = menuTemplate.Id,
-        //                    };
-
-        //                    _dbContext.MenuTemplateTranslations.Add(menuTemplateTranslation);
-        //                    _dbContext.SaveChanges();
-        //                }
-
-        //                if (menuItem.MenuTemplate.Permissions.Any())
-        //                {
-        //                    foreach (var itemPermission in menuItem.MenuTemplate.Permissions)
-        //                    {
-        //                        var permission = new Permission
-        //                        {
-        //                            PermissionName = itemPermission.PermissionName,
-        //                            ClaimName = itemPermission.ClaimName,
-        //                            PermissionTypeId = 1,
-        //                        };
-
-        //                        _dbContext.Permissions.Add(permission);
-        //                        _dbContext.SaveChanges();
-
-        //                        var menuTemplatePermission = new MenuTemplatePermission
-        //                        {
-        //                            MenuTemplateId = menuTemplate.Id,
-        //                            PermissionId = permission.Id,
-        //                        };
-
-        //                        _dbContext.MenuTemplatePermissions.Add(menuTemplatePermission);
-        //                        _dbContext.SaveChanges();
-        //                    }
-        //                }
-
-        //                var newMenuItem = new MenuItem()
-        //                {
-        //                    Link = menuItem.Link,
-        //                    Type = menuItem.Type,
-        //                    Position = menuItem.Position,
-        //                    MenuTemplateId = menuTemplate.Id,
-        //                    ParentId = parentId,
-        //                };
-
-        //                _dbContext.MenuItems.Add(newMenuItem);
-        //                _dbContext.SaveChanges();
-
-        //                foreach (var menuItemTranslation in menuItem.Translations)
-        //                {
-        //                    var translation = new MenuItemTranslation
-        //                    {
-        //                        Language = menuItemTranslation.Language,
-        //                        LocaleName = menuItemTranslation.LocaleName,
-        //                        Name = menuItemTranslation.Name,
-        //                        MenuItemId = newMenuItem.Id,
-        //                    };
-
-        //                    _dbContext.MenuItemTranslations.Add(translation);
-        //                    _dbContext.SaveChanges();
-        //                }
-        //            }
-        //            else
-        //            {
-        //                var newMenuItem = new MenuItem()
-        //                {
-        //                    Link = menuItem.Link,
-        //                    Type = menuItem.Type,
-        //                    Position = menuItem.ChildItems.Any() ?
-        //                        _dbContext.MenuItems.Where(x => x.ParentId == null).Max(x => x.Position) + menuItem.Position + 1
-        //                        : menuItem.Position,
-        //                    MenuTemplateId = null,
-        //                    ParentId = null
-        //                };
-
-        //                _dbContext.MenuItems.Add(newMenuItem);
-        //                _dbContext.SaveChanges();
-
-        //                foreach (var menuItemTranslation in menuItem.Translations)
-        //                {
-        //                    var translation = new MenuItemTranslation
-        //                    {
-        //                        Language = menuItemTranslation.Language,
-        //                        LocaleName = menuItemTranslation.LocaleName,
-        //                        Name = menuItemTranslation.Name,
-        //                        MenuItemId = newMenuItem.Id,
-        //                    };
-
-        //                    _dbContext.MenuItemTranslations.Add(translation);
-        //                    _dbContext.SaveChanges();
-        //                }
-
-        //                if (menuItem.ChildItems.Any())
-        //                {
-        //                    AddToDatabase(menuItem.ChildItems, newMenuItem.Id, pluginId);
-        //                }
-        //            }
-        //        }
-        //    }
-           
         public async Task<OperationDataResult<PluginsStoreModel>> GetMarketplacePlugins(MarketplacePluginsRequestModel model)
         {
             try

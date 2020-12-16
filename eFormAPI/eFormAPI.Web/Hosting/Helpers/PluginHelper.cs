@@ -332,6 +332,7 @@ namespace eFormAPI.Web.Hosting.Helpers
                             typeof(SwiftObjectGetResponse),
                             typeof(SwiftClient)
                         });
+
                     var types = loader
                         .LoadDefaultAssembly()
                         .GetTypes();
@@ -341,7 +342,7 @@ namespace eFormAPI.Web.Hosting.Helpers
                     {
                         Console.ForegroundColor = ConsoleColor.Green;
                         Console.WriteLine("[INF] Found plugin : " + type.Name);
-                        var plugin = (IEformPlugin) Activator.CreateInstance(type);
+                        var plugin = (IEformPlugin)Activator.CreateInstance(type);
                         plugins.Add(plugin);
                     }
                 }

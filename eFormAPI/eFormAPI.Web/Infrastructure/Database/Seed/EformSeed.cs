@@ -39,9 +39,10 @@ namespace eFormAPI.Web.Infrastructure.Database.Seed
                 .AddMenuTemplateDanishTranslations()
                 .AddMenuTemplateGermanTranslations()
                 .AddMenuTemplatePermissions()
-                .AddDefaultMenuEnglishTranslations()
-                .AddDefaultMenuDanishTranslations()
-                .AddDefaultMenuGermanTranslations()
+                .AddDefaultMenuTranslations()
+                //.AddDefaultMenuEnglishTranslations()
+                //.AddDefaultMenuDanishTranslations()
+                //.AddDefaultMenuGermanTranslations()
                 .AddDefaultMenu()
                 .AddConfigurationDefault();
 
