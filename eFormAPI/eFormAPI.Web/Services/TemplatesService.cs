@@ -40,8 +40,10 @@ using Microting.eFormApi.BasePn.Infrastructure.Models.Application;
 using Microting.eFormApi.BasePn.Infrastructure.Models.API;
 using Microsoft.Extensions.Options;
 using Microting.eForm.Dto;
-using Microting.eForm.Infrastructure.Models;
+using Microting.eForm.Infrastructure;
+using Microting.eForm.Infrastructure.Data.Entities;
 using Microting.eFormApi.BasePn.Infrastructure.Helpers;
+using Field = Microting.eForm.Infrastructure.Models.Field;
 
 namespace eFormAPI.Web.Services
 {
@@ -83,35 +85,31 @@ namespace eFormAPI.Web.Services
 
         public async Task<OperationDataResult<TemplateListModel>> Index(TemplateRequestModel templateRequestModel)
         {
-            var value = _httpContextAccessor?.HttpContext.User?.FindFirstValue(ClaimTypes.NameIdentifier);
-            var timeZone = _dbContext.Users.Single(x => x.Id == int.Parse(value)).TimeZone;
-            if (string.IsNullOrEmpty(timeZone))
-            {
-                timeZone = "Europe/Copenhagen";
-            }
-
-            TimeZoneInfo timeZoneInfo;
-
-            try
-            {
-                timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(timeZone);
-            }
-            catch
-            {
-                timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById("E. Europe Standard Time");
-            }
+            var timeZoneInfo = await _userService.GetCurrentUserTimeZoneInfo();
             Log.LogEvent("TemplateService.Index: called");
             try
             {
                 Log.LogEvent("TemplateService.Index: try section");
                 var core = await _coreHelper.GetCore();
-                List<Template_Dto> templatesDto = await core.TemplateItemReadAll(false,
+                await using MicrotingDbContext microtingDbContext = core.DbContextHelper.GetDbContext();
+                var locale = await _userService.GetCurrentUserLocale();
+                var language = await microtingDbContext.Languages.SingleOrDefaultAsync(x => x.LanguageCode.ToLower() == locale.ToLower());
+                if (language == null)
+                {
+                    language = await microtingDbContext.Languages.SingleOrDefaultAsync(x => x.Name == "Danish");
+                    if (language != null)
+                    {
+                        language.LanguageCode = "da";
+                        await language.Update(microtingDbContext);
+                    }
+                }
+                var templatesDto = await core.TemplateItemReadAll(false,
                     "",
                     templateRequestModel.NameFilter,
                     templateRequestModel.IsSortDsc,
                     templateRequestModel.Sort,
                     templateRequestModel.TagIds,
-                    timeZoneInfo);
+                    timeZoneInfo, language);
 
                 var model = new TemplateListModel
                 {
@@ -123,7 +121,7 @@ namespace eFormAPI.Web.Services
                 var eformIds = new List<int>();
                 //List<string> plugins = await _dbContext.EformPlugins.Select(x => x.PluginId).ToListAsync();
 
-                if (!_userService.IsInRole(EformRole.Admin))
+                if (!_userService.IsAdmin())
                 {
                     var isEformsInGroups = await _dbContext.SecurityGroupUsers
                         .Where(x => x.EformUserId == _userService.UserId)
@@ -208,7 +206,11 @@ namespace eFormAPI.Web.Services
             try
             {
                 var core = await _coreHelper.GetCore();
-                var templateDto = await core.TemplateItemRead(id);
+
+                var locale = await _userService.GetCurrentUserLocale();
+
+                Language language = core.DbContextHelper.GetDbContext().Languages.Single(x => x.LanguageCode.ToLower() == locale.ToLower());
+                var templateDto = await core.TemplateItemRead(id, language);
                 return new OperationDataResult<Template_Dto>(true, templateDto);
             }
             catch (Exception ex)
@@ -242,7 +244,7 @@ namespace eFormAPI.Web.Services
                     _localizationService.GetString("CheckSettingsBeforeProceed"));
             }
         }
-        
+
         public async Task<OperationResult> Create(EFormXmlModel eFormXmlModel)
         {
             try
@@ -292,6 +294,9 @@ namespace eFormAPI.Web.Services
             {
                 var result = new ExcelParseResult();
                 var core = await _coreHelper.GetCore();
+                await using MicrotingDbContext dbContext = core.DbContextHelper.GetDbContext();
+                var locale = await _userService.GetCurrentUserLocale();
+                Language language = dbContext.Languages.Single(x => x.LanguageCode.ToLower() == locale.ToLower());
 
                 var timeZone = await _userService.GetCurrentUserTimeZoneInfo();
                 var templatesDto = await core.TemplateItemReadAll(
@@ -301,7 +306,7 @@ namespace eFormAPI.Web.Services
                     false,
                     "",
                     new List<int>(),
-                    timeZone);
+                    timeZone, language);
 
                 // Read file
                 var fileResult = _eformExcelImportService.EformImport(excelStream);
@@ -396,7 +401,16 @@ namespace eFormAPI.Web.Services
                             throw new Exception(_localizationService.GetString("eFormCouldNotBeCreated"));
 
                         // Set tags to eform
-                        await core.TemplateCreate(newTemplate);
+                        int eFormId = await core.TemplateCreate(newTemplate);
+                        var eForm = await dbContext.CheckLists.SingleAsync(x => x.Id == eFormId);
+
+                        eForm.ReportH1 = importExcelModel.ReportH1;
+                        eForm.ReportH2 = importExcelModel.ReportH2;
+                        eForm.ReportH3 = importExcelModel.ReportH3;
+                        eForm.ReportH4 = importExcelModel.ReportH4;
+
+                        await eForm.Update(dbContext);
+
                         if (tagIds.Any())
                         {
                             await core.TemplateSetTags(newTemplate.Id, tagIds);
@@ -417,34 +431,31 @@ namespace eFormAPI.Web.Services
 
         public async Task<OperationResult> Delete(int id)
         {
-            var core = await _coreHelper.GetCore();
-            var templateDto = await core.TemplateItemRead(id);
-            foreach (var siteUId in templateDto.DeployedSites)
+            try
             {
-                await core.CaseDelete(templateDto.Id, siteUId.SiteUId);
-            }
+                var core = await _coreHelper.GetCore();
 
-            var result = await core.TemplateDelete(id);
+                await using var dbContext = core.DbContextHelper.GetDbContext();
+                List<CheckListSite> checkListSites = await dbContext.CheckListSites.Where(x => x.CheckListId == id).ToListAsync();
+                foreach (var checkListSite in checkListSites)
+                {
+                    await core.CaseDelete(checkListSite.MicrotingUid);
+                }
 
-            if (result)
-            {
+                CheckList checkList = await dbContext.CheckLists.SingleAsync(x => x.Id == id);
+                await checkList.Delete(dbContext);
+
                 var eformReport = _dbContext.EformReports
                     .FirstOrDefault(x => x.TemplateId == id);
 
                 if (eformReport != null)
                 {
                     _dbContext.EformReports.Remove(eformReport);
-                    _dbContext.SaveChanges();
+                    await _dbContext.SaveChangesAsync();
                 }
-            }
 
-            try
-            {
-                return result
-                    ? new OperationResult(true,
-                        _localizationService.GetStringWithFormat("eFormParamDeletedSuccessfully", templateDto.Label))
-                    : new OperationResult(false,
-                        _localizationService.GetStringWithFormat("eFormParamCouldNotBeDeleted", templateDto.Label));
+                return new OperationResult(true,
+                    _localizationService.GetStringWithFormat("eFormParamDeletedSuccessfully", id));
             }
             catch (Exception)
             {
@@ -455,7 +466,11 @@ namespace eFormAPI.Web.Services
         public async Task<OperationDataResult<DeployToModel>> DeployTo(int id)
         {
             var core = await _coreHelper.GetCore();
-            var templateDto = await core.TemplateItemRead(id);
+
+            await using MicrotingDbContext dbContext = core.DbContextHelper.GetDbContext();
+            var locale = await _userService.GetCurrentUserLocale();
+            Language language = dbContext.Languages.Single(x => x.LanguageCode.ToLower() == locale.ToLower());
+            var templateDto = await core.TemplateItemRead(id, language);
             var siteNamesDto = await core.Advanced_SiteItemReadAll();
 
             var deployToMode = new DeployToModel()
@@ -474,7 +489,11 @@ namespace eFormAPI.Web.Services
             var sitesToBeDeployedTo = new List<int>();
 
             var core = await _coreHelper.GetCore();
-            var templateDto = await core.TemplateItemRead(deployModel.Id);
+
+            await using MicrotingDbContext dbContext = core.DbContextHelper.GetDbContext();
+            var locale = await _userService.GetCurrentUserLocale();
+            Language language = dbContext.Languages.Single(x => x.LanguageCode.ToLower() == locale.ToLower());
+            var templateDto = await core.TemplateItemRead(deployModel.Id, language);
 
             foreach (var site in templateDto.DeployedSites)
             {
@@ -511,20 +530,23 @@ namespace eFormAPI.Web.Services
 
             if (sitesToBeDeployedTo.Any())
             {
-                var mainElement = await core.TemplateRead(deployModel.Id);
-                mainElement.Repeated = 0; 
-                // We set this right now hardcoded,
-                // this will let the eForm be deployed until end date or we actively retract it.
-                if (deployModel.FolderId != null)
+                foreach (int i in sitesToBeDeployedTo)
                 {
-                    using (var dbContext = core.dbContextHelper.GetDbContext())
+                    Site site = await dbContext.Sites.SingleAsync(x => x.MicrotingUid == i);
+                    language = await dbContext.Languages.SingleAsync(x => x.Id == site.LanguageId);
+                    var mainElement = await core.ReadeForm(deployModel.Id, language);
+                    mainElement.Repeated = 0;
+                    // We set this right now hardcoded,
+                    // this will let the eForm be deployed until end date or we actively retract it.
+                    if (deployModel.FolderId != null)
                     {
-                        mainElement.CheckListFolderName = dbContext.folders.Single(x => x.Id == deployModel.FolderId).MicrotingUid.ToString();
+                        mainElement.CheckListFolderName = dbContext.Folders.Single(x => x.Id == deployModel.FolderId).MicrotingUid.ToString();
                     }
+                    mainElement.EndDate = DateTime.Now.AddYears(10).ToUniversalTime();
+                    mainElement.StartDate = DateTime.Now.ToUniversalTime();
+                    await core.CaseCreate(mainElement, "", i, deployModel.FolderId);
+
                 }
-                mainElement.EndDate = DateTime.Now.AddYears(10).ToUniversalTime();
-                mainElement.StartDate = DateTime.Now.ToUniversalTime();
-                await core.CaseCreate(mainElement, "", sitesToBeDeployedTo, "", deployModel.FolderId);
             }
 
             foreach (var siteUId in sitesToBeRetractedFrom)
@@ -539,7 +561,11 @@ namespace eFormAPI.Web.Services
         public async Task<OperationDataResult<List<Field>>> GetFields(int id)
         {
             var core = await _coreHelper.GetCore();
-            var fields = core.Advanced_TemplateFieldReadAll(id).Result.Select(f => core.Advanced_FieldRead(f.Id).Result).ToList();
+
+            await using MicrotingDbContext dbContext = core.DbContextHelper.GetDbContext();
+            var locale = await _userService.GetCurrentUserLocale();
+            Language language = dbContext.Languages.Single(x => x.LanguageCode.ToLower() == locale.ToLower());
+            var fields = core.Advanced_TemplateFieldReadAll(id, language).Result.Select(f => core.Advanced_FieldRead(f.Id, language).Result).ToList();
 
             return new OperationDataResult<List<Field>>(true, fields);
         }

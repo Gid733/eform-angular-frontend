@@ -1,77 +1,78 @@
 import loginPage from '../../../Page objects/Login.page';
 import myEformsPage from '../../../Page objects/MyEforms.page';
-import foldersPage, {FoldersRowObject} from '../../../Page objects/Folders.page';
-import {generateRandmString} from '../../../Helpers/helper-functions';
-import {Guid} from 'guid-typescript';
+import foldersPage from '../../../Page objects/Folders.page';
+import { generateRandmString } from '../../../Helpers/helper-functions';
 
 const expect = require('chai').expect;
+let name = generateRandmString();
 
 describe('Folder page', function () {
   before(function () {
     loginPage.open('/');
     loginPage.login();
     myEformsPage.Navbar.goToFolderPage();
-    const name = Guid.create().toString();
-    const description = Guid.create().toString();
-    $('#newFolderBtn').waitForDisplayed({timeout: 10000});
+    const description = generateRandmString();
+    foldersPage.newFolderBtn.waitForDisplayed({ timeout: 10000 });
     foldersPage.createNewFolder(name, description);
   });
   it('Should change name', function () {
-    const newName = Guid.create().toString();
-    const rowNumParentsBeforeDelete = foldersPage.rowNumParents;
-    $('#folderTreeName').waitForDisplayed({timeout: 20000});
-    $$('#folderTreeName')[rowNumParentsBeforeDelete - 1].click();
-    const lastFolderBeforeEdit = foldersPage.getFolderFromTree(rowNumParentsBeforeDelete);
-    foldersPage.editFolderTree(lastFolderBeforeEdit, newName, null);
-    const lastFolderAfterEdit = foldersPage.getFolderFromTree(foldersPage.rowNumParents);
-    $('#newFolderBtn').waitForDisplayed({timeout: 20000});
-    expect(lastFolderAfterEdit.nameTree, 'Name has been changed incorrectly').equal(newName);
-    expect(lastFolderAfterEdit.descriptionTree,
-      'Description has been changed after changing only first name').equal(lastFolderBeforeEdit.descriptionTree);
+    const folderBeforeEdit = foldersPage.getFolderByName(name);
+    const descriptionBeforeEdit = folderBeforeEdit
+      .getDescription()
+      .find((x) => x.language === 'Danish').description;
+    name = generateRandmString();
+    folderBeforeEdit.editFolder(name);
+    const folderAfterEdit = foldersPage.getFolderByName(name);
+    expect(
+      folderAfterEdit.name,
+      'Name has been changed after changing only last name'
+    ).equal(name);
+    expect(
+      folderAfterEdit.getDescription().find((x) => x.language === 'Danish')
+        .description,
+      'Description has been changed incorrectly'
+    ).equal(descriptionBeforeEdit);
   });
   it('Should change description', function () {
-    const newDescription = Guid.create().toString();
-    $('#folderTreeName').waitForDisplayed({timeout: 20000});
-    const lastFolderBeforeEdit = foldersPage.getFolderFromTree(foldersPage.rowNumParents);
-    foldersPage.editFolderTree(lastFolderBeforeEdit, null, newDescription);
-    browser.pause(2000);
-    const lastFolderAfterEdit = foldersPage.getFolderFromTree(foldersPage.rowNumParents);
-    $('#newFolderBtn').waitForDisplayed({timeout: 20000});
-    expect(lastFolderAfterEdit.descriptionTree, 'Description has been changed incorrectly').equal(newDescription);
-    expect(lastFolderAfterEdit.nameTree,
-      'Name has been changed after changing only last name').equal(lastFolderBeforeEdit.nameTree);
+    const newDescription = generateRandmString();
+    $('#folderTreeName').waitForDisplayed({ timeout: 20000 });
+    const lastFolderBeforeEdit = foldersPage.getFolderByName(name);
+    lastFolderBeforeEdit.editFolder(null, newDescription);
+    foldersPage.newFolderBtn.waitForDisplayed({ timeout: 20000 });
+    const folder = foldersPage.getFolderByName(name);
+    expect(
+      folder.name,
+      'Name has been changed after changing only last name'
+    ).equal(lastFolderBeforeEdit.name);
+    expect(
+      folder.getDescription().find((x) => x.language === 'Danish').description,
+      'Description has been changed incorrectly'
+    ).equal(newDescription);
   });
-  it('Should not change first name and last name if cancel was clicked', function () {
-    const newName = Guid.create().toString();
-    const newDescription = Guid.create().toString();
-    const rowNumBeforeEdit = foldersPage.rowNumParents;
-    const lastFolderPageBeforeEdit = foldersPage.getFolderFromTree(rowNumBeforeEdit);
-    lastFolderPageBeforeEdit.editTreeBtn.click();
-    $('#editNameInput').waitForDisplayed({timeout: 10000});
-    foldersPage.editNameInput.click();
-    foldersPage.editNameInput.clearValue();
-    foldersPage.editNameInput.setValue(newName);
-    foldersPage.editDescriptionInput.click();
-    foldersPage.editDescriptionInput.clearValue();
-    foldersPage.editDescriptionInput.setValue(newDescription);
-    foldersPage.cancelEditBtn.click();
-    $('#newFolderBtn').waitForDisplayed({timeout: 20000});
-    const rowNumAfterEdit = foldersPage.rowNumParents;
-    expect(rowNumBeforeEdit).equal(rowNumAfterEdit);
-    const lastFolderPageAfterEdit = foldersPage.getFolderFromTree(rowNumAfterEdit);
-    expect(lastFolderPageAfterEdit.nameTree, 'Name has been changed').equal(lastFolderPageAfterEdit.nameTree);
-    expect(lastFolderPageAfterEdit.descriptionTree, 'Description has been changed').equal(lastFolderPageAfterEdit.descriptionTree);
+  it('Should not change name and description if cancel was clicked', function () {
+    const folderTreeName = $('#folderTreeName');
+    folderTreeName.waitForDisplayed({ timeout: 20000 });
+    const newName = generateRandmString();
+    const newDescription = generateRandmString();
+    const lastFolderPageBeforeEdit = foldersPage.getFolderByName(name);
+    const descriptionBeforeEdit = lastFolderPageBeforeEdit
+      .getDescription()
+      .find((x) => x.language === 'Danish').description;
+    lastFolderPageBeforeEdit.editFolder(newName, newDescription, true);
+    const lastFolderPageAfterEdit = foldersPage.getFolderByName(name);
+    expect(lastFolderPageAfterEdit.name, 'Name has been changed').equal(
+      lastFolderPageAfterEdit.name
+    );
+    expect(
+      lastFolderPageAfterEdit
+        .getDescription()
+        .find((x) => x.language === 'Danish').description,
+      'Description has been changed'
+    ).equal(descriptionBeforeEdit);
   });
-  it('Should delete folder', function () {
-    loginPage.open('/');
-    myEformsPage.Navbar.goToFolderPage();
-    $('#folderTreeName').waitForDisplayed({timeout: 20000});
-    $$('#folderTreeName')[0].click();
-    const lastFolder = foldersPage.getFolder(1);
-    lastFolder.deleteBtn.waitForDisplayed({timeout: 5000});
-    lastFolder.deleteBtn.click();
-    $('#spinner-animation').waitForDisplayed({timeout: 90000, reverse: true});
-    foldersPage.saveDeleteBtn.click();
-    $('#spinner-animation').waitForDisplayed({timeout: 90000, reverse: true});
+  after(function () {
+    const lastFolder = foldersPage.getFolderByName(name);
+    lastFolder.delete();
+    expect(foldersPage.getFolderByName(name)).eq(null);
   });
 });

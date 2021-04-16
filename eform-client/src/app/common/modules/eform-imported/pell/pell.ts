@@ -1,21 +1,21 @@
 const actions = {
   bold: {
-    icon: '<b class="text-black-60">B</b>',
+    icon: '<b class="text-black-50">B</b>',
     title: 'Bold',
     result: () => exec('bold')
   },
   italic: {
-    icon: '<i class="text-black-60">I</i>',
+    icon: '<i class="text-black-50">I</i>',
     title: 'Italic',
     result: () => exec('italic')
   },
   underline: {
-    icon: '<u class="text-black-60">U</u>',
+    icon: '<u class="text-black-50">U</u>',
     title: 'Underline',
     result: () => exec('underline')
   },
   strikethrough: {
-    icon: '<strike class="text-black-60">S</strike>',
+    icon: '<strike class="text-black-50">S</strike>',
     title: 'Strike-through',
     result: () => exec('strikeThrough')
   }
@@ -38,8 +38,11 @@ const preventTab = event => {
 export const init = settings => {
   settings.actions = settings.actions
     ? settings.actions.map(action => {
-      if (typeof action === 'string') { return actions[action]; }
-      else if (actions[action.name]) { return { ...actions[action.name], ...action }; }
+      if (typeof action === 'string') {
+        return actions[action];
+      } else if (actions[action.name]) {
+        return { ...actions[action.name], ...action };
+      }
       return action;
     })
     : Object.keys(actions).map(action => actions[action]);
@@ -55,6 +58,7 @@ export const init = settings => {
   settings.element.content.className = settings.classes.content;
   settings.element.content.oninput = event => settings.onChange(event.target.innerHTML);
   settings.element.content.onkeydown = preventTab;
+  settings.element.content.style = 'display:inline-block;';
   settings.element.appendChild(settings.element.content);
 
   settings.actions.forEach(action => {
@@ -66,8 +70,12 @@ export const init = settings => {
     actionbar.appendChild(button);
   });
 
-  if (settings.defaultParagraphSeparator) exec('defaultParagraphSeparator', settings.defaultParagraphSeparator)
-  if (settings.styleWithCSS) { exec('styleWithCSS'); }
+  if (settings.defaultParagraphSeparator) {
+    exec('defaultParagraphSeparator', settings.defaultParagraphSeparator);
+  }
+  if (settings.styleWithCSS) {
+    exec('styleWithCSS');
+  }
 
 
   return settings.element;

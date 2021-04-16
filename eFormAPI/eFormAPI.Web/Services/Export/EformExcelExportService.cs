@@ -22,6 +22,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+using System.Linq;
+using ICSharpCode.SharpZipLib.Zip;
+using Microting.eFormApi.BasePn.Infrastructure.Helpers;
+
 namespace eFormAPI.Web.Services.Export
 {
     using System;
@@ -39,15 +43,18 @@ namespace eFormAPI.Web.Services.Export
     public class EformExcelExportService : IEformExcelExportService
     {
         private readonly IEFormCoreService _coreHelper;
+        private readonly IUserService _userService;
         private readonly ILocalizationService _localizationService;
         private readonly ILogger<EformExcelExportService> _logger;
 
         public EformExcelExportService(
             IEFormCoreService coreHelper,
+            IUserService userService,
             ILocalizationService localizationService,
             ILogger<EformExcelExportService> logger)
         {
             _coreHelper = coreHelper;
+            _userService = userService;
             _localizationService = localizationService;
             _logger = logger;
         }
@@ -59,24 +66,18 @@ namespace eFormAPI.Web.Services.Export
             {
                 var core = await _coreHelper.GetCore();
                 var cultureInfo = new CultureInfo("de-DE");
-                TimeZoneInfo timeZoneInfo;
 
-                try
-                {
-                    timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById("Europe/Copenhagen");
-                }
-                catch
-                {
-                    timeZoneInfo = TimeZoneInfo.Local;
-                }
+                var locale = await _userService.GetCurrentUserLocale();
+                var language = core.DbContextHelper.GetDbContext().Languages.Single(x => x.LanguageCode.ToLower() == locale.ToLower());
+                var timeZoneInfo = await _userService.GetCurrentUserTimeZoneInfo();
 
                 var customPathForUploadedData = $"{await core.GetSdkSetting(Settings.httpServerAddress)}/" +
                                                 "api/template-files/get-image/";
 
-                TimeSpan ts = new TimeSpan(0, 0, 0);
-                DateTime startDate = excelModel.DateFrom.Date + ts;
+                var ts = new TimeSpan(0, 0, 0);
+                var startDate = excelModel.DateFrom.Date + ts;
                 ts = new TimeSpan(23, 59, 59);
-                DateTime endDate = excelModel.DateTo.Date + ts;
+                var endDate = excelModel.DateTo.Date + ts;
                 var dataSet = await core.GenerateDataSetFromCases(
                     excelModel.TemplateId,
                     startDate,
@@ -86,7 +87,7 @@ namespace eFormAPI.Web.Services.Export
                     "",
                     false,
                     cultureInfo,
-                    timeZoneInfo);
+                    timeZoneInfo, language).ConfigureAwait(false);
 
                 if (dataSet == null)
                 {
@@ -95,34 +96,85 @@ namespace eFormAPI.Web.Services.Export
                         _localizationService.GetString("DataNotFound"));
                 }
 
-                var excelSaveFolder =
-                    Path.Combine(await core.GetSdkSetting(Settings.fileLocationJasper),
-                        Path.Combine("templates", $"{excelModel.TemplateId}", "compact", $"{excelModel.TemplateId}.xlsx"));
+                //var sourceFileName =
+                //    Path.Combine(await core.GetSdkSetting(Settings.fileLocationJasper),
+                //        Path.Combine("templates", $"{excelModel.TemplateId}", "compact", $"{excelModel.TemplateId}.xlsx"));
                 Directory.CreateDirectory(Path.Combine(await core.GetSdkSetting(Settings.fileLocationJasper)
                     .ConfigureAwait(false), "results"));
 
-                string timeStamp = $"{DateTime.UtcNow:yyyyMMdd}_{DateTime.UtcNow:hhmmss}";
+                var timeStamp = $"{DateTime.UtcNow:yyyyMMdd}_{DateTime.UtcNow:hhmmss}";
 
-                string resultDocument = Path.Combine(await core.GetSdkSetting(Settings.fileLocationJasper)
-                        .ConfigureAwait(false), "results",
+                var resultDocument = Path.Combine(Path.GetTempPath(), "results",
                     $"{timeStamp}_{excelModel.TemplateId}.xlsx");
 
-                File.Copy(excelSaveFolder, resultDocument);
+                Directory.CreateDirectory(Path.Combine(await core.GetSdkSetting(Settings.fileLocationJasper)
+                    .ConfigureAwait(false), "results"));
 
-                if (!File.Exists(excelSaveFolder))
+                if (core.GetSdkSetting(Settings.s3Enabled).Result.ToLower() == "true")
+                {
+                    try
+                    {
+                        Log.LogEvent($"Trying to open {excelModel.TemplateId}.xlsx");
+                        var objectResponse = await core.GetFileFromS3Storage($"{excelModel.TemplateId}.xlsx");
+                        Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "results"));
+                        await using var fileStream = File.Create(resultDocument);
+                        await objectResponse.ResponseStream.CopyToAsync(fileStream);
+                        await fileStream.FlushAsync();
+                        await fileStream.DisposeAsync();
+                        fileStream.Close();
+                    }
+                    catch (Exception exception)
+                    {
+                        try
+                        {
+                            Log.LogException($"EformExcelExportService.EformExport: Got exeption {exception.Message}");
+                            var objectResponse = await core.GetFileFromS3Storage($"{excelModel.TemplateId}_xlsx_compact.zip");
+                            var zipFileName = Path.Combine(Path.GetTempPath(), $"{excelModel.TemplateId}.zip");
+                            await using var fileStream = File.Create(zipFileName);
+                            await objectResponse.ResponseStream.CopyToAsync(fileStream);
+                            fileStream.Close();
+                            var fastZip = new FastZip();
+                            // Will always overwrite if target filenames already exist
+                            var extractPath = Path.Combine(Path.GetTempPath(), "results");
+                            Directory.CreateDirectory(extractPath);
+                            fastZip.ExtractZip(zipFileName, extractPath, "");
+                            var extractedFile = Path.Combine(extractPath, "compact", $"{excelModel.TemplateId}.xlsx");
+                            await core.PutFileToStorageSystem(extractedFile, $"{excelModel.TemplateId}.xlsx");
+                            File.Move(extractedFile, resultDocument);
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine(e.Message);
+                            throw;
+                        }
+                    }
+                }
+
+                //string resultFile = Path.Combine(Path.GetTempPath(), $"{excelModel.TemplateId}.xlsx");
+                if (!File.Exists(resultDocument))
                 {
                     return new OperationDataResult<Stream>(
                         false,
                         _localizationService.GetString("ExcelTemplateNotFoundInStorage"));
                 }
 
-                var wb = new XLWorkbook(excelSaveFolder);
+                var wb = new XLWorkbook(resultDocument);
                 try {
                     var workSheetToDelete = wb.Worksheets.Worksheet($"Data_{excelModel.TemplateId}");
-                    workSheetToDelete.Delete();
-                } catch {}
+                    workSheetToDelete.Clear(XLClearOptions.All);
+                    //workSheetToDelete.Delete();
+                }
+                catch
+                {
+                    // ignored
+                }
 
-                IXLWorksheet worksheet = wb.Worksheets.Add($"Data_{excelModel.TemplateId}");
+                //var worksheet = wb.Worksheets.Add($"Data_{excelModel.TemplateId}");
+                var worksheet = wb.Worksheets.SingleOrDefault(x => x.Name == $"Data_{excelModel.TemplateId}");
+                if (worksheet == null)
+                {
+                    worksheet = wb.Worksheets.Add($"Data_{excelModel.TemplateId}");
+                }
                 for (var y = 0; y < dataSet.Count; y++)
                 {
                     var dataX = dataSet[y];

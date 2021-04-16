@@ -1,0 +1,740 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AdminUserNotFound" xml:space="preserve">
+    <value>Адміністратор не знайдений</value>
+  </data>
+  <data name="CannotOpenDatabes" xml:space="preserve">
+    <value>Не вдається відкрити базу даних</value>
+  </data>
+  <data name="CantDeletePrimaryAdminUser" xml:space="preserve">
+    <value>Не вдається видалити основного користувача адміністратора</value>
+  </data>
+  <data name="CantObtainSettingsFromWebConfig" xml:space="preserve">
+    <value>Не вдається отримати налаштування з web.config</value>
+  </data>
+  <data name="CantUpdateSettingsInWebConfig" xml:space="preserve">
+    <value>Не вдається оновити налаштування в web.config</value>
+  </data>
+  <data name="CaseCouldNotBeRemoved" xml:space="preserve">
+    <value>Кейс не може бути видалено</value>
+  </data>
+  <data name="CaseCouldNotBeUpdated" xml:space="preserve">
+    <value>Кейс не може бути оновлено</value>
+  </data>
+  <data name="CaseHasBeenUpdated" xml:space="preserve">
+    <value>Кейс був оновлений</value>
+  </data>
+  <data name="CaseLoadingFailed" xml:space="preserve">
+    <value>Завантаження кейсу не вдалося</value>
+  </data>
+  <data name="CaseParamDeletedSuccessfully" xml:space="preserve">
+    <value>Кейс #{0} успішно видалено</value>
+  </data>
+  <data name="CheckConnectionString" xml:space="preserve">
+    <value>Перевірте рядок підключення</value>
+  </data>
+  <data name="CheckSettingsBeforeProceed" xml:space="preserve">
+    <value>Перевірте налаштування, перш ніж продовжити</value>
+  </data>
+  <data name="ColumnsWereUpdated" xml:space="preserve">
+    <value>Стовпці були оновлені</value>
+  </data>
+  <data name="ConnectionStringAlreadyExist" xml:space="preserve">
+    <value>Рядок підключення вже існує</value>
+  </data>
+  <data name="CoreIsNotStarted" xml:space="preserve">
+    <value>Ядро не запускається</value>
+  </data>
+  <data name="CouldNotWriteConnectionString" xml:space="preserve">
+    <value>Не вдалося записати рядок підключення в /bin/Input.txt</value>
+  </data>
+  <data name="DeviceUserCouldNotBeCreated" xml:space="preserve">
+    <value>Пристрій користувача не може бути створений</value>
+  </data>
+  <data name="DeviceUserCouldNotBeObtained" xml:space="preserve">
+    <value>Пристрій користувача з таким UId отримати не вдалося</value>
+  </data>
+  <data name="DeviceUserCouldNotBeUpdated" xml:space="preserve">
+    <value>Пристрій користувача не може бути оновлений</value>
+  </data>
+  <data name="DeviceUserNotFound" xml:space="preserve">
+    <value>Uid пристрою користувача не знайдено</value>
+  </data>
+  <data name="DeviceUserPa" xml:space="preserve">
+    <value>Пристрій користувача з ідентифікатором "{0}" не може бути видалений</value>
+  </data>
+  <data name="DeviceUserParamCouldNotBeDeleted" xml:space="preserve">
+    <value>Пристрій користувача "{0}" не може бути видалений</value>
+  </data>
+  <data name="DeviceUserParamCouldNotBeEdited" xml:space="preserve">
+    <value>Пристрій користувача з ідентифікатором {0} не може бути відредагований</value>
+  </data>
+  <data name="DeviceUserParamCouldNotBeUpdated" xml:space="preserve">
+    <value>Пристрій користувача з ідентифікатором {0} не може бути оновлений</value>
+  </data>
+  <data name="DeviceUserParamCreatedSuccessfully" xml:space="preserve">
+    <value>Пристрій користувача "{0}" успішно створений</value>
+  </data>
+  <data name="DeviceUserParamDeletedSuccessfully" xml:space="preserve">
+    <value>Пристрій користувача "{0}" успішно видалений</value>
+  </data>
+  <data name="DeviceUserUpdatedSuccessfully" xml:space="preserve">
+    <value>Пристрій користувача успішно оновлено</value>
+  </data>
+  <data name="eFormCouldNotBeCreated" xml:space="preserve">
+    <value>Не вдалося створити ЕФорму</value>
+  </data>
+  <data name="eFormParamCouldNotBeDeleted" xml:space="preserve">
+    <value>ЕФорму "{0}" не вдалося видалити</value>
+  </data>
+  <data name="eFormParamCreatedSuccessfully" xml:space="preserve">
+    <value>ЕФорму "{0}" успішно створено</value>
+  </data>
+  <data name="eFormParamDeletedSuccessfully" xml:space="preserve">
+    <value>ЕФорму "{0}" успішно видалено</value>
+  </data>
+  <data name="ErrorWhenDeletingSearchableList" xml:space="preserve">
+    <value>Помилка при видаленні пошукового списку</value>
+  </data>
+  <data name="ErrorWhenObtainingSearchableList" xml:space="preserve">
+    <value>Помилка при отриманні пошукового списку</value>
+  </data>
+  <data name="ErrorWhileAddNewPassword" xml:space="preserve">
+    <value>Помилка при додаванні нового пароля</value>
+  </data>
+  <data name="ErrorWhileCreatingFileForSDK" xml:space="preserve">
+    <value>Помилка при створенні файлу для SDK</value>
+  </data>
+  <data name="ErrorWhileCreatingParamTag" xml:space="preserve">
+    <value>Помилка при створенні тега "{0}"</value>
+  </data>
+  <data name="ErrorWhileCreatingUser" xml:space="preserve">
+    <value>Помилка при створенні користувача</value>
+  </data>
+  <data name="ErrorWhileCreatingWorker" xml:space="preserve">
+    <value>Помилка при створенні працівика</value>
+  </data>
+  <data name="ErrorWhileDeletingSelectableList" xml:space="preserve">
+    <value>Помилка при видаленні списку вибору</value>
+  </data>
+  <data name="ErrorWhileDeletingTag" xml:space="preserve">
+    <value>Помилка при видаленні тега</value>
+  </data>
+  <data name="ErrorWhileDeletingUser" xml:space="preserve">
+    <value>Помилка при видаленні користувача</value>
+  </data>
+  <data name="ErrorWhileObtainColumns" xml:space="preserve">
+    <value>Помилка при отриманні стовпців</value>
+  </data>
+  <data name="ErrorWhileObtainSelectableList" xml:space="preserve">
+    <value>Помилка при отриманні вибіркового списку</value>
+  </data>
+  <data name="ErrorWhileObtainTags" xml:space="preserve">
+    <value>Помилка при отриманні тегів</value>
+  </data>
+  <data name="ErrorWhileObtainUsers" xml:space="preserve">
+    <value>Помилка при отриманні користувачів</value>
+  </data>
+  <data name="ErrorWhileRemovingOldPassword" xml:space="preserve">
+    <value>Помилка при видаленні старого пароля</value>
+  </data>
+  <data name="ErrorWhileRotateImage" xml:space="preserve">
+    <value>Помилка при повороті зображення</value>
+  </data>
+  <data name="ErrorWhileUpdatingColumns" xml:space="preserve">
+    <value>Помилка при оновленні стовпців</value>
+  </data>
+  <data name="ErrorWhileUpdatingPSK" xml:space="preserve">
+    <value>Помилка при оновленні користувацького PSK</value>
+  </data>
+  <data name="ErrorWhileUpdatingTemplateTags" xml:space="preserve">
+    <value>Помилка при оновленні тегів шаблону</value>
+  </data>
+  <data name="ErrorWhileUpdatingUser" xml:space="preserve">
+    <value>Помилка при оновленні користувача</value>
+  </data>
+  <data name="FileNotFound" xml:space="preserve">
+    <value>Файл не знайдено</value>
+  </data>
+  <data name="FolderError" xml:space="preserve">
+    <value>Помилка папки</value>
+  </data>
+  <data name="ImageDeletedSuccessfully" xml:space="preserve">
+    <value>Зображення успішно видалено</value>
+  </data>
+  <data name="ImageNotDeleted" xml:space="preserve">
+    <value>Зображення не було видалено</value>
+  </data>
+  <data name="ImageRotatedSuccessfully" xml:space="preserve">
+    <value>Зображення успішно повернуто</value>
+  </data>
+  <data name="InvalidRequest" xml:space="preserve">
+    <value>Невірний Запит</value>
+  </data>
+  <data name="InvalidSecurityCode" xml:space="preserve">
+    <value>Неправильний код безпеки</value>
+  </data>
+  <data name="InvalidUserNameOrPassword" xml:space="preserve">
+    <value>Неправильне ім'я користувача або пароль</value>
+  </data>
+  <data name="MainConnectionStringIsInvalid" xml:space="preserve">
+    <value>Основний рядок підключення неприпустима</value>
+  </data>
+  <data name="NewOTPCreatedSuccessfully" xml:space="preserve">
+    <value>Новий OTP успішно створений</value>
+  </data>
+  <data name="ParamCreatedSuccessfully" xml:space="preserve">
+    <value>{0} успішно створено</value>
+  </data>
+  <data name="ParamDeletedSuccessfully" xml:space="preserve">
+    <value>{0} успішно видалено</value>
+  </data>
+  <data name="ParamPairedSuccessfully" xml:space="preserve">
+    <value>"{0}" успішно зв'язано</value>
+  </data>
+  <data name="ParamUpdatedSuccessfully" xml:space="preserve">
+    <value>{0} успішно оновлено</value>
+  </data>
+  <data name="PleaseSetupSecurityCode" xml:space="preserve">
+    <value>Будь ласка, встановіть код безпеки на сервері</value>
+  </data>
+  <data name="RequestFieldsAreNotFilled" xml:space="preserve">
+    <value>Обов'язкові поля не заповнені</value>
+  </data>
+  <data name="RoleIsRequired" xml:space="preserve">
+    <value>Роль обов'язкова</value>
+  </data>
+  <data name="SDKConnectionStringIsInvalid" xml:space="preserve">
+    <value>Рядок підключення SDK неприпустимий</value>
+  </data>
+  <data name="SearchableListCreationFailed" xml:space="preserve">
+    <value>Пошуковий список не вдалось створити</value>
+  </data>
+  <data name="SearchableListLoadingFailed" xml:space="preserve">
+    <value>Помилка завантаження пошукового списку</value>
+  </data>
+  <data name="SelectableGroupLoadingFailed" xml:space="preserve">
+    <value>Помилка при завантаженні вибранної групи</value>
+  </data>
+  <data name="SelectableListCreationFailed" xml:space="preserve">
+    <value>Створення вибіркового списку не вдалося</value>
+  </data>
+  <data name="SettingsUpdatedSuccessfully" xml:space="preserve">
+    <value>Налаштування успішно оновлені</value>
+  </data>
+  <data name="SiteParamCouldNotBeDeleted" xml:space="preserve">
+    <value>Місце "{0}" не може бути видалений</value>
+  </data>
+  <data name="SiteParamCouldNotBeUpdated" xml:space="preserve">
+    <value>Місце з ідентифікатором {0} не може бути оновлений</value>
+  </data>
+  <data name="SiteParamDeletedSuccessfully" xml:space="preserve">
+    <value>Місце "{0}" успішно видалено</value>
+  </data>
+  <data name="SiteParamNotFound" xml:space="preserve">
+    <value>Місце з ідентифікатором {0} не знайдено</value>
+  </data>
+  <data name="SiteWithIdCouldNotBeDeleted" xml:space="preserve">
+    <value>Працівник з ідентифікатором {0} не може бути видалений</value>
+  </data>
+  <data name="TagDeletedSuccessfully" xml:space="preserve">
+    <value>Тег успішно видалено</value>
+  </data>
+  <data name="TagParamCreatedSuccessfully" xml:space="preserve">
+    <value>Тег "{0}" створено успішно</value>
+  </data>
+  <data name="TemplateTagUpdatedSuccessfully" xml:space="preserve">
+    <value>Теги шаблонів були успішно оновлені</value>
+  </data>
+  <data name="UnitParamOTPCouldNotCompleted" xml:space="preserve">
+    <value>Юніт "{0}" OTP-запит не може бути завершений</value>
+  </data>
+  <data name="UnitWasSuccessfullyCreated" xml:space="preserve">
+    <value>Юніт був успішно створений</value>
+  </data>
+  <data name="ErrorWhileCreatingUnit" xml:space="preserve">
+    <value>Помилка при створенні юніту</value>
+  </data>
+  <data name="UserNameOrPasswordIncorrect" xml:space="preserve">
+    <value>Неправильне ім'я користувача або пароль</value>
+  </data>
+  <data name="UserNotFound" xml:space="preserve">
+    <value>Користувач не знайдений</value>
+  </data>
+  <data name="UserNotFoundUserName" xml:space="preserve">
+    <value>Користувач {0} не знайдено</value>
+  </data>
+  <data name="UserParamWasDeleted" xml:space="preserve">
+    <value>Користувач {0} був видалений</value>
+  </data>
+  <data name="UserUserNameAlreadyExist" xml:space="preserve">
+    <value>Користувач {0} вже існує</value>
+  </data>
+  <data name="UserUserNameWasCreated" xml:space="preserve">
+    <value>Користувач {0} був створений</value>
+  </data>
+  <data name="UserUserNameWasUpdated" xml:space="preserve">
+    <value>Користувач {0} був оновлений</value>
+  </data>
+  <data name="WorkerParamCantBeDeleted" xml:space="preserve">
+    <value>Працівник "{0 {1}" не може бути видалений</value>
+  </data>
+  <data name="WorkerParamCantBeUpdated" xml:space="preserve">
+    <value>Працівник з ідентифікатором {0} не може бути оновлений</value>
+  </data>
+  <data name="WorkerParamDeletedSuccessfully" xml:space="preserve">
+    <value>Працівник "{0} {1}" успішно видалений</value>
+  </data>
+  <data name="WorkerParamWasUpdated" xml:space="preserve">
+    <value>Працівник з ідентифікатором {0}</value>
+  </data>
+  <data name="WorkerWasSuccessfullyCreated" xml:space="preserve">
+    <value>Працівник був успішно створений</value>
+  </data>
+  <data name="YouNeedToBuyMoreLicenses" xml:space="preserve">
+    <value>Вам потрібно купити більше ліцензій для додавання додаткових юнітів.</value>
+  </data>
+  <data name="YourEmailPasswordHasBeenReset" xml:space="preserve">
+    <value>Ваш email: {0}. Пароль був скинутий.</value>
+  </data>
+  <data name="SecurityGroupNotFound" xml:space="preserve">
+    <value>Група безпеки не знайдена</value>
+  </data>
+  <data name="YouCantViewChangeOrDeleteAdmin" xml:space="preserve">
+    <value>Ви не можете переглянути, змінити або видалити адміністратора</value>
+  </data>
+  <data name="ErrorWhileObtainingPermissions" xml:space="preserve">
+    <value>Помилка при отриманні дозволів</value>
+  </data>
+  <data name="ErrorWhileUpdatingPermissions" xml:space="preserve">
+    <value>Помилка при оновленні дозволів</value>
+  </data>
+  <data name="PermissionsUpdatedSuccessfully" xml:space="preserve">
+    <value>Дозволи успішно оновлені</value>
+  </data>
+  <data name="ConnectionStringDoesNotExist" xml:space="preserve">
+    <value>Рядок підключення не існує</value>
+  </data>
+  <data name="eFormAlreadyInGroup" xml:space="preserve">
+    <value>ЕФорма вже в групі</value>
+  </data>
+  <data name="eFormHasBeenDeletedFromGroup" xml:space="preserve">
+    <value>ЕФорма була видалена з групи</value>
+  </data>
+  <data name="eFormNotFound" xml:space="preserve">
+    <value>ЕФорма не знайдена</value>
+  </data>
+  <data name="ErrorWhileBindingEformToGroup" xml:space="preserve">
+    <value>Помилка при прив'язці ЕФорми до групи</value>
+  </data>
+  <data name="ErrorWhileCreatingSecurityGroup" xml:space="preserve">
+    <value>Помилка при створенні групи безпеки</value>
+  </data>
+  <data name="ErrorWhileDeletingEformFromGroup" xml:space="preserve">
+    <value>Помилка при видаленні ЕФорми з групи</value>
+  </data>
+  <data name="ErrorWhileDeletingSecurityGroup" xml:space="preserve">
+    <value>Помилка при видаленні групи безпеки</value>
+  </data>
+  <data name="ErrorWhileObtainingAvailableEForms" xml:space="preserve">
+    <value>Помилка при отриманні доступних ЕФорм</value>
+  </data>
+  <data name="ErrorWhileObtainingEformInfo" xml:space="preserve">
+    <value>Помилка при отриманні інформації про ЕФорму</value>
+  </data>
+  <data name="ErrorWhileObtainingSecurityGroup" xml:space="preserve">
+    <value>Помилка при отриманні групи безпеки</value>
+  </data>
+  <data name="ErrorWhileObtainingSecurityGroups" xml:space="preserve">
+    <value>Помилка при отриманні груп безпеки</value>
+  </data>
+  <data name="ErrorWhileObtainingUserMenu" xml:space="preserve">
+    <value>Помилка при отриманні користувацького меню</value>
+  </data>
+  <data name="ErrorWhileUpdatingSecurityGroup" xml:space="preserve">
+    <value>Помилка при оновленні групи безпеки</value>
+  </data>
+  <data name="PermissionForEformHasBeenUpdated" xml:space="preserve">
+    <value>Оновлено дозвіл для електронної форми</value>
+  </data>
+  <data name="SecurityGroupCreatedSuccessfully" xml:space="preserve">
+    <value>Успішно створена група безпеки</value>
+  </data>
+  <data name="SecurityGroupNameIsEmpty" xml:space="preserve">
+    <value>Ім'я групи безпеки порожне</value>
+  </data>
+  <data name="SecurityGroupRemovedSuccessfully" xml:space="preserve">
+    <value>Група безпеки успішно видалена</value>
+  </data>
+  <data name="SecurityGroupUpdatedSuccessfully" xml:space="preserve">
+    <value>Група безпеки успішно оновлена</value>
+  </data>
+  <data name="ErrorWhileObtainingSavedTags" xml:space="preserve">
+    <value>Помилка при отриманні збережених тегів</value>
+  </data>
+  <data name="ErrorWhileRemovingSavedTags" xml:space="preserve">
+    <value>Помилка при видаленні збережених тегів</value>
+  </data>
+  <data name="ErrorWhileSavingTag" xml:space="preserve">
+    <value>Помилка при збереженні тега</value>
+  </data>
+  <data name="InvalidTagId" xml:space="preserve">
+    <value>Неприпустимий ідентифікатор тега</value>
+  </data>
+  <data name="InvalidTagName" xml:space="preserve">
+    <value>Неприпустима назва тега</value>
+  </data>
+  <data name="SavedTagNotFound" xml:space="preserve">
+    <value>Збережений тег не знайдено</value>
+  </data>
+  <data name="TagAlreadySaved" xml:space="preserve">
+    <value>Тег вже збережений</value>
+  </data>
+  <data name="Advanced" xml:space="preserve">
+    <value>Додатково</value>
+  </data>
+  <data name="ApplicationSettings" xml:space="preserve">
+    <value>Налаштування програми</value>
+  </data>
+  <data name="ChangePassword" xml:space="preserve">
+    <value>Змінити пароль</value>
+  </data>
+  <data name="DeviceUsers" xml:space="preserve">
+    <value>Пристрої користувачів</value>
+  </data>
+  <data name="Logout" xml:space="preserve">
+    <value>Вихід із системи</value>
+  </data>
+  <data name="MyEforms" xml:space="preserve">
+    <value>Мої ЕФорми</value>
+  </data>
+  <data name="SearchableList" xml:space="preserve">
+    <value>Пошуковий список</value>
+  </data>
+  <data name="Security" xml:space="preserve">
+    <value>Безпека</value>
+  </data>
+  <data name="SelectableList" xml:space="preserve">
+    <value>Вибірковий список</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
+    <value>Налаштування</value>
+  </data>
+  <data name="Sites" xml:space="preserve">
+    <value>Місця</value>
+  </data>
+  <data name="Units" xml:space="preserve">
+    <value>Юніти</value>
+  </data>
+  <data name="UserManagement" xml:space="preserve">
+    <value>Управління користувачами</value>
+  </data>
+  <data name="Workers" xml:space="preserve">
+    <value>Працівники</value>
+  </data>
+  <data name="PluginsSettings" xml:space="preserve">
+    <value>Плагіни</value>
+  </data>
+  <data name="EformReportNotFound" xml:space="preserve">
+    <value>Звіт ЕФорми не знайдено</value>
+  </data>
+  <data name="ElementListNotProvided" xml:space="preserve">
+    <value>ElementList не надається</value>
+  </data>
+  <data name="ErrorWhileObtainingReportInfo" xml:space="preserve">
+    <value>Помилка при отриманні інформації звіту</value>
+  </data>
+  <data name="ErrorWhileUpdatingReport" xml:space="preserve">
+    <value>Помилка при оновленні звіту</value>
+  </data>
+  <data name="ReportUpdatedSuccessfully" xml:space="preserve">
+    <value>Звіт успішно оновлено</value>
+  </data>
+  <data name="TemplateNotFound" xml:space="preserve">
+    <value>Шаблон не знайдено</value>
+  </data>
+  <data name="ErrorWhileObtainingPlugins" xml:space="preserve">
+    <value>Помилка при завантаженні плагінів</value>
+  </data>
+  <data name="ErrorWhileUpdatingPluginSettings" xml:space="preserve">
+    <value>Помилка при оновленні налаштувань плагіна</value>
+  </data>
+  <data name="PluginNotFound" xml:space="preserve">
+    <value>Плагін не знайдено</value>
+  </data>
+  <data name="CantEditPrimaryAdminUser" xml:space="preserve">
+    <value>Ви не можете переглянути, змінити або видалити основного адміністратора</value>
+  </data>
+  <data name="CantUpdateRoleForPrimaryAdminUser" xml:space="preserve">
+    <value>Неможливо змінити роль для основного адміністратора</value>
+  </data>
+  <data name="RoleNotFound" xml:space="preserve">
+    <value>Роль не знайдено</value>
+  </data>
+  <data name="ErrorWhileExecutingPluginInstall" xml:space="preserve">
+    <value>Помилка при виконанні установки плагіна</value>
+  </data>
+  <data name="ErrorWhileObtainingPluginList" xml:space="preserve">
+    <value>Помилка при отриманні списку плагінів</value>
+  </data>
+  <data name="ErrorWhileObtainingSites" xml:space="preserve">
+    <value>Помилка при отриманні місць</value>
+  </data>
+  <data name="ErrorWhileUpdatingTags" xml:space="preserve">
+    <value>Помилка при оновленні тегів</value>
+  </data>
+  <data name="TagNotFound" xml:space="preserve">
+    <value>Тег не знайдено</value>
+  </data>
+  <data name="TagUpdatedSuccessfully" xml:space="preserve">
+    <value>Тег успішно оновлено</value>
+  </data>
+  <data name="EmailRecipients" xml:space="preserve">
+    <value>Одержувачі електронної пошти</value>
+  </data>
+  <data name="EmailRecipientCreatedSuccessfully" xml:space="preserve">
+    <value>Одержувач електронної пошти успішно створений</value>
+  </data>
+  <data name="EmailRecipientNotFound" xml:space="preserve">
+    <value>Одержувач електронної пошти не знайдено</value>
+  </data>
+  <data name="EmailRecipientRemovedSuccessfully" xml:space="preserve">
+    <value>Одержувач електронної пошти успішно видалений</value>
+  </data>
+  <data name="EmailRecipientUpdatedSuccessfully" xml:space="preserve">
+    <value>Одержувач електронної пошти успішно оновлено</value>
+  </data>
+  <data name="EmailTagCreatedSuccessfully" xml:space="preserve">
+    <value>Успішно створено email тег</value>
+  </data>
+  <data name="EmailTagNotFound" xml:space="preserve">
+    <value>Email тег не знайдено</value>
+  </data>
+  <data name="EmailTagRemovedSuccessfully" xml:space="preserve">
+    <value>Тег Електронної Пошти успішно видалено</value>
+  </data>
+  <data name="EmailTagUpdatedSuccessfully" xml:space="preserve">
+    <value>Тег Електронної Пошти успішно оновлено</value>
+  </data>
+  <data name="ErrorWhileCreatingEmailRecipient" xml:space="preserve">
+    <value>Помилка при створенні одержувача Електронної Пошти</value>
+  </data>
+  <data name="ErrorWhileCreatingEmailTag" xml:space="preserve">
+    <value>Помилка при створенні тега Електронної
+Пошти</value>
+  </data>
+  <data name="ErrorWhileObtainingEmailRecipients" xml:space="preserve">
+    <value>Помилка при отриманні одержувачів електронної пошти</value>
+  </data>
+  <data name="ErrorWhileObtainingEmailTag" xml:space="preserve">
+    <value>Помилка при отриманні тега Електронної
+Пошти</value>
+  </data>
+  <data name="ErrorWhileRemovingEmailRecipient" xml:space="preserve">
+    <value>Помилка при видаленні одержувача Електронної Пошти</value>
+  </data>
+  <data name="ErrorWhileRemovingEmailTag" xml:space="preserve">
+    <value>Помилка при видаленні тега Електронної Пошти</value>
+  </data>
+  <data name="ErrorWhileUpdatingEmailRecipient" xml:space="preserve">
+    <value>Помилка при оновленні одержувача Електронної Пошти</value>
+  </data>
+  <data name="ErrorWhileUpdatingEmailTag" xml:space="preserve">
+    <value>Помилка при оновленні тега Електронної Пошти</value>
+  </data>
+  <data name="ErrorWhileCreatingPost" xml:space="preserve">
+    <value>Помилка при створенні повідомлення</value>
+  </data>
+  <data name="ErrorWhileObtainingPosts" xml:space="preserve">
+    <value>Помилка при отриманні повідомлень</value>
+  </data>
+  <data name="ErrorWhileObtainingPostViewInfo" xml:space="preserve">
+    <value>Помилка при отриманні інформації про перегляд повідомлень</value>
+  </data>
+  <data name="PostCreatedSuccessfully" xml:space="preserve">
+    <value>Пост успішного створення</value>
+  </data>
+  <data name="PostNotFound" xml:space="preserve">
+    <value>Пост не знайдено</value>
+  </data>
+  <data name="CaseNotFound" xml:space="preserve">
+    <value>Кейс не знайдено</value>
+  </data>
+  <data name="SendGridKeyShouldBeAddedToSettings" xml:space="preserve">
+    <value>SendGrid key повинен будти доданий у налаштуваннях</value>
+  </data>
+  <data name="DataNotFound" xml:space="preserve">
+    <value>Дані не знайдені!</value>
+  </data>
+  <data name="eFormReport" xml:space="preserve">
+    <value>Звіт ЕФорми</value>
+  </data>
+  <data name="ErrorWhileExportingExcelFile" xml:space="preserve">
+    <value>Помилка при експорті файлу excel!</value>
+  </data>
+  <data name="ExcelTemplateNotFoundInStorage" xml:space="preserve">
+    <value>Шаблон Excel не знайдено в сховищі!</value>
+  </data>
+  <data name="ErrorWhileCreatingFolder" xml:space="preserve">
+    <value>Помилка при створенні папки</value>
+  </data>
+  <data name="ErrorWhileObtainingFoldersInfo" xml:space="preserve">
+    <value>Помилка при отриманні інформації про папки</value>
+  </data>
+  <data name="ErrorWhileRemovingFolder" xml:space="preserve">
+    <value>Помилка при видаленні папки</value>
+  </data>
+  <data name="ErrorWhileUpdatingFolder" xml:space="preserve">
+    <value>Помилка при оновленні папки</value>
+  </data>
+  <data name="FolderNotFound" xml:space="preserve">
+    <value>Папка не знайдена</value>
+  </data>
+  <data name="NavigationMenuUpdate" xml:space="preserve">
+    <value>Навігаційне меню було успішно оновлено.</value>
+  </data>
+  <data name="ImportFinishedSuccessfully" xml:space="preserve">
+    <value>Імпорт успішно завершено</value>
+  </data>
+  <data name="EFormWithNameAlreadyExists" xml:space="preserve">
+    <value>ЕФорма з ім'ям {0} вже існує</value>
+  </data>
+  <data name="EFormWithNameAlreadyExistsInTheImportedDocument" xml:space="preserve">
+    <value>ЕФорма з ім'ям {0} вже існує в імпортованому документі</value>
+  </data>
+  <data name="CasesNotFound" xml:space="preserve">
+    <value>Кейси не знайдено</value>
+  </data>
+  <data name="ErrorWhileGeneratingReportFile" xml:space="preserve">
+    <value>Помилка при створенні файлу звіту</value>
+  </data>
+  <data name="CaseId" xml:space="preserve">
+    <value>Кейс id</value>
+  </data>
+  <data name="CreatedAt" xml:space="preserve">
+    <value>Створено в</value>
+  </data>
+  <data name="DoneBy" xml:space="preserve">
+    <value>Зроблено</value>
+  </data>
+  <data name="ReportPeriod" xml:space="preserve">
+    <value>Звітний період</value>
+  </data>
+</root>

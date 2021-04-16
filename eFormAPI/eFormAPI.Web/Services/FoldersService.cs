@@ -23,6 +23,7 @@ SOFTWARE.
 */
 
 using Microting.eForm.Infrastructure;
+using Microting.eForm.Infrastructure.Data.Entities;
 
 namespace eFormAPI.Web.Services
 {
@@ -45,12 +46,15 @@ namespace eFormAPI.Web.Services
         private readonly IEFormCoreService _coreHelper;
         private readonly ILocalizationService _localizationService;
         private readonly ILogger<FoldersService> _logger;
-        public FoldersService(IEFormCoreService coreHelper, 
+        private readonly IUserService _userService;
+        public FoldersService(IEFormCoreService coreHelper,
             ILocalizationService localizationService,
+            IUserService userService,
             ILogger<FoldersService> logger)
         {
             _coreHelper = coreHelper;
             _localizationService = localizationService;
+            _userService = userService;
             _logger = logger;
         }
 
@@ -59,19 +63,17 @@ namespace eFormAPI.Web.Services
             try
             {
                 var core = await _coreHelper.GetCore();
-                await using var dbContext = core.dbContextHelper.GetDbContext();
-                var folders = await dbContext.folders
+                await using var dbContext = core.DbContextHelper.GetDbContext();
+                var locale = await _userService.GetCurrentUserLocale();
+                var language = dbContext.Languages.Single(x => string.Equals(x.LanguageCode, locale, StringComparison.CurrentCultureIgnoreCase));
+                var folderQuery = dbContext.Folders
                     .Where(x => x.WorkflowState != Constants.WorkflowStates.Removed)
-                    .Select(x => new FolderDtoModel
-                    {
-                        Id = x.Id,
-                        CreatedAt = x.CreatedAt,
-                        Description = x.Description,
-                        MicrotingUId = x.MicrotingUid,
-                        Name = x.Name,
-                        ParentId = x.ParentId,
-                        UpdatedAt = x.UpdatedAt,
-                    }).ToListAsync();
+                    .Where(x => x.FolderTranslations.Any(y =>
+                        y.LanguageId == language.Id && !string.IsNullOrEmpty(y.Name)));
+                var folders = await AddSelectToQueryForList(folderQuery, language.Id)
+                    .OrderBy(x => x.Name)
+                    .ToListAsync();
+
 
                 return new OperationDataResult<List<FolderDtoModel>>(true, folders);
             }
@@ -89,19 +91,16 @@ namespace eFormAPI.Web.Services
             try
             {
                 var core = await _coreHelper.GetCore();
-                await using var dbContext = core.dbContextHelper.GetDbContext();
-                var folders = await dbContext.folders
+                await using var dbContext = core.DbContextHelper.GetDbContext();
+                var locale = await _userService.GetCurrentUserLocale();
+                var language = dbContext.Languages.Single(x => string.Equals(x.LanguageCode, locale, StringComparison.CurrentCultureIgnoreCase));
+                var folderQuery = dbContext.Folders
                     .Where(x => x.WorkflowState != Constants.WorkflowStates.Removed)
-                    .Select(x => new FolderDtoModel
-                    {
-                        Id = x.Id,
-                        CreatedAt = x.CreatedAt,
-                        Description = x.Description,
-                        MicrotingUId = x.MicrotingUid,
-                        Name = x.Name,
-                        ParentId = x.ParentId,
-                        UpdatedAt = x.UpdatedAt,
-                    }).ToListAsync();
+                    .Where(x => x.FolderTranslations.Any(y =>
+                        y.LanguageId == language.Id && !string.IsNullOrEmpty(y.Name)));
+                var folders = await AddSelectToQueryForList(folderQuery, language.Id)
+                    .OrderBy(x => x.Name)
+                    .ToListAsync();
 
                 var treeResult = new List<FolderDtoModel>();
 
@@ -125,7 +124,26 @@ namespace eFormAPI.Web.Services
             try
             {
                 var core = await _coreHelper.GetCore();
-                await core.FolderCreate(createModel.Name, createModel.Description, createModel.ParentId);
+
+                var names = new List<KeyValuePair<string, string>>();
+                var descriptions = new List<KeyValuePair<string, string>>();
+                await using var sdkDbContext = core.DbContextHelper.GetDbContext();
+                var languages = await sdkDbContext.Languages
+                    .AsNoTracking()
+                    .Select(x => new { x.LanguageCode, x.Id })
+                    .ToListAsync();
+
+                foreach (var folderTranslationModel in createModel.Translations)
+                {
+                    var languageCode = languages
+                        .First(y => y.Id == folderTranslationModel.LanguageId).LanguageCode;
+                    names.Add(new KeyValuePair<string, string>(languageCode, folderTranslationModel.Name));
+
+                    descriptions.Add(
+                        new KeyValuePair<string, string>(languageCode, folderTranslationModel.Description));
+                }
+
+                await core.FolderCreate(names, descriptions, createModel.ParentId); // creating the folder in Danish as default
                 return new OperationResult(true);
             }
             catch (Exception e)
@@ -137,39 +155,33 @@ namespace eFormAPI.Web.Services
             }
         }
 
-        public async Task<OperationDataResult<FolderDtoModel>> Edit(int id)
+        public async Task<OperationDataResult<FolderModel>> Read(int id)
         {
             try
             {
                 var core = await _coreHelper.GetCore();
-                await using var dbContext = core.dbContextHelper.GetDbContext();
-                var folder = await dbContext.folders
+                await using var sdkDbContext = core.DbContextHelper.GetDbContext();
+
+                var query = sdkDbContext.Folders
                     .Where(x => x.WorkflowState != Constants.WorkflowStates.Removed)
-                    .Where(x => x.Id == id)
-                    .Select(x => new FolderDtoModel
-                    {
-                        Id = x.Id,
-                        Name = x.Name,
-                        CreatedAt = x.CreatedAt,
-                        Description = x.Description,
-                        MicrotingUId = x.MicrotingUid,
-                        ParentId = x.ParentId,
-                        UpdatedAt = x.UpdatedAt,
-                    }).FirstOrDefaultAsync();
+                    .Where(x => x.Id == id);
+
+                var folder = await AddSelectToQueryForRead(query)
+                    .FirstOrDefaultAsync();
 
                 if (folder == null)
                 {
-                    return new OperationDataResult<FolderDtoModel>(
+                    return new OperationDataResult<FolderModel>(
                         false,
                         _localizationService.GetString("FolderNotFound"));
                 }
 
-                return new OperationDataResult<FolderDtoModel>(true, folder);
+                return new OperationDataResult<FolderModel>(true, folder);
             }
             catch (Exception e)
             {
                 _logger.LogError(e, e.Message);
-                return new OperationDataResult<FolderDtoModel>(
+                return new OperationDataResult<FolderModel>(
                     false,
                     _localizationService.GetString("ErrorWhileObtainingFoldersInfo"));
             }
@@ -180,16 +192,34 @@ namespace eFormAPI.Web.Services
             var core = await _coreHelper.GetCore();
             try
             {
+                var names = new List<KeyValuePair<string, string>>();
+                var descriptions = new List<KeyValuePair<string, string>>();
+                await using var sdkDbContext = core.DbContextHelper.GetDbContext();
+                var languages = await sdkDbContext.Languages
+                    .AsNoTracking()
+                    .Select(x => new {x.LanguageCode, x.Id})
+                    .ToListAsync();
+
+                foreach (var folderTranslationModel in folderUpdateModel.Translations)
+                {
+                    var languageCode = languages
+                        .First(y => y.Id == folderTranslationModel.LanguageId).LanguageCode;
+                    names.Add(new KeyValuePair<string, string>(languageCode, folderTranslationModel.Name));
+
+                    descriptions.Add(
+                        new KeyValuePair<string, string>(languageCode, folderTranslationModel.Description));
+                }
+
                 await core.FolderUpdate(
                     folderUpdateModel.Id,
-                    folderUpdateModel.Name,
-                    folderUpdateModel.Description,
+                    names,
+                    descriptions,
                     folderUpdateModel.ParentId);
 
                 return new OperationResult(true);
             }
             catch (Exception e)
-            {   
+            {
                 _coreHelper.LogException(e.Message);
                 _logger.LogError(e, e.Message);
                 return new OperationResult(
@@ -203,8 +233,8 @@ namespace eFormAPI.Web.Services
             var core = await _coreHelper.GetCore();
             try
             {
-                await core.FolderDelete(id);
                 await DeleteChildren(id);
+                await core.FolderDelete(id);
                 return new OperationResult(true);
             }
             catch (Exception e)
@@ -220,12 +250,11 @@ namespace eFormAPI.Web.Services
         private async Task DeleteChildren(int id)
         {
             var core = await _coreHelper.GetCore();
-            await using MicrotingDbContext dbContext = core.dbContextHelper.GetDbContext();
-            var list = await dbContext.folders.Where(x => x.ParentId == id).ToListAsync();
+            await using MicrotingDbContext dbContext = core.DbContextHelper.GetDbContext();
+            var list = await dbContext.Folders.Where(x => x.ParentId == id).ToListAsync();
             foreach (var folder in list)
             {
-                await core.FolderDelete(folder.Id);
-                var sublist = await dbContext.folders.Where(x => x.ParentId == folder.Id).ToListAsync();
+                var sublist = await dbContext.Folders.Where(x => x.ParentId == folder.Id).ToListAsync();
                 if (sublist.Any())
                 {
                     foreach (var subfolder in sublist)
@@ -233,7 +262,44 @@ namespace eFormAPI.Web.Services
                         await DeleteChildren(subfolder.Id);
                     }
                 }
+                await core.FolderDelete(folder.Id);
             }
+        }
+
+        private static IQueryable<FolderModel> AddSelectToQueryForRead(IQueryable<Folder> query)
+        {
+            return query.Select(x => new FolderModel
+            {
+                Id = x.Id,
+                ParentId = x.ParentId,
+                Translations = x.FolderTranslations
+                    .Where(y => y.WorkflowState != Constants.WorkflowStates.Removed)
+                    .OrderBy(y => y.LanguageId)
+                    .Select(y => new FolderTranslationModel
+                    {
+                        Name = y.Name,
+                        Description = y.Description,
+                        LanguageId = y.LanguageId,
+                    }).ToList()
+            });
+        }
+
+        private static IQueryable<FolderDtoModel> AddSelectToQueryForList(IQueryable<Folder> query, int languageId)
+        {
+            return query.Select(x => new FolderDtoModel
+            {
+                Id = x.Id,
+                CreatedAt = x.CreatedAt,
+                Description = x.FolderTranslations
+                    .First(y => y.LanguageId == languageId)
+                    .Description,
+                MicrotingUId = x.MicrotingUid,
+                Name = x.FolderTranslations
+                    .First(y => y.LanguageId == languageId)
+                    .Name,
+                ParentId = x.ParentId,
+                UpdatedAt = x.UpdatedAt,
+            });
         }
     }
 }

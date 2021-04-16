@@ -39,6 +39,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microting.eForm.Dto;
+using Microting.eForm.Infrastructure.Data.Entities;
 using Microting.eForm.Infrastructure.Models;
 using Microting.eFormApi.BasePn.Abstractions;
 using Microting.eFormApi.BasePn.Infrastructure.Helpers;
@@ -62,9 +63,11 @@ namespace eFormAPI.Web.Controllers.Eforms
         private readonly IEformExcelExportService _eformExcelExportService;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly BaseDbContext _dbContext;
+        private readonly IUserService _userService;
 
         public TemplateFilesController(IEFormCoreService coreHelper,
             ILocalizationService localizationService,
+            IUserService userService,
             IEformPermissionsService permissionsService,
             IEformExcelExportService eformExcelExportService,
             BaseDbContext dbContext,
@@ -72,6 +75,7 @@ namespace eFormAPI.Web.Controllers.Eforms
         {
             _coreHelper = coreHelper;
             _dbContext = dbContext;
+            _userService = userService;
             _localizationService = localizationService;
             _permissionsService = permissionsService;
             _eformExcelExportService = eformExcelExportService;
@@ -95,6 +99,8 @@ namespace eFormAPI.Web.Controllers.Eforms
             CultureInfo cultureInfo = new CultureInfo("de-DE");
             var value = _httpContextAccessor?.HttpContext.User?.FindFirstValue(ClaimTypes.NameIdentifier);
             var timeZone = _dbContext.Users.Single(x => x.Id == int.Parse(value)).TimeZone;
+            var locale = await _userService.GetCurrentUserLocale();
+            Language language = core.DbContextHelper.GetDbContext().Languages.Single(x => x.LanguageCode.ToLower() == locale.ToLower());
             if (string.IsNullOrEmpty(timeZone))
             {
                 timeZone = "Europe/Copenhagen";
@@ -115,13 +121,13 @@ namespace eFormAPI.Web.Controllers.Eforms
             {
                 fullPath = await core.CasesToCsv(id, DateTime.Parse(start), DateTime.Parse(end), filePath,
                     $"{await core.GetSdkSetting(Settings.httpServerAddress)}/" + "api/template-files/get-image/", ",",
-                    "", utcTime, cultureInfo, timeZoneInfo);
+                    "", utcTime, cultureInfo, timeZoneInfo, language);
             }
             else
             {
                 fullPath = await core.CasesToCsv(id, null, null, filePath,
                     $"{await core.GetSdkSetting(Settings.httpServerAddress)}/" + "api/template-files/get-image/", ",",
-                    "", utcTime, cultureInfo, timeZoneInfo);
+                    "", utcTime, cultureInfo, timeZoneInfo, language);
             }
 
             var fileStream = new FileStream(fullPath, FileMode.Open, FileAccess.Read);
@@ -156,7 +162,15 @@ namespace eFormAPI.Web.Controllers.Eforms
             }
 
             var result = await _eformExcelExportService.EformExport(excelModel);
-            return new FileStreamResult(result.Model, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            if (result.Model == null)
+            {
+                return new NotFoundResult();
+            }
+            else
+            {
+                return new FileStreamResult(result.Model,
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            }
         }
 
         private async Task<IActionResult> GetFile(string fileName, string ext, string fileType, string noCache = "noCache")
@@ -310,6 +324,8 @@ namespace eFormAPI.Web.Controllers.Eforms
             try
             {
                 var core = await _coreHelper.GetCore();
+                var locale = await _userService.GetCurrentUserLocale();
+                var language = core.DbContextHelper.GetDbContext().Languages.Single(x => x.LanguageCode.ToLower() == locale.ToLower());
 
                 // Fix for broken SDK not handling empty customXmlContent well
                 string customXmlContent = new XElement("FillerElement",
@@ -317,7 +333,7 @@ namespace eFormAPI.Web.Controllers.Eforms
 
                 var filePath = await core.CaseToPdf(caseId, templateId.ToString(),
                     DateTime.Now.ToString("yyyyMMddHHmmssffff"),
-                    $"{core.GetSdkSetting(Settings.httpServerAddress)}/" + "api/template-files/get-image/", fileType, customXmlContent);
+                    $"{core.GetSdkSetting(Settings.httpServerAddress)}/" + "api/template-files/get-image/", fileType, customXmlContent, language);
                 //DateTime.Now.ToString("yyyyMMddHHmmssffff"), $"{core.GetHttpServerAddress()}/" + "api/template-files/get-image?&filename=");
                 if (!System.IO.File.Exists(filePath))
                 {
@@ -349,7 +365,9 @@ namespace eFormAPI.Web.Controllers.Eforms
                 var core = await _coreHelper.GetCore();
                 var caseId = await core.CaseReadFirstId(templateId, "not_revmoed");
                 CaseDto caseDto = await core.CaseLookupCaseId((int)caseId);
-                ReplyElement replyElement = await core.CaseRead((int)caseDto.MicrotingUId, (int)caseDto.CheckUId);
+                var locale = await _userService.GetCurrentUserLocale();
+                Language language = core.DbContextHelper.GetDbContext().Languages.Single(x => x.LanguageCode.ToLower() == locale.ToLower());
+                ReplyElement replyElement = await core.CaseRead((int)caseDto.MicrotingUId, (int)caseDto.CheckUId, language).ConfigureAwait(false);
                 if (caseId != null)
                 {
                     var filePath = await core.CaseToJasperXml(caseDto, replyElement, (int)caseId,
@@ -401,22 +419,14 @@ namespace eFormAPI.Web.Controllers.Eforms
                 }
 
                 var saveFolder =
-                    Path.Combine(await core.GetSdkSetting(Settings.fileLocationJasper),
-                        Path.Combine("templates", templateId.ToString()));
+                    Path.Combine(Path.GetTempPath(), "templates", templateId.ToString());
 
                 var zipArchiveFolder =
-                    Path.Combine(await core.GetSdkSetting(Settings.fileLocationJasper),
-                        Path.Combine("templates", Path.Combine("zip-archives", templateId.ToString())));
+                    Path.Combine(Path.GetTempPath(), "templates", Path.Combine("zip-archives", templateId.ToString()));
 
-                if (!Directory.Exists(Path.GetDirectoryName(saveFolder)))
-                {
-                    Directory.CreateDirectory(Path.GetDirectoryName(saveFolder));
-                }
+                Directory.CreateDirectory(Path.GetDirectoryName(saveFolder));
 
-                if (!Directory.Exists(Path.GetDirectoryName(zipArchiveFolder)))
-                {
-                    Directory.CreateDirectory(Path.GetDirectoryName(zipArchiveFolder));
-                }
+                Directory.CreateDirectory(Path.GetDirectoryName(zipArchiveFolder));
 
                 var filePath = Path.Combine(zipArchiveFolder, Path.GetFileName(uploadModel.File.FileName));
 
@@ -448,59 +458,60 @@ namespace eFormAPI.Web.Controllers.Eforms
                         var fastZip = new FastZip();
                         // Will always overwrite if target filenames already exist
                         fastZip.ExtractZip(filePath, extractPath, null);
-                        string reportType = "";
-                        bool statusOk = false;
-                        
-                        using (var dbContext = core.dbContextHelper.GetDbContext())
+
+                        await using var dbContext = core.DbContextHelper.GetDbContext();
+                        var compactPath = Path.Combine(extractPath, "compact");
+
+                        if (Directory.GetFiles(compactPath, "*.jrxml").Length != 0)
                         {
-                            var compactPath = Path.Combine(extractPath, "compact");
-
-                            if (Directory.GetFiles(compactPath, "*.jrxml").Length != 0)
+                            var cl = await dbContext.CheckLists.SingleAsync(x => x.Id == templateId);
+                            cl.JasperExportEnabled = true;
+                            cl.DocxExportEnabled = false;
+                            await cl.Update(dbContext);
+                            foreach (var file in Directory.GetFiles(extractPath, "*.jasper"))
                             {
-                                var cl = await dbContext.check_lists.SingleAsync(x => x.Id == templateId);
-                                cl.JasperExportEnabled = true;
-                                cl.DocxExportEnabled = false;
-                                await cl.Update(dbContext);
-                                foreach (var file in Directory.GetFiles(extractPath, "*.jasper"))
-                                {
-                                    System.IO.File.Delete(file);
-                                }
-
-                                reportType = "jasper";
-
-                                statusOk = true;
-                            }
-                            if (Directory.GetFiles(compactPath, "*.docx").Length != 0)
-                            {
-                                var cl = await dbContext.check_lists.SingleAsync(x => x.Id == templateId);
-                                cl.JasperExportEnabled = false;
-                                cl.DocxExportEnabled = true;
-                                await cl.Update(dbContext);
-
-                                reportType = "docx";
-
-                                statusOk = true;
+                                System.IO.File.Delete(file);
                             }
 
-                            var files = Directory.GetFiles(compactPath, "*.xlsx");
-                            if (files.Length != 0)
+                            if (core.GetSdkSetting(Settings.swiftEnabled).Result.ToLower() == "true" ||
+                                core.GetSdkSetting(Settings.s3Enabled).Result.ToLower() == "true")
                             {
-                                var cl = await dbContext.check_lists.SingleAsync(x => x.Id == templateId);
-                                cl.ExcelExportEnabled = true;
-                                await cl.Update(dbContext);
-
-                                reportType = "xlxs";
-
-                                statusOk = true;
+                                await core.PutFileToStorageSystem(filePath,
+                                    $"{templateId}_jasper_{uploadModel.File.FileName}");
                             }
+                            return Ok();
+                        }
+                        if (Directory.GetFiles(compactPath, "*.docx").Length != 0)
+                        {
+                            var cl = await dbContext.CheckLists.SingleAsync(x => x.Id == templateId);
+                            cl.JasperExportEnabled = false;
+                            cl.DocxExportEnabled = true;
+                            await cl.Update(dbContext);
+                            if (core.GetSdkSetting(Settings.swiftEnabled).Result.ToLower() == "true" ||
+                                core.GetSdkSetting(Settings.s3Enabled).Result.ToLower() == "true")
+                            {
+                                await core.PutFileToStorageSystem(Path.Combine(compactPath, $"{templateId}.docx"),
+                                    $"{templateId}.docx");
+                                System.IO.File.Delete(Path.Combine(compactPath, $"{templateId}.docx"));
+                            }
+
+                            return Ok();
                         }
 
-                        if (statusOk)
+                        var files = Directory.GetFiles(compactPath, "*.xlsx");
+                        if (files.Length != 0)
                         {
-                            if (core.GetSdkSetting(Settings.swiftEnabled).Result.ToLower() == "true" || core.GetSdkSetting(Settings.s3Enabled).Result.ToLower() == "true")
+                            var cl = await dbContext.CheckLists.SingleAsync(x => x.Id == templateId);
+                            cl.ExcelExportEnabled = true;
+                            await cl.Update(dbContext);
+                            if (core.GetSdkSetting(Settings.swiftEnabled).Result.ToLower() == "true" ||
+                                core.GetSdkSetting(Settings.s3Enabled).Result.ToLower() == "true")
                             {
-                                await core.PutFileToStorageSystem(filePath, $"{templateId}_{reportType}_{uploadModel.File.FileName}");
+                                await core.PutFileToStorageSystem(Path.Combine(compactPath, $"{templateId}.xlsx"),
+                                    $"{templateId}.xlsx");
+                                System.IO.File.Delete(Path.Combine(compactPath, $"{templateId}.xlsx"));
                             }
+
                             return Ok();
                         }
                     }

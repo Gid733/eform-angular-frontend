@@ -34,6 +34,7 @@ using eFormAPI.Web.Infrastructure.Models.Cases.Request;
 using eFormAPI.Web.Infrastructure.Models.Cases.Response;
 using Microsoft.AspNetCore.Http;
 using Microting.eForm.Infrastructure.Constants;
+using Microting.eForm.Infrastructure.Data.Entities;
 using Microting.eForm.Infrastructure.Models;
 using Microting.eFormApi.BasePn.Abstractions;
 using Microting.eFormApi.BasePn.Infrastructure.Models.API;
@@ -47,14 +48,17 @@ namespace eFormAPI.Web.Services
         private readonly IEFormCoreService _coreHelper;
         private readonly ILocalizationService _localizationService;
         private readonly BaseDbContext _dbContext;
+        private readonly IUserService _userService;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         public CasesService(IEFormCoreService coreHelper,
+            IUserService userService,
             ILocalizationService localizationService, BaseDbContext dbContext,
             IHttpContextAccessor httpContextAccessor)
         {
             _coreHelper = coreHelper;
             _dbContext = dbContext;
+            _userService = userService;
             _localizationService = localizationService;
             _httpContextAccessor = httpContextAccessor;
         }
@@ -109,7 +113,9 @@ namespace eFormAPI.Web.Services
                 var caseDto = await core.CaseReadByCaseId(id);
                 var microtingUId = caseDto.MicrotingUId;
                 var microtingCheckUId = caseDto.CheckUId;
-                var theCase = await core.CaseRead((int)microtingUId, (int)microtingCheckUId);
+                var locale = await _userService.GetCurrentUserLocale();
+                Language language = core.DbContextHelper.GetDbContext().Languages.Single(x => x.LanguageCode.ToLower() == locale.ToLower());
+                var theCase = await core.CaseRead((int)microtingUId, (int)microtingCheckUId, language);
                 theCase.Id = id;
 
                 return !theCase.Equals(null)
@@ -147,6 +153,8 @@ namespace eFormAPI.Web.Services
             var checkListValueList = new List<string>();
             var fieldValueList = new List<string>();
             var core = await _coreHelper.GetCore();
+            var locale = await _userService.GetCurrentUserLocale();
+            var language = core.DbContextHelper.GetDbContext().Languages.Single(x => x.LanguageCode.ToLower() == locale.ToLower());
             try
             {
                 model.ElementList.ForEach(element =>
@@ -165,7 +173,7 @@ namespace eFormAPI.Web.Services
             try
             {
                 await core.CaseUpdate(model.Id, fieldValueList, checkListValueList);
-                await core.CaseUpdateFieldValues(model.Id);
+                await core.CaseUpdateFieldValues(model.Id, language);
 
                 if (CaseUpdateDelegates.CaseUpdateDelegate != null)
                 {

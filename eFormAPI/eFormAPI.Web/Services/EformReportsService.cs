@@ -21,24 +21,25 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using eFormAPI.Web.Abstractions;
-using eFormAPI.Web.Abstractions.Eforms;
-using eFormAPI.Web.Infrastructure.Database;
-using eFormAPI.Web.Infrastructure.Helpers;
-using eFormAPI.Web.Infrastructure.Models.Reports;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using Microting.eForm.Infrastructure.Models;
-using Microting.eFormApi.BasePn.Abstractions;
-using Microting.eFormApi.BasePn.Infrastructure.Models.API;
+
 
 namespace eFormAPI.Web.Services
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+    using Abstractions;
+    using Abstractions.Eforms;
+    using Infrastructure.Database;
+    using Infrastructure.Helpers;
+    using Infrastructure.Models.Reports;
+    using Microsoft.EntityFrameworkCore;
+    using Microsoft.Extensions.Logging;
+    using Microting.eForm.Infrastructure.Models;
+    using Microting.eFormApi.BasePn.Abstractions;
+    using Microting.eFormApi.BasePn.Infrastructure.Models.API;
     using Infrastructure.Database.Entities.Reports;
 
     public class EformReportsService : IEformReportsService
@@ -46,10 +47,14 @@ namespace eFormAPI.Web.Services
         private readonly IEFormCoreService _coreHelper;
         private readonly ILocalizationService _localizationService;
         private readonly BaseDbContext _dbContext;
+        private readonly IUserService _userService;
+        //private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<EformReportsService> _logger;
 
         public EformReportsService(
             IEFormCoreService coreHelper,
+            IUserService userService,
+            //IHttpContextAccessor httpContextAccessor,
             ILocalizationService localizationService,
             BaseDbContext dbContext,
             ILogger<EformReportsService> logger)
@@ -58,6 +63,8 @@ namespace eFormAPI.Web.Services
             _localizationService = localizationService;
             _dbContext = dbContext;
             _logger = logger;
+            //_httpContextAccessor = httpContextAccessor;
+            _userService = userService;
         }
 
         private static List<EformReportElementModel> GetReportElementsList(BaseDbContext dbContext,
@@ -72,7 +79,7 @@ namespace eFormAPI.Web.Services
             var elements = new List<Element>();
             var dataElements = new List<DataElement>();
             var groupElements = new List<GroupElement>();
-            
+
             var item = elementList.FirstOrDefault();
             if (item != null)
             {
@@ -127,11 +134,11 @@ namespace eFormAPI.Web.Services
                         .Select(y => y.Label)
                         .FirstOrDefault(),
                     ElementList = GetReportElementsList(dbContext, x,
-                        (List<object>) groupElements.Where(y => y.Id == x.ElementId)
+                        groupElements.Where(y => y.Id == x.ElementId)
                             .Select(y => new List<object>(y.ElementList))
                             .FirstOrDefault()),
                     DataItemList = GetReportDataItemList(dbContext, x, null,
-                        (List<object>) dataElements.Where(y => y.Id == x.ElementId)
+                        dataElements.Where(y => y.Id == x.ElementId)
                             .Select(y => new List<object>(y.DataItemList))
                             .FirstOrDefault()),
                 }).ToList();
@@ -294,7 +301,11 @@ namespace eFormAPI.Web.Services
             {
                 var result = new EformReportFullModel();
                 var core = await _coreHelper.GetCore();
-                MainElement template = await core.TemplateRead(templateId);
+                await using var dbContext = core.DbContextHelper.GetDbContext();
+
+                var localeString = await _userService.GetCurrentUserLocale();
+                var language = dbContext.Languages.Single(x => string.Equals(x.LanguageCode, localeString, StringComparison.CurrentCultureIgnoreCase));
+                var template = await core.ReadeForm(templateId, language);
                 if (template == null)
                 {
                     return new OperationDataResult<EformReportFullModel>(false,
@@ -415,66 +426,66 @@ namespace eFormAPI.Web.Services
             try
             {
                 //using (var transaction = await _dbContext.Database.BeginTransactionAsync())
-//                {
-                    try
-                    {
-                        var eformReport = _dbContext.EformReports
-                            .FirstOrDefault(x => x.Id == requestModel.EformReport.Id);
+                //                {
+                //try
+                //{
+                var eformReport = _dbContext.EformReports
+                    .FirstOrDefault(x => x.Id == requestModel.EformReport.Id);
 
-                        if (eformReport == null)
-                        {
-                            return new OperationResult(false,
-                                _localizationService.GetString("EformReportNotFound"));
-                        }
-
-                        eformReport.Description = requestModel.EformReport.Description;
-                        if (!string.IsNullOrEmpty(requestModel.EformReport.HeaderImage))
-                        {
-                            eformReport.HeaderImage = Encoding.UTF8.GetBytes(requestModel.EformReport.HeaderImage);
-                        }
-
-                        eformReport.HeaderVisibility = requestModel.EformReport.HeaderVisibility;
-                        eformReport.IsDateVisible = requestModel.EformReport.IsDateVisible;
-                        eformReport.IsWorkerNameVisible = requestModel.EformReport.IsWorkerNameVisible;
-
-                        _dbContext.EformReports.Update(eformReport);
-                        await _dbContext.SaveChangesAsync();
-
-                        var elementList = requestModel.EformMainElement?.ElementList;
-                        if (elementList == null)
-                        {
-                            return new OperationResult(false,
-                                _localizationService.GetString("ElementListNotProvided"));
-                        }
-
-                        var dataItems = ParseElements(elementList);
-                        if (dataItems.Any())
-                        {
-                            var dataItemsIds = dataItems.Select(x => x.Id).ToArray();
-                            var eformDataItems = await _dbContext.EformReportDataItems
-                                .Where(x => dataItemsIds.Contains(x.Id)).ToListAsync();
-
-                            foreach (var eformDataItem in eformDataItems)
-                            {
-                                var dataItem = dataItems.FirstOrDefault(x => x.Id == eformDataItem.Id);
-                                if (dataItem != null)
-                                {
-                                    eformDataItem.Position = dataItem.Position;
-                                    eformDataItem.Visibility = dataItem.Visibility;
-                                    _dbContext.EformReportDataItems.Update(eformDataItem);
-                                }
-                            }
-
-                            await _dbContext.SaveChangesAsync();
-                        }
-
-                        //transaction.Commit();
+                if (eformReport == null)
+                {
+                    return new OperationResult(false,
+                        _localizationService.GetString("EformReportNotFound"));
                 }
-                    catch (Exception)
+
+                eformReport.Description = requestModel.EformReport.Description;
+                if (!string.IsNullOrEmpty(requestModel.EformReport.HeaderImage))
+                {
+                    eformReport.HeaderImage = Encoding.UTF8.GetBytes(requestModel.EformReport.HeaderImage);
+                }
+
+                eformReport.HeaderVisibility = requestModel.EformReport.HeaderVisibility;
+                eformReport.IsDateVisible = requestModel.EformReport.IsDateVisible;
+                eformReport.IsWorkerNameVisible = requestModel.EformReport.IsWorkerNameVisible;
+
+                _dbContext.EformReports.Update(eformReport);
+                await _dbContext.SaveChangesAsync();
+
+                var elementList = requestModel.EformMainElement?.ElementList;
+                if (elementList == null)
+                {
+                    return new OperationResult(false,
+                        _localizationService.GetString("ElementListNotProvided"));
+                }
+
+                var dataItems = ParseElements(elementList);
+                if (dataItems.Any())
+                {
+                    var dataItemsIds = dataItems.Select(x => x.Id).ToArray();
+                    var eformDataItems = await _dbContext.EformReportDataItems
+                        .Where(x => dataItemsIds.Contains(x.Id)).ToListAsync();
+
+                    foreach (var eformDataItem in eformDataItems)
                     {
-                        //transaction.Rollback();
-                        throw;
+                        var dataItem = dataItems.FirstOrDefault(x => x.Id == eformDataItem.Id);
+                        if (dataItem != null)
+                        {
+                            eformDataItem.Position = dataItem.Position;
+                            eformDataItem.Visibility = dataItem.Visibility;
+                            _dbContext.EformReportDataItems.Update(eformDataItem);
+                        }
                     }
+
+                    await _dbContext.SaveChangesAsync();
+                }
+
+                //transaction.Commit();
+                //}
+                //catch (Exception)
+                //{
+                //transaction.Rollback();
+                //    throw;
+                //}
                 //}
 
                 return new OperationResult(true,

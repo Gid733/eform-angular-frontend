@@ -11,12 +11,12 @@ exports.config = {
   // directory is where your package.json resides, so `wdio` will be called from there.
   //
   specs: [
+    // 'e2e/Tests/main-page-eforms/my-eforms.delete-eform.spec.ts',
     'e2e/Tests/main-page-eforms/my-eforms.create-eform.spec.ts',
     'e2e/Tests/main-page-eforms/my-eforms.sort-eform.spec.ts',
     'e2e/Tests/main-page-eforms/my-eforms.filter-eform.spec.ts',
     // 'e2e/Tests/main-page-eforms/my-eforms.tags-eform.spec.ts',
     // 'e2e/Tests/main-page-eforms/my-eforms.pairing-eform.spec.ts',
-    // 'e2e/Tests/main-page-eforms/my-eforms.delete-eform.spec.ts',
   ],
   suites: {
     settings: [
@@ -54,7 +54,7 @@ exports.config = {
     // maxInstances can get overwritten per capability. So if you have an in-house Selenium
     // grid with only 5 firefox instances available you can make sure that not more than
     // 5 instances get started at a time.
-    maxInstances: 5,
+    maxInstances: 1,
     //
     browserName: 'chrome',
     'goog:chromeOptions': {
@@ -155,7 +155,7 @@ exports.config = {
   // See the full list at http://mochajs.org/
   mochaOpts: {
     ui: 'bdd',
-    require: 'ts-node/register',
+    //require: 'ts-node/register',
     compilers: ['tsconfig-paths/register'],
     timeout: 60000
   },
@@ -190,7 +190,7 @@ exports.config = {
    * @param {Array.<String>} specs List of spec file paths that are to be run
    */
   before: function () {
-    require('ts-node/register');
+    //require('ts-node/register');
     browser.timeouts('implicit', 5000);
   },
   /**
@@ -229,7 +229,7 @@ exports.config = {
    * Function to be executed after a test (in Mocha/Jasmine) or a step (in Cucumber) ends.
    * @param {Object} test test details
    */
-  afterTest(test, context, { error, result, duration, passed, retries }) {
+  afterTest: function (test, context, { error, result, duration, passed, retries }) {
     const path = require('path');
 
     // if test passed, ignore, else take and save screenshot.

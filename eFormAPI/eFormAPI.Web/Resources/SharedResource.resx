@@ -499,7 +499,7 @@
     <value>Invalid tag id</value>
   </data>
   <data name="InvalidTagName" xml:space="preserve">
-    <value>Ugyldigt tagnavn</value>
+    <value>Invalid tag name</value>
   </data>
   <data name="SavedTagNotFound" xml:space="preserve">
     <value>Saved tag not found</value>
@@ -511,7 +511,7 @@
     <value>Advanced</value>
   </data>
   <data name="ApplicationSettings" xml:space="preserve">
-    <value>Application Settings</value>
+    <value>Application settings</value>
   </data>
   <data name="ChangePassword" xml:space="preserve">
     <value>Change Password</value>
@@ -526,7 +526,7 @@
     <value>My eForms</value>
   </data>
   <data name="SearchableList" xml:space="preserve">
-    <value>Searchable List</value>
+    <value>Searchable list</value>
   </data>
   <data name="Security" xml:space="preserve">
     <value>Security</value>
@@ -586,7 +586,7 @@
     <value>It's not possible to change role for primary admin</value>
   </data>
   <data name="RoleNotFound" xml:space="preserve">
-    <value>Role not fond</value>
+    <value>Role not found</value>
   </data>
   <data name="ErrorWhileExecutingPluginInstall" xml:space="preserve">
     <value>Error while executing plugin install</value>
@@ -607,7 +607,7 @@
     <value>Tag updated successfully</value>
   </data>
   <data name="EmailRecipients" xml:space="preserve">
-    <value>Email Recipients</value>
+    <value>Email recipients</value>
   </data>
   <data name="EmailRecipientCreatedSuccessfully" xml:space="preserve">
     <value>Email recipient created successfully</value>
@@ -716,5 +716,23 @@
   </data>
   <data name="EFormWithNameAlreadyExistsInTheImportedDocument" xml:space="preserve">
     <value>eForm with name {0} already exists in the imported document</value>
+  </data>
+  <data name="CasesNotFound" xml:space="preserve">
+    <value>Cases not found</value>
+  </data>
+  <data name="ErrorWhileGeneratingReportFile" xml:space="preserve">
+    <value>Error while generating report file</value>
+  </data>
+  <data name="CaseId" xml:space="preserve">
+    <value>Case id</value>
+  </data>
+  <data name="CreatedAt" xml:space="preserve">
+    <value>Created At</value>
+  </data>
+  <data name="DoneBy" xml:space="preserve">
+    <value>Done by</value>
+  </data>
+  <data name="ReportPeriod" xml:space="preserve">
+    <value>Report period</value>
   </data>
 </root>

@@ -1,8 +1,5 @@
-import {PageWithNavbarPage} from './PageWithNavbar.page';
-import myEformsPage from './MyEforms.page';
-import {Guid} from 'guid-typescript';
-import {expect} from 'chai';
-import {DeviceUsersRowObject} from './DeviceUsers.page';
+import { PageWithNavbarPage } from './PageWithNavbar.page';
+import { applicationLanguages } from 'src/app/common/const';
 
 class FoldersPage extends PageWithNavbarPage {
   constructor() {
@@ -13,40 +10,140 @@ class FoldersPage extends PageWithNavbarPage {
     return $('#newFolderBtn');
   }
 
-  public get createNameInput() {
-    return $('#name');
+  public createNameInput(translationIndex: number) {
+    return $(`#createFolderNameTranslation_${translationIndex}`);
   }
 
-  public get createDescriptionInput() {
-    return $('#description');
+  public createDescription(translationIndex: number) {
+    return $(`#createFolderDescriptionTranslation_${translationIndex}`);
+  }
+
+  public createDescriptionInput(translationIndex: number) {
+    return this.createDescription(translationIndex).$('.pell-content');
+  }
+
+  public createDescriptionInputPellBold(translationIndex: number) {
+    const ele = this.createDescription(translationIndex).$(
+      'button[title="Bold"]'
+    );
+    ele.waitForDisplayed({ timeout: 20000 });
+    ele.waitForClickable({ timeout: 20000 });
+    return ele;
+  }
+
+  public createDescriptionInputPellUnderline(translationIndex: number) {
+    const ele = this.createDescription(translationIndex).$(
+      'button[title="Underline"]'
+    );
+    ele.waitForDisplayed({ timeout: 20000 });
+    ele.waitForClickable({ timeout: 20000 });
+    return ele;
+  }
+
+  public createDescriptionInputPellItalic(translationIndex: number) {
+    const ele = this.createDescription(translationIndex).$(
+      'button[title="Italic"]'
+    );
+    ele.waitForDisplayed({ timeout: 20000 });
+    ele.waitForClickable({ timeout: 20000 });
+    return ele;
+  }
+
+  public createDescriptionInputPellStrikeThrough(translationIndex: number) {
+    const ele = this.createDescription(translationIndex).$(
+      'button[title="Strike-through"]'
+    );
+    ele.waitForDisplayed({ timeout: 20000 });
+    ele.waitForClickable({ timeout: 20000 });
+    return ele;
+  }
+
+  public editDescriptionInputPellBold(translationIndex: number) {
+    const ele = this.editDescription(translationIndex).$(
+      'button[title="Bold"]'
+    );
+    ele.waitForDisplayed({ timeout: 20000 });
+    ele.waitForClickable({ timeout: 20000 });
+    return ele;
+  }
+
+  public editDescriptionInputPellUnderline(translationIndex: number) {
+    const ele = this.editDescription(translationIndex).$(
+      'button[title="Underline"]'
+    );
+    ele.waitForDisplayed({ timeout: 20000 });
+    ele.waitForClickable({ timeout: 20000 });
+    return ele;
+  }
+
+  public editDescriptionInputPellItalic(translationIndex: number) {
+    const ele = this.editDescription(translationIndex).$(
+      'button[title="Italic"]'
+    );
+    ele.waitForDisplayed({ timeout: 20000 });
+    ele.waitForClickable({ timeout: 20000 });
+    return ele;
+  }
+
+  public editDescriptionInputPellStrikeThrough(translationIndex: number) {
+    const ele = this.editDescription(translationIndex).$(
+      'button[title="Strike-through"]'
+    );
+    ele.waitForDisplayed({ timeout: 20000 });
+    ele.waitForClickable({ timeout: 20000 });
+    return ele;
   }
 
   public get saveCreateBtn() {
-    return $('#folderSaveBtn');
+    const ele = $('#folderSaveBtn');
+    ele.waitForDisplayed({ timeout: 20000 });
+    return ele;
   }
 
   public get cancelCreateBtn() {
-    return $('#cancelCreateBtn');
+    const cancelCreateBtn = $('#cancelCreateBtn');
+    cancelCreateBtn.waitForDisplayed({ timeout: 20000 });
+    cancelCreateBtn.waitForClickable({ timeout: 20000 });
+    return cancelCreateBtn;
   }
 
   public get saveDeleteBtn() {
-    $('#saveDeleteBtn').waitForDisplayed({timeout: 20000});
-    $('#saveDeleteBtn').waitForClickable({timeout: 20000});
-    return $('#saveDeleteBtn');
+    const saveDeleteBtn = $('#saveDeleteBtn');
+    saveDeleteBtn.waitForDisplayed({ timeout: 20000 });
+    // saveDeleteBtn.waitForClickable({timeout: 20000});
+    return saveDeleteBtn;
   }
 
   public get cancelDeleteBtn() {
-    $('#cancelDeleteBtn').waitForDisplayed({timeout: 20000});
-    $('#cancelDeleteBtn').waitForClickable({timeout: 20000});
-    return $('#cancelDeleteBtn');
+    const ele = $('#cancelDeleteBtn');
+    ele.waitForDisplayed({ timeout: 20000 });
+    ele.waitForClickable({ timeout: 20000 });
+    return ele;
   }
 
-  public get editNameInput() {
-    return $('#editNameInput');
+  public editNameInput(translationIndex: number) {
+    const ele = $(`#editFolderNameTranslation_${translationIndex}`);
+    ele.waitForDisplayed({ timeout: 20000 });
+    return ele;
   }
 
-  public get editDescriptionInput() {
-    return $('#editDescriptionInput');
+  public editDescription(translationIndex: number) {
+    const ele = $(`#editFolderDescriptionTranslation_${translationIndex}`);
+    ele.waitForDisplayed({ timeout: 20000 });
+    return ele;
+  }
+
+  public editDescriptionInput(translationIndex: number) {
+    const ele = this.editDescription(translationIndex).$('.pell-content');
+    ele.waitForDisplayed({ timeout: 20000 });
+    return ele;
+  }
+
+  public get createLanguageSelector() {
+    const ele = $('#createLanguageSelector');
+    ele.waitForDisplayed({ timeout: 20000 });
+    ele.waitForClickable({ timeout: 20000 });
+    return ele;
   }
 
   public get saveEditBtn() {
@@ -58,8 +155,10 @@ class FoldersPage extends PageWithNavbarPage {
   }
 
   public get rowNum(): number {
-    browser.pause(500);
-    return $$('#tableBody > tr').length;
+    if (!$('#folderTreeId').isExisting()) {
+      browser.pause(500);
+    }
+    return $$('#folderTreeId').length;
   }
 
   public get rowNumParents(): number {
@@ -67,95 +166,138 @@ class FoldersPage extends PageWithNavbarPage {
     return $$('#folderTreeName').length;
   }
 
+  public get rowChildrenNum() {
+    return $$('.tree-node-level-2').length;
+  }
+
+  public get editLanguageSelector() {
+    const ele = $('#editLanguageSelector');
+    ele.waitForDisplayed({ timeout: 20000 });
+    ele.waitForClickable({ timeout: 20000 });
+    return ele;
+  }
+
   getFolder(num): FoldersRowObject {
     return new FoldersRowObject(num);
   }
 
-  getFolderFromTree(num): FoldersTreeRowObject {
-    return new FoldersTreeRowObject(num);
+  getFolderByName(nameFolder: string): FoldersRowObject {
+    browser.pause(500);
+    for (let i = 1; i < this.rowNum + 1; i++) {
+      const folder = new FoldersRowObject(i);
+      if (folder.name === nameFolder) {
+        return folder;
+      }
+    }
+    return null;
   }
 
-  public createNewFolder(name: string, description: string) {
+  getFolderRowNumByName(nameFolder: string): number {
+    for (let i = 1; i < this.rowNum + 1; i++) {
+      const folder = new FoldersRowObject(i);
+      if (folder.name === nameFolder) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  getFolderFromTree(numParent, numChild): FoldersTreeRowObject {
+    return new FoldersTreeRowObject(numParent, numChild);
+  }
+
+  public createNewFolder(
+    name: string | { name: string; language: string }[],
+    description: string | { description: string; language: string }[],
+    clickCancel = false
+  ) {
+    this.openCreateFolder(name, description);
+    this.closeCreateFolder(clickCancel);
+  }
+
+  public openCreateFolder(
+    name?: string | Array<{ name: string; language: string }>,
+    description?: string | Array<{ description: string; language: string }>
+  ) {
     this.newFolderBtn.click();
-    $('#name').waitForDisplayed({timeout: 10000});
-    this.createNameInput.setValue(name);
-    this.createDescriptionInput.setValue(description);
-    this.saveCreateBtn.click();
-    $('#spinner-animation').waitForDisplayed({timeout: 90000, reverse: true});
-    $('#newFolderBtn').waitForDisplayed({timeout: 20000});
+    this.cancelCreateBtn.waitForDisplayed({ timeout: 10000 });
+    if (name) {
+      if (typeof name === typeof '') {
+        const nameConverted = name as string;
+        const da = applicationLanguages[0];
+        this.createLanguageSelector.$('input').setValue(da.text);
+        const value = this.createLanguageSelector.$(`.ng-option=${da.text}`);
+        value.waitForDisplayed({ timeout: 20000 });
+        value.click();
+        this.createNameInput(
+          applicationLanguages.findIndex((x) => x.text === da.text)
+        ).setValue(nameConverted);
+      }
+      if (typeof name === typeof []) {
+        const nameConverted = name as { name: string; language: string }[];
+        for (let i = 0; i > nameConverted.length; i++) {
+          const language = applicationLanguages.find(
+            (x) => x.text === nameConverted[i].language
+          );
+          this.createLanguageSelector.$('input').setValue(language.text);
+          const value = this.createLanguageSelector.$(
+            `.ng-option=${language.text}`
+          );
+          value.waitForDisplayed({ timeout: 20000 });
+          value.click();
+          this.createNameInput(
+            applicationLanguages.findIndex((x) => x.text === language.text)
+          ).setValue(nameConverted[i].name);
+        }
+      }
+    }
+    if (description) {
+      if (typeof description === typeof '') {
+        const descriptionConvert = description as string;
+        const da = applicationLanguages[0];
+        this.createLanguageSelector.$('input').setValue(da.text);
+        const value = this.createLanguageSelector.$(`.ng-option=${da.text}`);
+        value.waitForDisplayed({ timeout: 20000 });
+        value.click();
+        this.createDescriptionInput(
+          applicationLanguages.findIndex((x) => x.text === da.text)
+        ).setValue(descriptionConvert);
+      }
+      if (typeof description === typeof []) {
+        const descriptionConvert = description as {
+          description: string;
+          language: string;
+        }[];
+        for (let i = 0; i > descriptionConvert.length; i++) {
+          const language = applicationLanguages.find(
+            (x) => x.text === descriptionConvert[i].language
+          );
+          this.createLanguageSelector.$('input').setValue(language.text);
+          const value = this.createLanguageSelector.$(
+            `.ng-option=${language.text}`
+          );
+          value.waitForDisplayed({ timeout: 20000 });
+          value.click();
+          this.createDescriptionInput(
+            applicationLanguages.findIndex((x) => x.text === language.text)
+          ).setValue(descriptionConvert[i].description);
+        }
+      }
+    }
   }
 
-  public editFolder(folder: FoldersRowObject, name = '', description = '') {
-    folder.editBtn.click();
-    $('#editNameInput').waitForDisplayed({timeout: 20000});
-    if (name != null) {
-      this.editNameInput.click();
-      this.editNameInput.clearValue();
-      this.editNameInput.setValue(name);
+  closeCreateFolder(clickCancel = false) {
+    if (!clickCancel) {
+      this.saveCreateBtn.waitForClickable({ timeout: 20000 });
+      this.saveCreateBtn.click();
+      $('#spinner-animation').waitForDisplayed({
+        timeout: 90000,
+        reverse: true,
+      });
+    } else {
+      this.cancelCreateBtn.click();
     }
-    if (description != null) {
-      this.editDescriptionInput.click();
-      this.editDescriptionInput.clearValue();
-      this.editDescriptionInput.setValue(description);
-    }
-    this.saveEditBtn.click();
-    $('#newFolderBtn').waitForDisplayed({timeout: 20000});
-  }
-
-  public createFolderChild(rowNum, name = '', description = '') {
-    $$('#folderTreeName')[rowNum - 1].click();
-    $$('#createFolderChildBtn')[0].waitForDisplayed({timeout: 10000});
-    $$('#createFolderChildBtn')[0].click();
-    $('#name').waitForDisplayed({timeout: 10000});
-    this.createNameInput.setValue(name);
-    this.createDescriptionInput.setValue(description);
-    this.saveCreateBtn.click();
-    $('#spinner-animation').waitForDisplayed({timeout: 90000, reverse: true});
-  }
-
-  public deleteFolderChild(parentRowNum: number, childRowToDelete: number) {
-    $$('#folderTreeOpenClose')[parentRowNum - 1].waitForDisplayed({timeout: 10000});
-    $$('#folderTreeOpenClose')[parentRowNum - 1].click();
-    browser.pause(1000);
-    $$('#folderTreeName')[childRowToDelete - 1].waitForDisplayed({timeout: 10000});
-    $$('#folderTreeName')[childRowToDelete - 1].click();
-    $('#deleteFolderTreeBtn').click();
-    this.saveDeleteBtn.click();
-  }
-
-  public editFolderChild(folder: FoldersTreeRowObject, name = '', description = '') {
-    folder.editTreeBtn.click();
-    if (name != null) {
-      this.editNameInput.waitForDisplayed({timeout: 20000});
-      this.editNameInput.click();
-      this.editNameInput.clearValue();
-      this.editNameInput.setValue(name);
-    }
-    if (description != null) {
-      this.editDescriptionInput.waitForDisplayed({timeout: 20000});
-      this.editDescriptionInput.click();
-      this.editDescriptionInput.clearValue();
-      this.editDescriptionInput.setValue(description);
-    }
-    this.saveEditBtn.click();
-    $('#newFolderBtn').waitForDisplayed({timeout: 20000});
-  }
-
-  public editFolderTree(folder: FoldersTreeRowObject, name = '', description = '') {
-    folder.editTreeBtn.click();
-    $('#editNameInput').waitForDisplayed({timeout: 20000});
-    if (name != null) {
-      this.editNameInput.click();
-      this.editNameInput.clearValue();
-      this.editNameInput.setValue(name);
-    }
-    if (description != null) {
-      this.editDescriptionInput.click();
-      this.editDescriptionInput.clearValue();
-      this.editDescriptionInput.setValue(description);
-    }
-    this.saveEditBtn.click();
-    $('#newFolderBtn').waitForDisplayed({timeout: 20000});
+    foldersPage.newFolderBtn.waitForDisplayed({ timeout: 20000 });
   }
 }
 
@@ -164,49 +306,471 @@ export default foldersPage;
 
 export class FoldersRowObject {
   constructor(rowNum) {
-    if ($$('#folderTreeName')[rowNum - 1]) {
-      // this.folderId = $$('#folderId')[rowNum - 1];
+    if ($$('.tree-node-level-1')[rowNum - 1]) {
+      const element = $$('.tree-node-level-1')[rowNum - 1];
       try {
-        this.name = $$('#folderTreeName')[rowNum - 1].getText();
-      } catch (e) {
-      }
+        this.folderElement = element.$('#folderTreeId');
+      } catch (e) {}
       try {
-        this.description = $$('#folderTreeDescription')[rowNum - 1].getText();
-      } catch (e) {
-      }
-      this.editBtn = $$('#editFolderTreeBtn')[rowNum - 1];
-      this.deleteBtn = $$('#deleteFolderTreeBtn')[rowNum - 1];
+        this.name = element.$('#folderTreeName').getText();
+      } catch (e) {}
+      // try {
+      //   this.description = element.$('#folderTreeDescription').getText();
+      // } catch (e) {
+      // }
+      this.folderTreeOpenClose = element.$('#folderTreeOpenClose');
+      this.editBtn = this.folderElement.$('#editFolderTreeBtn');
+      this.deleteBtn = this.folderElement.$('#deleteFolderTreeBtn');
+      this.createFolderChildBtn = this.folderElement.$('#createFolderChildBtn');
     }
   }
 
-  folderId;
+  folderElement;
   name;
-  description;
+  // description;
   editBtn;
   deleteBtn;
+  createFolderChildBtn;
+  folderTreeOpenClose;
+
+  getDescription(): { description: string; language: string }[] {
+    this.openEditModal();
+    const descriptions = new Array<{ description: string; language: string }>();
+
+    for (let i = 0; i < applicationLanguages.length; i++) {
+      const language = applicationLanguages[i];
+      foldersPage.editLanguageSelector.$('input').setValue(language.text);
+      const value = foldersPage.editLanguageSelector.$(
+        `.ng-option=${language.text}`
+      );
+      value.waitForDisplayed({ timeout: 20000 });
+      value.click();
+      descriptions.push({
+        description: foldersPage
+          .editDescriptionInput(
+            applicationLanguages.findIndex((x) => x.text === language.text)
+          )
+          .getText(),
+        language: language.text,
+      });
+    }
+    foldersPage.cancelEditBtn.click();
+    return descriptions;
+  }
+
+  createChild(
+    name?: string | { name: string; language: string }[],
+    description?: string | { description: string; language: string }[],
+    clickCancel = false
+  ) {
+    if (!this.createFolderChildBtn.isExisting()) {
+      this.folderElement.click();
+      this.createFolderChildBtn.waitForDisplayed({ timeout: 20000 });
+    }
+    this.createFolderChildBtn.click();
+    foldersPage.cancelCreateBtn.waitForDisplayed({ timeout: 10000 });
+    if (name) {
+      if (typeof name === typeof '') {
+        const nameConverted = name as string;
+        const da = applicationLanguages[0];
+        foldersPage.createLanguageSelector.$('input').setValue(da.text);
+        const value = foldersPage.createLanguageSelector.$(
+          `.ng-option=${da.text}`
+        );
+        value.waitForDisplayed({ timeout: 20000 });
+        value.click();
+        foldersPage
+          .createNameInput(
+            applicationLanguages.findIndex((x) => x.text === da.text)
+          )
+          .setValue(nameConverted);
+      }
+      if (typeof name === typeof []) {
+        const nameConverted = name as { name: string; language: string }[];
+        for (let i = 0; i > nameConverted.length; i++) {
+          const language = applicationLanguages.find(
+            (x) => x.text === nameConverted[i].language
+          );
+          foldersPage.createLanguageSelector.$('input').setValue(language.text);
+          const value = foldersPage.createLanguageSelector.$(
+            `.ng-option=${language.text}`
+          );
+          value.waitForDisplayed({ timeout: 20000 });
+          value.click();
+          foldersPage
+            .createNameInput(
+              applicationLanguages.findIndex((x) => x.text === language.text)
+            )
+            .setValue(nameConverted[i].name);
+        }
+      }
+    }
+    if (description != null) {
+      if (typeof description === typeof '') {
+        const descriptionConvert = description as string;
+        const da = applicationLanguages[0];
+        foldersPage.createLanguageSelector.$('input').setValue(da.text);
+        const value = foldersPage.createLanguageSelector.$(
+          `.ng-option=${da.text}`
+        );
+        value.waitForDisplayed({ timeout: 20000 });
+        value.click();
+        foldersPage
+          .createDescriptionInput(
+            applicationLanguages.findIndex((x) => x.text === da.text)
+          )
+          .setValue(descriptionConvert);
+      }
+      if (typeof description === typeof []) {
+        const descriptionConvert = description as {
+          description: string;
+          language: string;
+        }[];
+        for (let i = 0; i > descriptionConvert.length; i++) {
+          const language = applicationLanguages.find(
+            (x) => x.text === descriptionConvert[i].language
+          );
+          foldersPage.createLanguageSelector.$('input').setValue(language.text);
+          const value = foldersPage.createLanguageSelector.$(
+            `.ng-option=${language.text}`
+          );
+          value.waitForDisplayed({ timeout: 20000 });
+          value.click();
+          foldersPage
+            .createDescriptionInput(
+              applicationLanguages.findIndex((x) => x.text === language.text)
+            )
+            .setValue(descriptionConvert[i].description);
+        }
+      }
+    }
+    if (!clickCancel) {
+      foldersPage.saveCreateBtn.click();
+      $('#spinner-animation').waitForDisplayed({
+        timeout: 90000,
+        reverse: true,
+      });
+    } else {
+      foldersPage.cancelCreateBtn.click();
+    }
+    foldersPage.newFolderBtn.waitForDisplayed({ timeout: 20000 });
+  }
+
+  delete(clickCancel = false) {
+    if (!this.deleteBtn.isExisting()) {
+      this.folderElement.click();
+      this.deleteBtn.waitForDisplayed({ timeout: 20000 });
+    }
+    this.deleteBtn.click();
+    if (!clickCancel) {
+      foldersPage.saveDeleteBtn.waitForClickable({ timeout: 20000 });
+      foldersPage.saveDeleteBtn.click();
+      $('#spinner-animation').waitForDisplayed({
+        timeout: 2000,
+        reverse: true,
+      });
+    } else {
+      foldersPage.cancelDeleteBtn.waitForDisplayed({ timeout: 20000 });
+      foldersPage.cancelDeleteBtn.click();
+    }
+    foldersPage.newFolderBtn.waitForDisplayed({ timeout: 20000 });
+  }
+
+  openEditModal() {
+    if (!this.editBtn.isExisting()) {
+      this.folderElement.click();
+      this.editBtn.waitForDisplayed({ timeout: 20000 });
+    }
+    this.editBtn.click();
+    foldersPage.cancelEditBtn.waitForDisplayed({ timeout: 20000 });
+  }
+
+  editFolder(
+    name?: string | { name: string; language: string }[],
+    description?: string | { description: string; language: string }[],
+    clickCancel = false
+  ) {
+    this.openEditModal();
+    foldersPage.cancelEditBtn.waitForDisplayed({ timeout: 20000 });
+    if (name) {
+      if (typeof name === typeof '') {
+        const nameConverted = name as string;
+        const da = applicationLanguages[0];
+        foldersPage.editLanguageSelector.$('input').setValue(da.text);
+        const value = foldersPage.editLanguageSelector.$(
+          `.ng-option=${da.text}`
+        );
+        value.waitForDisplayed({ timeout: 20000 });
+        value.click();
+        foldersPage
+          .editNameInput(
+            applicationLanguages.findIndex((x) => x.text === da.text)
+          )
+          .setValue(nameConverted);
+      }
+      if (typeof name === typeof []) {
+        const nameConverted = name as { name: string; language: string }[];
+        for (let i = 0; i > nameConverted.length; i++) {
+          const language = applicationLanguages.find(
+            (x) => x.text === nameConverted[i].language
+          );
+          foldersPage.editLanguageSelector.$('input').setValue(language.text);
+          const value = foldersPage.editLanguageSelector.$(
+            `.ng-option=${language.text}`
+          );
+          value.waitForDisplayed({ timeout: 20000 });
+          value.click();
+          foldersPage
+            .editNameInput(
+              applicationLanguages.findIndex((x) => x.text === language.text)
+            )
+            .setValue(nameConverted[i].name);
+        }
+      }
+    }
+    if (description) {
+      if (typeof description === typeof '') {
+        const descriptionConvert = description as string;
+        const da = applicationLanguages[0];
+        foldersPage.editLanguageSelector.$('input').setValue(da.text);
+        const value = foldersPage.editLanguageSelector.$(
+          `.ng-option=${da.text}`
+        );
+        value.waitForDisplayed({ timeout: 20000 });
+        value.click();
+        foldersPage
+          .editDescriptionInput(
+            applicationLanguages.findIndex((x) => x.text === da.text)
+          )
+          .setValue(descriptionConvert);
+      }
+      if (typeof description === typeof []) {
+        const descriptionConvert = description as {
+          description: string;
+          language: string;
+        }[];
+        for (let i = 0; i > descriptionConvert.length; i++) {
+          const language = applicationLanguages.find(
+            (x) => x.text === descriptionConvert[i].language
+          );
+          foldersPage.editLanguageSelector.$('input').setValue(language.text);
+          const value = foldersPage.editLanguageSelector.$(
+            `.ng-option=${language.text}`
+          );
+          value.waitForDisplayed({ timeout: 20000 });
+          value.click();
+          foldersPage
+            .editDescriptionInput(
+              applicationLanguages.findIndex((x) => x.text === language.text)
+            )
+            .setValue(descriptionConvert[i].description);
+        }
+      }
+    }
+    this.closeEditModal(clickCancel);
+  }
+
+  closeEditModal(clickCancel = false) {
+    if (!clickCancel) {
+      foldersPage.saveEditBtn.click();
+      $('#spinner-animation').waitForDisplayed({
+        timeout: 20000,
+        reverse: true,
+      });
+    } else {
+      foldersPage.cancelEditBtn.click();
+    }
+    foldersPage.newFolderBtn.waitForDisplayed({ timeout: 20000 });
+  }
+
+  collapseChildren() {
+    if (this.folderTreeOpenClose.$('fa-icon[icon="folder-open"]')) {
+      this.folderTreeOpenClose.click();
+    }
+  }
+
+  expandChildren() {
+    if (this.folderTreeOpenClose.$('fa-icon[icon="folder"]')) {
+      this.folderTreeOpenClose.click();
+    }
+  }
 }
 
 export class FoldersTreeRowObject {
-  constructor(rowNum) {
-    if ($$('#folderTreeId')[rowNum - 1]) {
-      // this.folderTreeId = $$('#folderTreeId')[rowNum - 1];
-      // console.log(this.folderTreeId);
+  constructor(rowNumFolderParent, rowNumberFolderChildren) {
+    if (
+      $$('.tree-node-level-1')[rowNumFolderParent - 1].$$('.tree-node-level-2')[
+        rowNumberFolderChildren - 1
+      ]
+    ) {
+      const element = $$('.tree-node-level-1')[rowNumFolderParent - 1].$$(
+        '.tree-node-level-2'
+      )[rowNumberFolderChildren - 1];
       try {
-        this.nameTree = $$('#folderTreeName')[rowNum - 1].getText();
-      } catch (e) {
-      }
+        this.folderTreeElement = element.$('#folderTreeId');
+      } catch (e) {}
       try {
-        this.descriptionTree = $$('#folderTreeDescription')[rowNum - 1].getText();
-      } catch (e) {
-      }
-      this.editTreeBtn = $('#editFolderTreeBtn');
-      this.deleteTreeBtn = $('#deleteFolderTreeBtn');
+        this.nameTree = element.$('#folderTreeName').getText();
+      } catch (e) {}
+      // try {
+      //   this.descriptionTree = element.$$('#folderTreeDescription')[rowNumberFolderChildren - 1].getText();
+      // } catch (e) {
+      // }
+      this.editTreeBtn = element.$('#editFolderTreeBtn');
+      this.deleteTreeBtn = element.$('#deleteFolderTreeBtn');
     }
   }
 
-  folderTreeId;
+  folderTreeElement;
   nameTree;
-  descriptionTree;
+  // descriptionTree;
   editTreeBtn;
   deleteTreeBtn;
+
+  getDescription(): { description: string; language: string }[] {
+    this.openEditModal();
+    const descriptions = new Array<{ description: string; language: string }>();
+
+    for (let i = 0; i < applicationLanguages.length; i++) {
+      const language = applicationLanguages[i];
+      foldersPage.editLanguageSelector.$('input').setValue(language.text);
+      const value = foldersPage.editLanguageSelector.$(
+        `.ng-option=${language.text}`
+      );
+      value.waitForDisplayed({ timeout: 20000 });
+      value.click();
+      descriptions.push({
+        description: foldersPage
+          .editDescriptionInput(
+            applicationLanguages.findIndex((x) => x.text === language.text)
+          )
+          .getText(),
+        language: language.text,
+      });
+    }
+    foldersPage.cancelEditBtn.click();
+    return descriptions;
+  }
+
+  delete(clickCancel = false) {
+    if (!this.deleteTreeBtn.isExisting()) {
+      this.folderTreeElement.click();
+      this.deleteTreeBtn.waitForDisplayed({ timeout: 20000 });
+    }
+    this.deleteTreeBtn.click();
+    if (!clickCancel) {
+      foldersPage.saveDeleteBtn.waitForClickable({ timeout: 20000 });
+      foldersPage.saveDeleteBtn.click();
+      $('#spinner-animation').waitForDisplayed({
+        timeout: 2000,
+        reverse: true,
+      });
+    } else {
+      foldersPage.cancelDeleteBtn.waitForClickable({ timeout: 20000 });
+      foldersPage.cancelDeleteBtn.click();
+    }
+    foldersPage.newFolderBtn.waitForDisplayed({ timeout: 20000 });
+  }
+
+  openEditModal() {
+    if (!this.editTreeBtn.isExisting()) {
+      this.folderTreeElement.click();
+      this.editTreeBtn.waitForDisplayed({ timeout: 20000 });
+    }
+    this.editTreeBtn.click();
+    foldersPage.saveEditBtn.waitForDisplayed({ timeout: 20000 });
+  }
+
+  editFolderChild(
+    name?: string | { name: string; language: string }[],
+    description?: string | { description: string; language: string }[],
+    clickCancel = false
+  ) {
+    this.openEditModal();
+    if (name != null) {
+      if (typeof name === typeof '') {
+        const nameConverted = name as string;
+        const da = applicationLanguages[0];
+        foldersPage.editLanguageSelector.$('input').setValue(da.text);
+        const value = foldersPage.editLanguageSelector.$(
+          `.ng-option=${da.text}`
+        );
+        value.waitForDisplayed({ timeout: 20000 });
+        value.click();
+        foldersPage
+          .editNameInput(
+            applicationLanguages.findIndex((x) => x.text === da.text)
+          )
+          .setValue(nameConverted);
+      }
+      if (typeof name === typeof []) {
+        const nameConverted = name as { name: string; language: string }[];
+        for (let i = 0; i > nameConverted.length; i++) {
+          const language = applicationLanguages.find(
+            (x) => x.text === nameConverted[i].language
+          );
+          foldersPage.editLanguageSelector.$('input').setValue(language.text);
+          const value = foldersPage.editLanguageSelector.$(
+            `.ng-option=${language.text}`
+          );
+          value.waitForDisplayed({ timeout: 20000 });
+          value.click();
+          foldersPage
+            .editNameInput(
+              applicationLanguages.findIndex((x) => x.text === language.text)
+            )
+            .setValue(nameConverted[i].name);
+        }
+      }
+    }
+    if (description != null) {
+      if (typeof description === typeof '') {
+        const descriptionConvert = description as string;
+        const da = applicationLanguages[0];
+        foldersPage.editLanguageSelector.$('input').setValue(da.text);
+        const value = foldersPage.editLanguageSelector.$(
+          `.ng-option=${da.text}`
+        );
+        value.waitForDisplayed({ timeout: 20000 });
+        value.click();
+        foldersPage
+          .editDescriptionInput(
+            applicationLanguages.findIndex((x) => x.text === da.text)
+          )
+          .setValue(descriptionConvert);
+      }
+      if (typeof description === typeof []) {
+        const descriptionConvert = description as {
+          description: string;
+          language: string;
+        }[];
+        for (let i = 0; i > descriptionConvert.length; i++) {
+          const language = applicationLanguages.find(
+            (x) => x.text === descriptionConvert[i].language
+          );
+          foldersPage.editLanguageSelector.$('input').setValue(language.text);
+          const value = foldersPage.editLanguageSelector.$(
+            `.ng-option=${language.text}`
+          );
+          value.waitForDisplayed({ timeout: 20000 });
+          value.click();
+          foldersPage
+            .editDescriptionInput(
+              applicationLanguages.findIndex((x) => x.text === language.text)
+            )
+            .setValue(descriptionConvert[i].description);
+        }
+      }
+    }
+    if (!clickCancel) {
+      foldersPage.saveEditBtn.click();
+      $('#spinner-animation').waitForDisplayed({
+        timeout: 20000,
+        reverse: true,
+      });
+    } else {
+      foldersPage.cancelEditBtn.click();
+    }
+    foldersPage.newFolderBtn.waitForDisplayed({ timeout: 20000 });
+  }
 }

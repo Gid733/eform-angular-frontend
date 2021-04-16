@@ -1,13 +1,13 @@
 <ng-container *ngIf="showCollapseButton">
   <a
-    class="float-right page-link mb-2"
+    class="btn-icon mb-2 float-right text-black-50 btn"
     *ngIf="collapsed"
     (click)="tree.treeModel.expandAll(); collapsed = !collapsed"
   >
     <fa-icon icon="angle-double-right" size="lg" [fixedWidth]="true"></fa-icon>
   </a>
   <a
-    class="float-right page-link mb-2"
+    class="btn-icon mb-2 float-right text-black-50 btn"
     *ngIf="!collapsed"
     (click)="tree.treeModel.collapseAll(); collapsed = !collapsed"
   >
@@ -77,9 +77,8 @@
   <ng-template #treeNodeTemplate let-node let-index="index">
     <div id="folderTreeId" class="d-flex align-items-center"
          [ngStyle]="{'cursor': lockSelectedNode ? 'not-allowed' : 'pointer'}">
-      <span id="folderTreeName">{{ node.data.name }}</span>
-      <pre> _ </pre>
-      <span id="folderTreeDescription" *ngIf="node.data.description">{{ node.data.description }}</span>
+      <span id="folderTreeName">{{ node.data.name }} </span>
+      <small style="color: var(--blue-400);">({{ node.data.microtingUId }})</small>
       <div class="ml-3 text-black-50" *ngIf="node.isActive && showActions">
         <fa-icon
           *ngIf="showCreateAction"

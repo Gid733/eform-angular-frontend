@@ -862,7 +862,7 @@ namespace eFormAPI.Web.Migrations
                             E2EId = "search",
                             Link = "/advanced/entity-search",
                             MenuTemplateId = 7,
-                            Name = "Searchable List",
+                            Name = "Searchable list",
                             ParentId = 3,
                             Position = 3,
                             Type = 1,
@@ -892,7 +892,7 @@ namespace eFormAPI.Web.Migrations
                             E2EId = "application-settings",
                             Link = "/application-settings",
                             MenuTemplateId = 9,
-                            Name = "Application Settings",
+                            Name = "Application settings",
                             ParentId = 3,
                             Position = 6,
                             Type = 1,
@@ -937,7 +937,7 @@ namespace eFormAPI.Web.Migrations
                             E2EId = "email-recipients",
                             Link = "/email-recipients",
                             MenuTemplateId = 12,
-                            Name = "Email Recipients",
+                            Name = "Email recipients",
                             ParentId = 3,
                             Position = 7,
                             Type = 1,
@@ -1047,7 +1047,7 @@ namespace eFormAPI.Web.Migrations
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
                             Language = "Danish",
-                            LocaleName = "da-DK",
+                            LocaleName = "da",
                             MenuItemId = 1,
                             Name = "Mine eForms",
                             UpdatedByUserId = 0,
@@ -1062,6 +1062,18 @@ namespace eFormAPI.Web.Migrations
                             LocaleName = "de-DE",
                             MenuItemId = 1,
                             Name = "Meine eForms",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
+                            Id = 39,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "Ukrainian",
+                            LocaleName = "uk-UA",
+                            MenuItemId = 1,
+                            Name = "Мої ЕФорми",
                             UpdatedByUserId = 0,
                             Version = 0
                         },
@@ -1083,9 +1095,9 @@ namespace eFormAPI.Web.Migrations
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
                             Language = "Danish",
-                            LocaleName = "da-DK",
+                            LocaleName = "da",
                             MenuItemId = 2,
-                            Name = "Enhedsbrugere",
+                            Name = "Mobilbrugere",
                             UpdatedByUserId = 0,
                             Version = 0
                         },
@@ -1097,7 +1109,19 @@ namespace eFormAPI.Web.Migrations
                             Language = "German",
                             LocaleName = "de-DE",
                             MenuItemId = 2,
-                            Name = "Gerätebenutzer ",
+                            Name = "Gerätebenutzer",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
+                            Id = 40,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "Ukrainian",
+                            LocaleName = "uk-UA",
+                            MenuItemId = 2,
+                            Name = "Користувачі пристроїв",
                             UpdatedByUserId = 0,
                             Version = 0
                         },
@@ -1119,9 +1143,9 @@ namespace eFormAPI.Web.Migrations
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
                             Language = "Danish",
-                            LocaleName = "da-DK",
+                            LocaleName = "da",
                             MenuItemId = 3,
-                            Name = "Avanceret",
+                            Name = "Admin",
                             UpdatedByUserId = 0,
                             Version = 0
                         },
@@ -1134,6 +1158,18 @@ namespace eFormAPI.Web.Migrations
                             LocaleName = "de-DE",
                             MenuItemId = 3,
                             Name = "Fortgeschritten",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
+                            Id = 41,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "Ukrainian",
+                            LocaleName = "uk-UA",
+                            MenuItemId = 3,
+                            Name = "Додатково",
                             UpdatedByUserId = 0,
                             Version = 0
                         },
@@ -1155,7 +1191,7 @@ namespace eFormAPI.Web.Migrations
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
                             Language = "Danish",
-                            LocaleName = "da-DK",
+                            LocaleName = "da",
                             MenuItemId = 4,
                             Name = "Lokationer",
                             UpdatedByUserId = 0,
@@ -1170,6 +1206,18 @@ namespace eFormAPI.Web.Migrations
                             LocaleName = "de-DE",
                             MenuItemId = 4,
                             Name = "Standorte",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
+                            Id = 42,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "Ukrainian",
+                            LocaleName = "uk-UA",
+                            MenuItemId = 4,
+                            Name = "Місця",
                             UpdatedByUserId = 0,
                             Version = 0
                         },
@@ -1191,7 +1239,7 @@ namespace eFormAPI.Web.Migrations
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
                             Language = "Danish",
-                            LocaleName = "da-DK",
+                            LocaleName = "da",
                             MenuItemId = 5,
                             Name = "Medarbejder",
                             UpdatedByUserId = 0,
@@ -1206,6 +1254,18 @@ namespace eFormAPI.Web.Migrations
                             LocaleName = "de-DE",
                             MenuItemId = 5,
                             Name = "Mitarbeiter",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
+                            Id = 43,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "Ukrainian",
+                            LocaleName = "uk-UA",
+                            MenuItemId = 5,
+                            Name = "Працівники",
                             UpdatedByUserId = 0,
                             Version = 0
                         },
@@ -1227,7 +1287,7 @@ namespace eFormAPI.Web.Migrations
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
                             Language = "Danish",
-                            LocaleName = "da-DK",
+                            LocaleName = "da",
                             MenuItemId = 6,
                             Name = "Enheder",
                             UpdatedByUserId = 0,
@@ -1247,13 +1307,25 @@ namespace eFormAPI.Web.Migrations
                         },
                         new
                         {
+                            Id = 44,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "Ukrainian",
+                            LocaleName = "uk-UA",
+                            MenuItemId = 6,
+                            Name = "Юніти",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
                             Id = 7,
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
                             Language = "English",
                             LocaleName = "en-US",
                             MenuItemId = 7,
-                            Name = "Searchable List",
+                            Name = "Searchable list",
                             UpdatedByUserId = 0,
                             Version = 0
                         },
@@ -1263,7 +1335,7 @@ namespace eFormAPI.Web.Migrations
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
                             Language = "Danish",
-                            LocaleName = "da-DK",
+                            LocaleName = "da",
                             MenuItemId = 7,
                             Name = "Søgbar Lister",
                             UpdatedByUserId = 0,
@@ -1278,6 +1350,18 @@ namespace eFormAPI.Web.Migrations
                             LocaleName = "de-DE",
                             MenuItemId = 7,
                             Name = "Durchsuchbare Listen",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
+                            Id = 45,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "Ukrainian",
+                            LocaleName = "uk-UA",
+                            MenuItemId = 7,
+                            Name = "Пошуковий список",
                             UpdatedByUserId = 0,
                             Version = 0
                         },
@@ -1299,7 +1383,7 @@ namespace eFormAPI.Web.Migrations
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
                             Language = "Danish",
-                            LocaleName = "da-DK",
+                            LocaleName = "da",
                             MenuItemId = 8,
                             Name = "Valgbar Liste",
                             UpdatedByUserId = 0,
@@ -1319,13 +1403,25 @@ namespace eFormAPI.Web.Migrations
                         },
                         new
                         {
+                            Id = 46,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "Ukrainian",
+                            LocaleName = "uk-UA",
+                            MenuItemId = 8,
+                            Name = "Вибірковий список",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
                             Id = 9,
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
                             Language = "English",
                             LocaleName = "en-US",
                             MenuItemId = 9,
-                            Name = "Application Settings",
+                            Name = "Application settings",
                             UpdatedByUserId = 0,
                             Version = 0
                         },
@@ -1335,7 +1431,7 @@ namespace eFormAPI.Web.Migrations
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
                             Language = "Danish",
-                            LocaleName = "da-DK",
+                            LocaleName = "da",
                             MenuItemId = 9,
                             Name = "Applikationsindstillinger",
                             UpdatedByUserId = 0,
@@ -1355,13 +1451,25 @@ namespace eFormAPI.Web.Migrations
                         },
                         new
                         {
+                            Id = 47,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "Ukrainian",
+                            LocaleName = "uk-UA",
+                            MenuItemId = 9,
+                            Name = "Налаштування застосунку",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
                             Id = 10,
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
                             Language = "English",
                             LocaleName = "en-US",
                             MenuItemId = 10,
-                            Name = "Plugins Settings",
+                            Name = "Plugins",
                             UpdatedByUserId = 0,
                             Version = 0
                         },
@@ -1371,7 +1479,7 @@ namespace eFormAPI.Web.Migrations
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
                             Language = "Danish",
-                            LocaleName = "da-DK",
+                            LocaleName = "da",
                             MenuItemId = 10,
                             Name = "Plugins",
                             UpdatedByUserId = 0,
@@ -1386,6 +1494,18 @@ namespace eFormAPI.Web.Migrations
                             LocaleName = "de-DE",
                             MenuItemId = 10,
                             Name = "Plugins",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
+                            Id = 48,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "Ukrainian",
+                            LocaleName = "uk-UA",
+                            MenuItemId = 10,
+                            Name = "Налаштування плагінів",
                             UpdatedByUserId = 0,
                             Version = 0
                         },
@@ -1407,7 +1527,7 @@ namespace eFormAPI.Web.Migrations
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
                             Language = "Danish",
-                            LocaleName = "da-DK",
+                            LocaleName = "da",
                             MenuItemId = 11,
                             Name = "Folders",
                             UpdatedByUserId = 0,
@@ -1427,13 +1547,25 @@ namespace eFormAPI.Web.Migrations
                         },
                         new
                         {
+                            Id = 49,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "Ukrainian",
+                            LocaleName = "uk-UA",
+                            MenuItemId = 11,
+                            Name = "Папки",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
                             Id = 12,
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
                             Language = "English",
                             LocaleName = "en-US",
                             MenuItemId = 12,
-                            Name = "Email Recipients",
+                            Name = "Email recipients",
                             UpdatedByUserId = 0,
                             Version = 0
                         },
@@ -1443,7 +1575,7 @@ namespace eFormAPI.Web.Migrations
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = 0,
                             Language = "Danish",
-                            LocaleName = "da-DK",
+                            LocaleName = "da",
                             MenuItemId = 12,
                             Name = "E-mail-modtagere",
                             UpdatedByUserId = 0,
@@ -1458,6 +1590,18 @@ namespace eFormAPI.Web.Migrations
                             LocaleName = "de-DE",
                             MenuItemId = 12,
                             Name = "E-Mail-Empfänger",
+                            UpdatedByUserId = 0,
+                            Version = 0
+                        },
+                        new
+                        {
+                            Id = 50,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = 0,
+                            Language = "Ukrainian",
+                            LocaleName = "uk-UA",
+                            MenuItemId = 12,
+                            Name = "Email одержувачі",
                             UpdatedByUserId = 0,
                             Version = 0
                         });
@@ -1580,7 +1724,7 @@ namespace eFormAPI.Web.Migrations
                             CreatedByUserId = 0,
                             DefaultLink = "/advanced/entity-search",
                             E2EId = "search",
-                            Name = "Searchable List",
+                            Name = "Searchable list",
                             UpdatedByUserId = 0,
                             Version = 0
                         },
@@ -1602,7 +1746,7 @@ namespace eFormAPI.Web.Migrations
                             CreatedByUserId = 0,
                             DefaultLink = "/application-settings",
                             E2EId = "application-settings",
-                            Name = "Application Settings",
+                            Name = "Application settings",
                             UpdatedByUserId = 0,
                             Version = 0
                         },
@@ -1613,7 +1757,7 @@ namespace eFormAPI.Web.Migrations
                             CreatedByUserId = 0,
                             DefaultLink = "/plugins-settings",
                             E2EId = "plugins-settings",
-                            Name = "Plugins Settings",
+                            Name = "Plugins",
                             UpdatedByUserId = 0,
                             Version = 0
                         },
@@ -1635,7 +1779,7 @@ namespace eFormAPI.Web.Migrations
                             CreatedByUserId = 0,
                             DefaultLink = "/email-recipients",
                             E2EId = "email-recipients",
-                            Name = "Email Recipients",
+                            Name = "Email recipients",
                             UpdatedByUserId = 0,
                             Version = 0
                         });
@@ -1984,7 +2128,7 @@ namespace eFormAPI.Web.Migrations
                             Language = "English",
                             LocaleName = "en-US",
                             MenuTemplateId = 7,
-                            Name = "Searchable List"
+                            Name = "Searchable list"
                         },
                         new
                         {
@@ -2000,7 +2144,7 @@ namespace eFormAPI.Web.Migrations
                             Language = "English",
                             LocaleName = "en-US",
                             MenuTemplateId = 9,
-                            Name = "Application Settings"
+                            Name = "Application settings"
                         },
                         new
                         {
@@ -2008,7 +2152,7 @@ namespace eFormAPI.Web.Migrations
                             Language = "English",
                             LocaleName = "en-US",
                             MenuTemplateId = 10,
-                            Name = "Plugins Settings"
+                            Name = "Plugins"
                         },
                         new
                         {
@@ -2024,13 +2168,13 @@ namespace eFormAPI.Web.Migrations
                             Language = "English",
                             LocaleName = "en-US",
                             MenuTemplateId = 12,
-                            Name = "Email Recipients"
+                            Name = "Email recipients"
                         },
                         new
                         {
                             Id = 13,
                             Language = "Danish",
-                            LocaleName = "da-DK",
+                            LocaleName = "da",
                             MenuTemplateId = 1,
                             Name = "Mine eForms"
                         },
@@ -2038,23 +2182,23 @@ namespace eFormAPI.Web.Migrations
                         {
                             Id = 14,
                             Language = "Danish",
-                            LocaleName = "da-DK",
+                            LocaleName = "da",
                             MenuTemplateId = 2,
-                            Name = "Enhedsbrugere"
+                            Name = "Mobilbrugere"
                         },
                         new
                         {
                             Id = 15,
                             Language = "Danish",
-                            LocaleName = "da-DK",
+                            LocaleName = "da",
                             MenuTemplateId = 3,
-                            Name = "Avanceret"
+                            Name = "Admin"
                         },
                         new
                         {
                             Id = 16,
                             Language = "Danish",
-                            LocaleName = "da-DK",
+                            LocaleName = "da",
                             MenuTemplateId = 4,
                             Name = "Lokationer"
                         },
@@ -2062,7 +2206,7 @@ namespace eFormAPI.Web.Migrations
                         {
                             Id = 17,
                             Language = "Danish",
-                            LocaleName = "da-DK",
+                            LocaleName = "da",
                             MenuTemplateId = 5,
                             Name = "Medarbejder"
                         },
@@ -2070,7 +2214,7 @@ namespace eFormAPI.Web.Migrations
                         {
                             Id = 18,
                             Language = "Danish",
-                            LocaleName = "da-DK",
+                            LocaleName = "da",
                             MenuTemplateId = 6,
                             Name = "Enheder"
                         },
@@ -2078,7 +2222,7 @@ namespace eFormAPI.Web.Migrations
                         {
                             Id = 19,
                             Language = "Danish",
-                            LocaleName = "da-DK",
+                            LocaleName = "da",
                             MenuTemplateId = 7,
                             Name = "Søgbar Lister"
                         },
@@ -2086,7 +2230,7 @@ namespace eFormAPI.Web.Migrations
                         {
                             Id = 20,
                             Language = "Danish",
-                            LocaleName = "da-DK",
+                            LocaleName = "da",
                             MenuTemplateId = 8,
                             Name = "Valgbar Liste"
                         },
@@ -2094,7 +2238,7 @@ namespace eFormAPI.Web.Migrations
                         {
                             Id = 21,
                             Language = "Danish",
-                            LocaleName = "da-DK",
+                            LocaleName = "da",
                             MenuTemplateId = 9,
                             Name = "Applikationsindstillinger"
                         },
@@ -2102,7 +2246,7 @@ namespace eFormAPI.Web.Migrations
                         {
                             Id = 22,
                             Language = "Danish",
-                            LocaleName = "da-DK",
+                            LocaleName = "da",
                             MenuTemplateId = 10,
                             Name = "Plugins"
                         },
@@ -2110,7 +2254,7 @@ namespace eFormAPI.Web.Migrations
                         {
                             Id = 23,
                             Language = "Danish",
-                            LocaleName = "da-DK",
+                            LocaleName = "da",
                             MenuTemplateId = 11,
                             Name = "Folders"
                         },
@@ -2118,7 +2262,7 @@ namespace eFormAPI.Web.Migrations
                         {
                             Id = 24,
                             Language = "Danish",
-                            LocaleName = "da-DK",
+                            LocaleName = "da",
                             MenuTemplateId = 12,
                             Name = "E-mail-modtagere"
                         },

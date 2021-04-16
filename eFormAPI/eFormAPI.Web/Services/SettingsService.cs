@@ -43,10 +43,12 @@ using Microting.eFormApi.BasePn.Infrastructure.Models.Application;
 using Microting.eFormApi.BasePn.Infrastructure.Models.API;
 using Microting.eFormApi.BasePn.Infrastructure.Helpers;
 using Castle.Core.Internal;
+using Castle.DynamicProxy.Generators;
 using eFormAPI.Web.Hosting.Helpers;
 using eFormAPI.Web.Infrastructure.Models.Settings.Admin;
 using eFormAPI.Web.Infrastructure.Models.Settings.Initial;
 using Microting.eForm.Dto;
+using Microting.eForm.Infrastructure.Data.Entities;
 
 namespace eFormAPI.Web.Services
 {
@@ -125,7 +127,6 @@ namespace eFormAPI.Web.Services
 
         public async Task<OperationResult> UpdateConnectionString(InitialSettingsModel initialSettingsModel)
         {
-            string sdkConnectionString, mainConnectionString;
             var customerNo = initialSettingsModel.GeneralAppSetupSettingsModel.CustomerNo.ToString();
             var dbNamePrefix = "";
 
@@ -137,23 +138,23 @@ namespace eFormAPI.Web.Services
             var sdkDbName = dbNamePrefix + customerNo + "_SDK";
             var angularDbName = dbNamePrefix + customerNo + "_Angular";
 
-            sdkConnectionString = "host= " +
-                                  initialSettingsModel.ConnectionStringSdk.Host +
-                                  ";Database=" +
-                                  sdkDbName + ";" +
-                                  initialSettingsModel
-                                      .ConnectionStringSdk.Auth +
-                                  "port=" + initialSettingsModel.ConnectionStringSdk.Port +
-                                  ";Convert Zero Datetime = true;SslMode=none;";
+            var sdkConnectionString = "host= " +
+                                         initialSettingsModel.ConnectionStringSdk.Host +
+                                         ";Database=" +
+                                         sdkDbName + ";" +
+                                         initialSettingsModel
+                                             .ConnectionStringSdk.Auth +
+                                         "port=" + initialSettingsModel.ConnectionStringSdk.Port +
+                                         ";Convert Zero Datetime = true;SslMode=none;";
 
-            mainConnectionString = "host= " +
-                                   initialSettingsModel.ConnectionStringSdk.Host +
-                                   ";Database=" +
-                                   angularDbName + ";" +
-                                   initialSettingsModel
-                                       .ConnectionStringSdk.Auth +
-                                   "port=" + initialSettingsModel.ConnectionStringSdk.Port +
-                                   ";Convert Zero Datetime = true;SslMode=none;";
+            var mainConnectionString = "host= " +
+                                          initialSettingsModel.ConnectionStringSdk.Host +
+                                          ";Database=" +
+                                          angularDbName + ";" +
+                                          initialSettingsModel
+                                              .ConnectionStringSdk.Auth +
+                                          "port=" + initialSettingsModel.ConnectionStringSdk.Port +
+                                          ";Convert Zero Datetime = true;SslMode=none;";
 
 
             if (!string.IsNullOrEmpty(_connectionStringsSdk.Value.SdkConnection))
@@ -166,9 +167,9 @@ namespace eFormAPI.Web.Services
             {
                 Log.LogEvent($"SettingsService.ConnectionStringExist: connection string is {sdkConnectionString}");
                 var adminTools = new AdminTools(sdkConnectionString);
-//                 Setup SDK DB
+                //                 Setup SDK DB
                 await adminTools.DbSetup(initialSettingsModel.ConnectionStringSdk.Token);
-//                var core = await _coreHelper.GetCore();
+                //                var core = await _coreHelper.GetCore();
                 Core core = new Core();
                 await core.StartSqlOnly(sdkConnectionString);
                 await core.SetSdkSetting(Settings.customerNo, customerNo);
@@ -184,7 +185,7 @@ namespace eFormAPI.Web.Services
 
                 return new OperationResult(false, exception.Message);
 
-                //return new OperationResult(false, 
+                //return new OperationResult(false,
                 //    _localizationService.GetString("SDKConnectionStringIsInvalid"));
             }
 
@@ -195,83 +196,96 @@ namespace eFormAPI.Web.Services
                 dbContextOptionsBuilder.UseMySql(mainConnectionString, b =>
                     b.MigrationsAssembly("eFormAPI.Web").EnableRetryOnFailure());
 
-                using (var dbContext = new BaseDbContext(dbContextOptionsBuilder.Options))
+
+                await using var dbContext = new BaseDbContext(dbContextOptionsBuilder.Options);
+                Log.LogEvent("Migrating Angular DB");
+                if ((await dbContext.Database.GetPendingMigrationsAsync()).Any())
                 {
-                    Log.LogEvent("Migrating Angular DB");
-                    if (dbContext.Database.GetPendingMigrations().Any())
+                    await dbContext.Database.MigrateAsync();
+                }
+                var userStore = new UserStore<EformUser,
+                    EformRole,
+                    BaseDbContext,
+                    int,
+                    IdentityUserClaim<int>,
+                    EformUserRole,
+                    IdentityUserLogin<int>,
+                    IdentityUserToken<int>,
+                    IdentityRoleClaim<int>>(dbContext);
+
+
+                IPasswordHasher<EformUser> hasher = new PasswordHasher<EformUser>();
+                var validator = new UserValidator<EformUser>();
+                var validators = new List<UserValidator<EformUser>> { validator };
+                var userManager = new UserManager<EformUser>(userStore, null, hasher, validators, null, null, null,
+                    null, null);
+
+                // Set-up token providers.
+                IUserTwoFactorTokenProvider<EformUser> tokenProvider = new EmailTokenProvider<EformUser>();
+                userManager.RegisterTokenProvider("Default", tokenProvider);
+                IUserTwoFactorTokenProvider<EformUser> phoneTokenProvider =
+                    new PhoneNumberTokenProvider<EformUser>();
+                userManager.RegisterTokenProvider("PhoneTokenProvider", phoneTokenProvider);
+                // Roles
+                var roleStore = new RoleStore<EformRole, BaseDbContext, int>(dbContext);
+                var roleManager = new RoleManager<EformRole>(roleStore, null, null, null, null);
+                if (!await roleManager.RoleExistsAsync(EformRole.Admin))
+                {
+                    await roleManager.CreateAsync(new EformRole() { Name = EformRole.Admin });
+                }
+
+                if (!await roleManager.RoleExistsAsync(EformRole.User))
+                {
+                    await roleManager.CreateAsync(new EformRole() { Name = EformRole.User });
+                }
+
+                // Seed admin and demo users
+                string timeZoneString = "Europe/Copenhagen";
+
+                try
+                {
+                    TimeZoneInfo.FindSystemTimeZoneById(timeZoneString);
+                }
+                catch
+                {
+                    timeZoneString = "E. Europe Standard Time";
+                }
+                var adminUser = new EformUser()
+                {
+                    UserName = initialSettingsModel.AdminSetupModel.Email,
+                    Email = initialSettingsModel.AdminSetupModel.Email,
+                    FirstName = initialSettingsModel.AdminSetupModel.FirstName,
+                    LastName = initialSettingsModel.AdminSetupModel.LastName,
+                    Locale = initialSettingsModel.GeneralAppSetupSettingsModel.DefaultLocale,
+                    TimeZone = timeZoneString,
+                    DarkTheme = initialSettingsModel.AdminSetupModel.DarkTheme,
+                    Formats = "de-DE",
+                    EmailConfirmed = true,
+                    TwoFactorEnabled = false,
+                    IsGoogleAuthenticatorEnabled = false
+                };
+                if (!userManager.Users.Any(x => x.Email.Equals(adminUser.Email)))
+                {
+                    var createResult = await userManager.CreateAsync(adminUser,
+                        initialSettingsModel.AdminSetupModel.Password);
+                    if (!createResult.Succeeded)
                     {
-                        dbContext.Database.Migrate();
+                        return new OperationResult(false,
+                            _localizationService.GetString("Could not create the user"));
                     }
-                    var userStore = new UserStore<EformUser,
-                        EformRole,
-                        BaseDbContext,
-                        int,
-                        IdentityUserClaim<int>,
-                        EformUserRole,
-                        IdentityUserLogin<int>,
-                        IdentityUserToken<int>,
-                        IdentityRoleClaim<int>>(dbContext);
+                }
 
-
-                    IPasswordHasher<EformUser> hasher = new PasswordHasher<EformUser>();
-                    var validator = new UserValidator<EformUser>();
-                    var validators = new List<UserValidator<EformUser>> {validator};
-                    var userManager = new UserManager<EformUser>(userStore, null, hasher, validators, null, null, null,
-                        null, null);
-
-                    // Set-up token providers.
-                    IUserTwoFactorTokenProvider<EformUser> tokenProvider = new EmailTokenProvider<EformUser>();
-                    userManager.RegisterTokenProvider("Default", tokenProvider);
-                    IUserTwoFactorTokenProvider<EformUser> phoneTokenProvider =
-                        new PhoneNumberTokenProvider<EformUser>();
-                    userManager.RegisterTokenProvider("PhoneTokenProvider", phoneTokenProvider);
-                    // Roles
-                    var roleStore = new RoleStore<EformRole, BaseDbContext, int>(dbContext);
-                    var roleManager = new RoleManager<EformRole>(roleStore, null, null, null, null);
-                    if (!await roleManager.RoleExistsAsync(EformRole.Admin))
-                    {
-                        await roleManager.CreateAsync(new EformRole() {Name = EformRole.Admin});
-                    }
-
-                    if (!await roleManager.RoleExistsAsync(EformRole.User))
-                    {
-                        await roleManager.CreateAsync(new EformRole() {Name = EformRole.User});
-                    }
-
-                    // Seed admin and demo users
-                    var adminUser = new EformUser()
-                    {
-                        UserName = initialSettingsModel.AdminSetupModel.Email,
-                        Email = initialSettingsModel.AdminSetupModel.Email,
-                        FirstName = initialSettingsModel.AdminSetupModel.FirstName,
-                        LastName = initialSettingsModel.AdminSetupModel.LastName,
-                        EmailConfirmed = true,
-                        TwoFactorEnabled = false,
-                        IsGoogleAuthenticatorEnabled = false
-                    };
-                    if (!userManager.Users.Any(x => x.Email.Equals(adminUser.Email)))
-                    {
-                        var createResult = await userManager.CreateAsync(adminUser,
-                            initialSettingsModel.AdminSetupModel.Password);
-                        if (!createResult.Succeeded)
-                        {
-                            return new OperationResult(false,
-                                _localizationService.GetString("Could not create the user"));
-                        }
-                    }
-
-                    var user = userManager.Users.FirstOrDefault(x => x.Email.Equals(adminUser.Email));
-                    if (!await userManager.IsInRoleAsync(user, EformRole.Admin))
-                    {
-                        await userManager.AddToRoleAsync(user, EformRole.Admin);
-                    }
+                var user = userManager.Users.FirstOrDefault(x => x.Email.Equals(adminUser.Email));
+                if (!await userManager.IsInRoleAsync(user, EformRole.Admin))
+                {
+                    await userManager.AddToRoleAsync(user, EformRole.Admin);
                 }
             }
             catch (Exception exception)
             {
                 _logger.LogError(exception.Message);
                 _logger.LogError(exception.StackTrace);
-                //return new OperationResult(false, 
+                //return new OperationResult(false,
                 //    _localizationService.GetString("MainConnectionStringIsInvalid"));
 
                 if (exception.InnerException != null)
@@ -290,22 +304,20 @@ namespace eFormAPI.Web.Services
                 var signingKey = Convert.ToBase64String(key);
 
                 // Update Database settings
-                using (var dbContext = new BaseDbContext(dbContextOptionsBuilder.Options))
+                await using var dbContext = new BaseDbContext(dbContextOptionsBuilder.Options);
+                await _tokenOptions.UpdateDb((options) => { options.SigningKey = signingKey; }, dbContext);
+
+                await _applicationSettings.UpdateDb(
+                    options =>
+                    {
+                        options.DefaultLocale = initialSettingsModel.GeneralAppSetupSettingsModel.DefaultLocale;
+                    }, dbContext);
+
+                await _connectionStringsSdk.UpdateDb((options) =>
                 {
-                    await _tokenOptions.UpdateDb((options) => { options.SigningKey = signingKey; }, dbContext);
-
-                    await _applicationSettings.UpdateDb(
-                        options =>
-                        {
-                            options.DefaultLocale = initialSettingsModel.GeneralAppSetupSettingsModel.DefaultLocale;
-                        }, dbContext);
-
-                    await _connectionStringsSdk.UpdateDb((options) =>
-                        {
-                            options.SdkConnection = sdkConnectionString;
-                        }, dbContext);
-                }
-                // Update connection string 
+                    options.SdkConnection = sdkConnectionString;
+                }, dbContext);
+                // Update connection string
                 _connectionStrings.UpdateFile((options) =>
                 {
                     options.DefaultConnection = mainConnectionString;
@@ -316,14 +328,11 @@ namespace eFormAPI.Web.Services
             {
                 _logger.LogError(exception.Message);
                 _logger.LogError(exception.StackTrace);
-                if (exception.InnerException != null)
-                {
-                    return new OperationResult(false, exception.Message + " - " + exception.InnerException.Message);
-                }
+                return exception.InnerException != null
+                    ? new OperationResult(false, exception.Message + " - " + exception.InnerException.Message)
+                    : new OperationResult(false, exception.Message);
 
-                return new OperationResult(false, exception.Message);
-
-                //return new OperationResult(false, 
+                //return new OperationResult(false,
                 //    _localizationService.GetString("CouldNotWriteConnectionString"));
             }
 
@@ -343,7 +352,7 @@ namespace eFormAPI.Web.Services
                     MainTextVisible = _loginPageSettings.Value.MainTextVisible,
                     SecondaryText = _loginPageSettings.Value.SecondaryText,
                     SecondaryTextVisible = _loginPageSettings.Value.SecondaryTextVisible,
-                    IsSMTPExists = !_emailSettings.Value.SmtpHost.IsNullOrEmpty() && 
+                    IsSMTPExists = !_emailSettings.Value.SmtpHost.IsNullOrEmpty() &&
                                    !_emailSettings.Value.SmtpPort.ToString().IsNullOrEmpty()
                 };
                 return new OperationDataResult<LoginPageSettingsModel>(true, model);
@@ -369,6 +378,68 @@ namespace eFormAPI.Web.Services
                     SecondaryText = _headerSettings.Value.SecondaryText,
                     SecondaryTextVisible = _headerSettings.Value.SecondaryTextVisible,
                 };
+
+                var core = _coreHelper.GetCore().GetAwaiter().GetResult();
+                var dbContext = core.DbContextHelper.GetDbContext();
+                var folders = dbContext.Folders.Where(x => !string.IsNullOrEmpty(x.Name) && x.WorkflowState != Microting.eForm.Infrastructure.Constants.Constants.WorkflowStates.Removed).ToList();
+                foreach (Folder folder in folders)
+                {
+                    List<string> nameTexts = folder.Name.Split("|").ToList();
+                    List<string> descriptionTexts = folder.Description.Split("|").ToList();
+
+
+                    List<KeyValuePair<string, string>> names = new List<KeyValuePair<string, string>>();
+                    List<KeyValuePair<string, string>> descriptions = new List<KeyValuePair<string, string>>();
+
+                    names.Add(new KeyValuePair<string, string> ("da", nameTexts[0]));
+                    descriptions.Add(new KeyValuePair<string, string>("da",descriptionTexts[0].Replace("&nbsp;", " ")));
+                    if (descriptionTexts.Count > 1)
+                    {
+                        descriptions.Add(new KeyValuePair<string, string>("en-US",descriptionTexts[1].Replace("&nbsp;", " ")));
+                    }
+                    else
+                    {
+                        descriptions.Add(new KeyValuePair<string, string>("en-US", " "));
+                    }
+                    if (descriptionTexts.Count > 2)
+                    {
+                        descriptions.Add(new KeyValuePair<string, string>("de-DE",descriptionTexts[2].Replace("&nbsp;", " ")));
+                    }
+                    else
+                    {
+                        descriptions.Add(new KeyValuePair<string, string>("de-DE", " "));
+                    }
+                    if (nameTexts.Count > 1)
+                    {
+                        if (descriptions.Count != 2)
+                        {
+                            descriptions.Add(new KeyValuePair<string, string>("en-US", " "));
+                        }
+                        names.Add(new KeyValuePair<string, string> ("en-US", nameTexts[1]));
+                    }
+                    else
+                    {
+                        names.Add(new KeyValuePair<string, string>("en-US", " "));
+                    }
+                    if (nameTexts.Count > 2)
+                    {
+                        if (descriptions.Count != 3)
+                        {
+                            descriptions.Add(new KeyValuePair<string, string>("de-DE", " "));
+                        }
+                        names.Add(new KeyValuePair<string, string> ("de-DE", nameTexts[2]));
+                    }
+                    else
+                    {
+                        names.Add(new KeyValuePair<string, string>("de-DE", " "));
+                    }
+
+                    core.FolderUpdate(folder.Id, names, descriptions, folder.ParentId).GetAwaiter().GetResult();
+                    folder.Name = null;
+                    folder.Description = null;
+                    folder.Update(dbContext).GetAwaiter().GetResult();
+                }
+
                 return new OperationDataResult<HeaderSettingsModel>(true, model);
             }
             catch (Exception e)
@@ -394,18 +465,15 @@ namespace eFormAPI.Web.Services
             return new OperationDataResult<string>(true, PathHelper.GetOsVersion().ToString());
         }
 
-        public async Task<OperationDataResult<string>> GetLatestVersion()
+        public OperationDataResult<string> GetLatestVersion()
         {
-            return new OperationDataResult<string>(true, await PluginHelper.GetLatestRepositoryVersion("microting", "eform-angular-frontend"));
+            return new OperationDataResult<string>(true, PluginHelper.GetLatestRepositoryVersion("microting", "eform-angular-frontend"));
         }
 
         public async Task<OperationDataResult<AdminSettingsModel>> GetAdminSettings()
         {
             try
             {
-                var sdkConnectionString = _connectionStringsSdk.Value.SdkConnection;
-                var adminTool = new AdminTools(sdkConnectionString);
-                await adminTool.DbSetup("");
                 var core = await _coreHelper.GetCore();
 
                 var model = new AdminSettingsModel()
@@ -483,60 +551,96 @@ namespace eFormAPI.Web.Services
             try
             {
                 var core = await _coreHelper.GetCore();
-                await _emailSettings.UpdateDb((option) =>
+                if (adminSettingsModel.SMTPSettingsModel != null)
                 {
-                    option.SmtpHost = adminSettingsModel.SMTPSettingsModel.Host;
-                    option.SmtpPort = int.Parse(adminSettingsModel.SMTPSettingsModel.Port);
-                    option.Login = adminSettingsModel.SMTPSettingsModel.Login;
-                    option.Password = adminSettingsModel.SMTPSettingsModel.Password;
-                    option.SendGridKey = adminSettingsModel.SendGridSettingsModel.ApiKey;
-                }, _dbContext);
-                await _headerSettings.UpdateDb((option) =>
-                {
-                    option.ImageLink = adminSettingsModel.HeaderSettingsModel.ImageLink;
-                    option.ImageLinkVisible = adminSettingsModel.HeaderSettingsModel.ImageLinkVisible;
-                    option.MainText = adminSettingsModel.HeaderSettingsModel.MainText;
-                    option.MainTextVisible = adminSettingsModel.HeaderSettingsModel.MainTextVisible;
-                    option.SecondaryText = adminSettingsModel.HeaderSettingsModel.SecondaryText;
-                    option.SecondaryTextVisible = adminSettingsModel.HeaderSettingsModel.SecondaryTextVisible;
-                }, _dbContext);
-                await _loginPageSettings.UpdateDb((option) =>
-                {
-                    option.ImageLink = adminSettingsModel.LoginPageSettingsModel.ImageLink;
-                    option.ImageLinkVisible = adminSettingsModel.LoginPageSettingsModel.ImageLinkVisible;
-                    option.MainText = adminSettingsModel.LoginPageSettingsModel.MainText;
-                    option.MainTextVisible = adminSettingsModel.LoginPageSettingsModel.MainTextVisible;
-                    option.SecondaryText = adminSettingsModel.LoginPageSettingsModel.SecondaryText;
-                    option.SecondaryTextVisible = adminSettingsModel.LoginPageSettingsModel.SecondaryTextVisible;
-                }, _dbContext);
-                await core.SetSdkSetting(Settings.httpServerAddress, adminSettingsModel.SiteLink);
-                await core.SetSdkSetting(Settings.swiftEnabled, adminSettingsModel.SwiftSettingsModel.SwiftEnabled.ToString());
-                await core.SetSdkSetting(Settings.swiftUserName, adminSettingsModel.SwiftSettingsModel.SwiftUserName);
-                
-                if (adminSettingsModel.SwiftSettingsModel.SwiftPassword != "SOMESECRETPASSWORD")
-                {
-                    await core.SetSdkSetting(Settings.swiftPassword, adminSettingsModel.SwiftSettingsModel.SwiftPassword);
+                    await _emailSettings.UpdateDb((option) =>
+                    {
+                        option.SmtpHost = adminSettingsModel.SMTPSettingsModel.Host;
+                        option.SmtpPort = int.Parse(adminSettingsModel.SMTPSettingsModel.Port);
+                        option.Login = adminSettingsModel.SMTPSettingsModel.Login;
+                        option.Password = adminSettingsModel.SMTPSettingsModel.Password;
+                        option.SendGridKey = adminSettingsModel.SendGridSettingsModel.ApiKey;
+                    }, _dbContext);
                 }
-                
-                await core.SetSdkSetting(Settings.swiftEndPoint, adminSettingsModel.SwiftSettingsModel.SwiftEndpoint);
-                await core.SetSdkSetting(Settings.keystoneEndPoint, adminSettingsModel.SwiftSettingsModel.KeystoneEndpoint);
-                await core.SetSdkSetting(Settings.customerNo, adminSettingsModel.SdkSettingsModel.CustomerNo);
-                await core.SetSdkSetting(Settings.logLevel, adminSettingsModel.SdkSettingsModel.LogLevel);
-                await core.SetSdkSetting(Settings.logLimit, adminSettingsModel.SdkSettingsModel.LogLimit);
-                await core.SetSdkSetting(Settings.fileLocationPicture, adminSettingsModel.SdkSettingsModel.FileLocationPicture);
-                await core.SetSdkSetting(Settings.fileLocationPdf, adminSettingsModel.SdkSettingsModel.FileLocationPdf);
-                await core.SetSdkSetting(Settings.fileLocationJasper, adminSettingsModel.SdkSettingsModel.FileLocationReports);
-                await core.SetSdkSetting(Settings.httpServerAddress, adminSettingsModel.SdkSettingsModel.HttpServerAddress);
-                await core.SetSdkSetting(Settings.s3Enabled, adminSettingsModel.S3SettingsModel.S3Enabled.ToString());
-                await core.SetSdkSetting(Settings.s3AccessKeyId, adminSettingsModel.S3SettingsModel.S3AccessKeyId);
-                await core.SetSdkSetting(Settings.s3BucketName, adminSettingsModel.S3SettingsModel.S3BucketName);
-                
-                if (adminSettingsModel.S3SettingsModel.S3SecrectAccessKey != "SOMESECRETPASSWORD")
+
+                if (adminSettingsModel.HeaderSettingsModel != null)
                 {
-                    await core.SetSdkSetting(Settings.s3SecrectAccessKey, adminSettingsModel.S3SettingsModel.S3SecrectAccessKey);    
+                    await _headerSettings.UpdateDb((option) =>
+                    {
+                        option.ImageLink = adminSettingsModel.HeaderSettingsModel.ImageLink;
+                        option.ImageLinkVisible = adminSettingsModel.HeaderSettingsModel.ImageLinkVisible;
+                        option.MainText = adminSettingsModel.HeaderSettingsModel.MainText;
+                        option.MainTextVisible = adminSettingsModel.HeaderSettingsModel.MainTextVisible;
+                        option.SecondaryText = adminSettingsModel.HeaderSettingsModel.SecondaryText;
+                        option.SecondaryTextVisible = adminSettingsModel.HeaderSettingsModel.SecondaryTextVisible;
+                    }, _dbContext);
                 }
-                
-                await core.SetSdkSetting(Settings.s3Endpoint, adminSettingsModel.S3SettingsModel.S3Endpoint);
+
+                if (adminSettingsModel.LoginPageSettingsModel != null)
+                {
+                    await _loginPageSettings.UpdateDb((option) =>
+                    {
+                        option.ImageLink = adminSettingsModel.LoginPageSettingsModel.ImageLink;
+                        option.ImageLinkVisible = adminSettingsModel.LoginPageSettingsModel.ImageLinkVisible;
+                        option.MainText = adminSettingsModel.LoginPageSettingsModel.MainText;
+                        option.MainTextVisible = adminSettingsModel.LoginPageSettingsModel.MainTextVisible;
+                        option.SecondaryText = adminSettingsModel.LoginPageSettingsModel.SecondaryText;
+                        option.SecondaryTextVisible = adminSettingsModel.LoginPageSettingsModel.SecondaryTextVisible;
+                    }, _dbContext);
+                }
+
+                if (!string.IsNullOrEmpty(adminSettingsModel.SiteLink))
+                {
+                    await core.SetSdkSetting(Settings.httpServerAddress, adminSettingsModel.SiteLink);
+                }
+
+                if (adminSettingsModel.SwiftSettingsModel != null)
+                {
+                    await core.SetSdkSetting(
+                        Settings.swiftEnabled,
+                        adminSettingsModel.SwiftSettingsModel.SwiftEnabled.ToString());
+
+                    await core.SetSdkSetting(
+                        Settings.swiftUserName,
+                        adminSettingsModel.SwiftSettingsModel.SwiftUserName);
+
+                    if (adminSettingsModel.SwiftSettingsModel.SwiftPassword != "SOMESECRETPASSWORD")
+                    {
+                        await core.SetSdkSetting(Settings.swiftPassword,
+                            adminSettingsModel.SwiftSettingsModel.SwiftPassword);
+                    }
+
+                    await core.SetSdkSetting(Settings.swiftEndPoint,
+                        adminSettingsModel.SwiftSettingsModel.SwiftEndpoint);
+                    await core.SetSdkSetting(Settings.keystoneEndPoint,
+                        adminSettingsModel.SwiftSettingsModel.KeystoneEndpoint);
+                }
+
+                if (adminSettingsModel.SdkSettingsModel != null)
+                {
+                    await core.SetSdkSetting(Settings.customerNo, adminSettingsModel.SdkSettingsModel.CustomerNo);
+                    await core.SetSdkSetting(Settings.logLevel, adminSettingsModel.SdkSettingsModel.LogLevel);
+                    await core.SetSdkSetting(Settings.logLimit, adminSettingsModel.SdkSettingsModel.LogLimit);
+                    await core.SetSdkSetting(Settings.fileLocationPicture, adminSettingsModel.SdkSettingsModel.FileLocationPicture);
+                    await core.SetSdkSetting(Settings.fileLocationPdf, adminSettingsModel.SdkSettingsModel.FileLocationPdf);
+                    await core.SetSdkSetting(Settings.fileLocationJasper, adminSettingsModel.SdkSettingsModel.FileLocationReports);
+                    await core.SetSdkSetting(Settings.httpServerAddress, adminSettingsModel.SdkSettingsModel.HttpServerAddress);
+                }
+
+                if (adminSettingsModel.S3SettingsModel != null)
+                {
+                    await core.SetSdkSetting(Settings.s3Enabled, adminSettingsModel.S3SettingsModel.S3Enabled.ToString());
+                    await core.SetSdkSetting(Settings.s3AccessKeyId, adminSettingsModel.S3SettingsModel.S3AccessKeyId);
+                    await core.SetSdkSetting(Settings.s3BucketName, adminSettingsModel.S3SettingsModel.S3BucketName);
+
+                    if (adminSettingsModel.S3SettingsModel.S3SecrectAccessKey != "SOMESECRETPASSWORD")
+                    {
+                        await core.SetSdkSetting(Settings.s3SecrectAccessKey, adminSettingsModel.S3SettingsModel.S3SecrectAccessKey);
+                    }
+
+                    await core.SetSdkSetting(Settings.s3Endpoint, adminSettingsModel.S3SettingsModel.S3Endpoint);
+                }
+
                 return new OperationResult(true, _localizationService.GetString("SettingsUpdatedSuccessfully"));
             }
             catch (Exception e)
@@ -561,7 +665,7 @@ namespace eFormAPI.Web.Services
                     option.SecondaryText = "No more paper-forms and back-office data entry";
                     option.SecondaryTextVisible = true;
                 }, _dbContext);
-                return new OperationResult(true, "Login page settings have been reseted successfully");
+                return new OperationResult(true, "Login page settings have been reset successfully");
             }
             catch (Exception e)
             {
@@ -574,7 +678,7 @@ namespace eFormAPI.Web.Services
         {
             try
             {
-               await _headerSettings.UpdateDb((option) =>
+                await _headerSettings.UpdateDb((option) =>
                 {
                     option.ImageLink = "";
                     option.ImageLinkVisible = true;
@@ -583,7 +687,7 @@ namespace eFormAPI.Web.Services
                     option.SecondaryText = "No more paper-forms and back-office data entry";
                     option.SecondaryTextVisible = true;
                 }, _dbContext);
-                return new OperationResult(true, "Header settings have been reseted successfully");
+                return new OperationResult(true, "Header settings have been reset successfully");
             }
             catch (Exception e)
             {

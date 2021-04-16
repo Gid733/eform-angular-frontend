@@ -7,15 +7,15 @@ import {expect} from 'chai';
 describe('Application settings page - site header section', function () {
   before(function () {
     loginPage.open('/auth');
+    loginPage.login();
   });
   it('should change main text', function () {
-    loginPage.login();
     myEformsPage.Navbar.goToApplicationSettings();
+    $('#mainTextLoginPage').waitForDisplayed({timeout: 120000});
     $('#spinner-animation').waitForDisplayed({timeout: 50000, reverse: true});
     applicationSettingsPage.LoginPage.mainTextInput.setValue(ApplicationSettingsConstants.LoginPage.customMainText);
     $('#spinner-animation').waitForDisplayed({timeout: 50000, reverse: true});
     applicationSettingsPage.save();
-    //browser.refresh();
     $('#sign-out-dropdown').waitForDisplayed({timeout: 40000});
     $('#spinner-animation').waitForDisplayed({timeout: 50000, reverse: true});
     applicationSettingsPage.Navbar.logout();
@@ -27,9 +27,10 @@ describe('Application settings page - site header section', function () {
   it('should change secondary text', function () {
     loginPage.login();
     myEformsPage.Navbar.goToApplicationSettings();
+    $('#mainTextLoginPage').waitForDisplayed({timeout: 120000});
+    $('#spinner-animation').waitForDisplayed({timeout: 50000, reverse: true});
     applicationSettingsPage.LoginPage.secondaryTextInput.setValue(ApplicationSettingsConstants.LoginPage.customSecondaryText);
     applicationSettingsPage.save();
-    //browser.refresh();
     // browser.pause(8000);
     $('#sign-out-dropdown').waitForDisplayed({timeout: 20000});
     $('#spinner-animation').waitForDisplayed({timeout: 50000, reverse: true});
@@ -41,10 +42,11 @@ describe('Application settings page - site header section', function () {
   });
   it('should hide main text', function () {
     loginPage.login();
-    myEformsPage.Navbar.goToApplicationSettings();
+    loginPage.open('/application-settings');
+    $('#mainTextLoginPage').waitForDisplayed({timeout: 120000});
+    $('#spinner-animation').waitForDisplayed({timeout: 50000, reverse: true});
     applicationSettingsPage.LoginPage.mainTextVisibilityToggleBtn.click();
     applicationSettingsPage.save();
-    //browser.refresh();
     // browser.pause(8000);
     $('#sign-out-dropdown').waitForDisplayed({timeout: 20000});
     $('#spinner-animation').waitForDisplayed({timeout: 50000, reverse: true});
@@ -56,11 +58,11 @@ describe('Application settings page - site header section', function () {
   });
   it('should hide secondary text', function () {
     loginPage.login();
-    myEformsPage.Navbar.goToApplicationSettings();
+    loginPage.open('/application-settings');
+    $('#mainTextLoginPage').waitForDisplayed({timeout: 120000});
+    $('#spinner-animation').waitForDisplayed({timeout: 50000, reverse: true});
     applicationSettingsPage.LoginPage.secondaryTextVisibilityToggleBtn.click();
     applicationSettingsPage.save();
-    //browser.refresh();
-    // browser.pause(8000);
     $('#sign-out-dropdown').waitForDisplayed({timeout: 20000});
     $('#spinner-animation').waitForDisplayed({timeout: 50000, reverse: true});
     applicationSettingsPage.Navbar.logout();
@@ -71,20 +73,24 @@ describe('Application settings page - site header section', function () {
   });
   it('should hide image', function () {
     loginPage.login();
-    myEformsPage.Navbar.goToApplicationSettings();
+    loginPage.open('/application-settings');
+    $('#mainTextLoginPage').waitForDisplayed({timeout: 120000});
+    $('#spinner-animation').waitForDisplayed({timeout: 50000, reverse: true});
     applicationSettingsPage.LoginPage.imageVisibilityToggler.click();
     applicationSettingsPage.save();
-    //browser.refresh();
-    // browser.pause(8000);
     $('#sign-out-dropdown').waitForDisplayed({timeout: 20000});
-    browser.pause(1000);    applicationSettingsPage.Navbar.logout();
+    $('#spinner-animation').waitForDisplayed({timeout: 50000, reverse: true});
+    browser.pause(1000);
+    applicationSettingsPage.Navbar.logout();
     expect(loginPage.loginBtn.isDisplayed()).equal(true);
     expect(loginPage.image.isDisplayed(),
       'Error while toggling visibility of image on login page').to.equal(false);
   });
   it('should reset main text', function () {
     loginPage.login();
-    myEformsPage.Navbar.goToApplicationSettings();
+    loginPage.open('/application-settings');
+    $('#mainTextLoginPage').waitForDisplayed({timeout: 120000});
+    $('#spinner-animation').waitForDisplayed({timeout: 50000, reverse: true});
     applicationSettingsPage.LoginPage.reset();
     applicationSettingsPage.Navbar.logout();
     expect(loginPage.loginBtn.isDisplayed()).equal(true);

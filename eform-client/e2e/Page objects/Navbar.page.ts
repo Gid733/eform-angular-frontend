@@ -1,17 +1,23 @@
 export class Navbar {
   public get applicationSettingsBtn() {
-    const ele = $(`#header #application-settings`);
+    const ele = $(`#application-settings`);
     ele.waitForDisplayed({timeout: 20000});
     return ele;
   }
   public get signOutDropdown() {
-    return $(`#sign-out-dropdown`);
+    const ele = $(`#sign-out-dropdown`);
+    ele.waitForDisplayed({timeout: 20000});
+    ele.waitForClickable({timeout: 20000});
+    return ele;
   }
   public get advancedBtn() {
     return $('#advanced');
   }
   public get logoutBtn() {
-    return $(`#sign-out`);
+    const ele = $(`#sign-out`);
+    ele.waitForDisplayed({timeout: 20000});
+    ele.waitForClickable({timeout: 20000});
+    return ele;
   }
   public get settingsBtn() {
     return $(`#settings`);
@@ -46,10 +52,14 @@ export class Navbar {
     return ele;
   }
   public get entitySearchBtn() {
-    return $(`#header #search`);
+    const ele = $(`#header #search`);
+    ele.waitForDisplayed({timeout: 20000});
+    return ele;
   }
   public get entitySelectBtn() {
-    return $(`#header #selectable-list`);
+    const ele = $(`#header #selectable-list`);
+    ele.waitForDisplayed({timeout: 20000});
+    return ele;
   }
   public get myEformsBtn() {
     return $('#header #my-eforms');
@@ -69,8 +79,12 @@ export class Navbar {
   }
   public verifyHeaderMenuItem(headerMenuItem) {
     return $(`//*[@id="header"]//*[contains(text(), '${headerMenuItem}')]`).getText();
-  }  public clickOnHeaderMenuItem2(headerMenuItem) {
-    return $(`//*[@id="header"]//*[contains(text(), '${headerMenuItem}')]`);
+  }
+  public clickOnHeaderMenuItem2(headerMenuItem) {
+    const ele = $(`//*[@id="header"]//*[contains(text(), '${headerMenuItem}')]`);
+    ele.waitForDisplayed({timeout: 20000});
+    ele.waitForClickable({timeout: 20000});
+    return ele;
   }
 
   public logout() {
@@ -129,8 +143,9 @@ export class Navbar {
   }
   public goToFolderPage() {
     this.advancedDropdownClick();
+    this.foldersBtn.waitForDisplayed({timeout: 5000});
+    this.foldersBtn.waitForClickable({timeout: 5000});
     this.foldersBtn.click();
-    // browser.pause(15000);
     $('#spinner-animation').waitForDisplayed({timeout: 30000, reverse: true});
   }
   public goToPluginsPage() {

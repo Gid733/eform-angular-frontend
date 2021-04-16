@@ -14,7 +14,7 @@ export class PageSettingsModel {
   pageSize: number;
   sort: string;
   isSortDsc: boolean;
-  additional: Array<{key: string, value: string}> = [];
+  additional: Array<{ key: string; value: string }> = [];
 
   constructor(data?: any) {
     if (data) {
