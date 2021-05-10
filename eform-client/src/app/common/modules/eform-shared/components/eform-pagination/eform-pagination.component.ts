@@ -5,9 +5,11 @@ import {
   OnChanges,
   OnInit,
   Output,
+  SimpleChanges,
 } from '@angular/core';
 import { Observable, range } from 'rxjs';
 import { filter, map, toArray } from 'rxjs/operators';
+import { PaginationModel } from 'src/app/common/models';
 
 @Component({
   // tslint:disable-next-line:component-selector
@@ -22,6 +24,7 @@ export class EformPaginationComponent implements OnInit, OnChanges {
   @Input() limit = 1;
   @Input() size = 1;
   @Input() range = 3;
+  @Input() pagination: PaginationModel;
   currentPage: number;
   totalPages: number;
   pages: Observable<number[]>;
@@ -56,11 +59,23 @@ export class EformPaginationComponent implements OnInit, OnChanges {
     return Math.ceil(Math.max(size, 1) / Math.max(limit, 1));
   }
 
-  ngOnChanges() {
-    this.getPages(this.offset, this.limit, this.size);
+  ngOnChanges(changes: SimpleChanges) {
+    if (!changes.pagination.firstChange) {
+      if (this.pagination) {
+        this.offset = this.pagination.offset;
+        this.limit = this.pagination.pageSize;
+        this.size = this.pagination.total;
+      }
+      this.getPages(this.offset, this.limit, this.size);
+    }
   }
 
   ngOnInit() {
+    if (this.pagination) {
+      this.offset = this.pagination.offset;
+      this.limit = this.pagination.pageSize;
+      this.size = this.pagination.total;
+    }
     this.getPages(this.offset, this.limit, this.size);
   }
 }

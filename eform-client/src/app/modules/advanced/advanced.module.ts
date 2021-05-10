@@ -4,7 +4,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { DragulaModule } from 'ng2-dragula';
 import { MDBBootstrapModule } from 'angular-bootstrap-md';
-import { EformSharedModule } from 'src/app/common/modules/eform-shared/eform-shared.module';
+import { EformSharedModule } from '../../common/modules/eform-shared/eform-shared.module';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { AdvancedRoutingModule } from './advanced.routing';
 import {
@@ -33,12 +33,14 @@ import {
   WorkersComponent,
   FoldersComponent,
   FolderCreateComponent,
-  SiteTagsComponent,
   FolderEditComponent,
   FolderDeleteComponent,
+  SiteTagsComponent,
 } from './components';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { EformImportedModule } from 'src/app/common/modules/eform-imported/eform-imported.module';
+import { EformImportedModule } from '../../common/modules/eform-imported/eform-imported.module';
+import { advancedPersistProviders } from './components/advansed-persist-providers';
+import { EformSharedTagsModule } from '../../common/modules/eform-shared-tags/eform-shared-tags.module';
 
 @NgModule({
   imports: [
@@ -54,6 +56,7 @@ import { EformImportedModule } from 'src/app/common/modules/eform-imported/eform
     MDBBootstrapModule,
     EformImportedModule,
     ReactiveFormsModule,
+    EformSharedTagsModule,
   ],
   declarations: [
     EntitySearchComponent,
@@ -85,5 +88,6 @@ import { EformImportedModule } from 'src/app/common/modules/eform-imported/eform
     FolderDeleteComponent,
     SiteTagsComponent,
   ],
+  providers: [...advancedPersistProviders],
 })
 export class AdvancedModule {}

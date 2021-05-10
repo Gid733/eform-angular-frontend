@@ -78,7 +78,7 @@ namespace eFormAPI.Web.Services
             var sdkDbContext = core.DbContextHelper.GetDbContext();
             var timeZoneInfo = await _userService.GetCurrentUserTimeZoneInfo();
             var language = sdkDbContext.Languages.Single(x =>
-                string.Equals(x.LanguageCode, localeString, StringComparison.CurrentCultureIgnoreCase));
+                x.LanguageCode == localeString);
             var template = await core.TemplateItemRead(eFormCaseReportRequest.TemplateId, language);
             if (template == null)
             {
@@ -262,11 +262,14 @@ namespace eFormAPI.Web.Services
                             case Constants.FieldTypes.SingleSelect:
                             {
                                 FieldOption fieldOption =
-                                    caseField.Field.FieldOptions.Single(x => x.Key == caseField.Value);
-                                FieldOptionTranslation fieldOptionTranslation =
-                                    await sdkDbContext.FieldOptionTranslations.SingleAsync(x =>
-                                        x.FieldOptionId == fieldOption.Id && x.LanguageId == language.Id);
-                                reportEformCaseModel.CaseFields.Add(fieldOptionTranslation.Text);
+                                    caseField.Field.FieldOptions.SingleOrDefault(x => x.Key == caseField.Value);
+                                if (fieldOption != null)
+                                {
+                                    FieldOptionTranslation fieldOptionTranslation =
+                                        await sdkDbContext.FieldOptionTranslations.SingleAsync(x =>
+                                            x.FieldOptionId == fieldOption.Id && x.LanguageId == language.Id);
+                                    reportEformCaseModel.CaseFields.Add(fieldOptionTranslation.Text);
+                                }
                                 break;
                             }
                             default:
@@ -366,7 +369,7 @@ namespace eFormAPI.Web.Services
             var core = await _coreHelper.GetCore();
             var localeString = await _userService.GetCurrentUserLocale();
             var sdkDbContext = core.DbContextHelper.GetDbContext();
-            var language = sdkDbContext.Languages.Single(x => string.Equals(x.LanguageCode, localeString, StringComparison.CurrentCultureIgnoreCase));
+            var language = sdkDbContext.Languages.Single(x => x.LanguageCode == localeString);
             var template = await core.TemplateItemRead(templateId, language);
             if (template == null)
             {

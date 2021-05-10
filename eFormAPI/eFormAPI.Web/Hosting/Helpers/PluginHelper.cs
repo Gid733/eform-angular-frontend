@@ -21,6 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -76,6 +77,7 @@ namespace eFormAPI.Web.Hosting.Helpers
                     }
                     catch
                     {
+                        // ignored
                     }
                 }
 
@@ -126,6 +128,7 @@ namespace eFormAPI.Web.Hosting.Helpers
                     }
                 }
             }
+
             return plugins;
         }
 
@@ -148,6 +151,7 @@ namespace eFormAPI.Web.Hosting.Helpers
                     }
                     catch
                     {
+                        // ignored
                     }
                 }
 
@@ -278,9 +282,12 @@ namespace eFormAPI.Web.Hosting.Helpers
             //var directories = Directory.EnumerateDirectories(pluginsDir);
             //foreach (var directory in directories)
             //{
-                var pluginList = Directory.GetFiles(pluginsDir, "*.Pn.dll", SearchOption.AllDirectories);
+            var pluginList = Directory.GetFiles(pluginsDir, "*.Pn.dll", SearchOption.AllDirectories);
 
-                foreach (var pluginFile in pluginList)
+
+            foreach (var pluginFile in pluginList)
+            {
+                if (!pluginFile.Contains("ref"))
                 {
                     var loader = PluginLoader.CreateFromAssemblyFile(pluginFile,
                         // this ensures that the plugin resolves to the same version of DependencyInjection
@@ -315,7 +322,7 @@ namespace eFormAPI.Web.Hosting.Helpers
                             typeof(LoggerCategory<>),
                             typeof(DbLoggerCategory),
                             typeof(WarningsConfigurationBuilder),
-                            typeof(MySqlDbContextOptionsExtensions),
+                            //typeof(MySqlDbContextOptionsExtensions),
                             typeof(CoreOptionsExtension),
                             typeof(RelationalEventId),
                             typeof(IDbContextOptionsBuilderInfrastructure),
@@ -342,11 +349,11 @@ namespace eFormAPI.Web.Hosting.Helpers
                     {
                         Console.ForegroundColor = ConsoleColor.Green;
                         Console.WriteLine($@"[INF] Found plugin : {type.Name}");
-                        var plugin = (IEformPlugin)Activator.CreateInstance(type);
+                        var plugin = (IEformPlugin) Activator.CreateInstance(type);
                         plugins.Add(plugin);
                     }
                 }
-            //}
+            }
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine($@"[INF] {plugins.Count} plugins found");

@@ -16,6 +16,7 @@ import {
 import { AccountManagementRouting } from './account-management.routing';
 import { TranslateModule } from '@ngx-translate/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { usersPersistProvider } from './components/users/store/users.store';
 
 @NgModule({
   imports: [
@@ -37,5 +38,6 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
     NewUserModalComponent,
     RemoveUserModalComponent,
   ],
+  providers: [usersPersistProvider],
 })
 export class AccountManagementModule {}

@@ -14,12 +14,15 @@ import {
   EformEditTagsModalComponent,
   EformExcelReportModalComponent,
   EformRemoveEformModalComponent,
+  EformsBulkImportModalComponent,
   EformsPageComponent,
   EformUploadZipModalComponent,
-  EformsBulkImportModalComponent,
+  EformsTagsComponent,
 } from './components';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { OwlDateTimeModule } from 'ng-pick-datetime-ex';
+import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { persistProvider } from 'src/app/modules/eforms/store';
+import { EformSharedTagsModule } from 'src/app/common/modules/eform-shared-tags/eform-shared-tags.module';
 
 @NgModule({
   imports: [
@@ -34,6 +37,7 @@ import { OwlDateTimeModule } from 'ng-pick-datetime-ex';
     TranslateModule.forChild(),
     FontAwesomeModule,
     OwlDateTimeModule,
+    EformSharedTagsModule,
   ],
   declarations: [
     EformsPageComponent,
@@ -45,6 +49,8 @@ import { OwlDateTimeModule } from 'ng-pick-datetime-ex';
     EformUploadZipModalComponent,
     EformExcelReportModalComponent,
     EformsBulkImportModalComponent,
+    EformsTagsComponent,
   ],
+  providers: [persistProvider],
 })
 export class EFormsModule {}

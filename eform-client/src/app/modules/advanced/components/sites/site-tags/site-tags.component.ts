@@ -1,64 +1,83 @@
-import {Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
-import {CommonDictionaryModel} from '../../../../../common/models/common';
-import {SiteNameDto} from '../../../../../common/models/dto';
-import {SiteTagsService} from '../../../../../common/services/advanced';
-import {SiteTagsUpdateModel} from '../../../../../common/models/advanced/site-tags-update.model';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnDestroy,
+  OnInit,
+  Output,
+  ViewChild,
+} from '@angular/core';
+import { SharedTagsComponent } from 'src/app/common/modules/eform-shared-tags/components';
+import {
+  CommonDictionaryModel,
+  SharedTagCreateModel,
+  SharedTagModel,
+} from 'src/app/common/models';
+import { Subscription } from 'rxjs';
+import { AutoUnsubscribe } from 'ngx-auto-unsubscribe';
+import { EformTagService } from 'src/app/common/services';
 
+@AutoUnsubscribe()
 @Component({
-  selector: 'app-site-tags',
+  selector: 'app-sites-tags',
   templateUrl: './site-tags.component.html',
-  styleUrls: ['./site-tags.component.scss']
+  styleUrls: ['./site-tags.component.scss'],
 })
-export class SiteTagsComponent implements OnInit {
-  @ViewChild('frame', {static: true }) frame;
-  @Output() onTagAdded: EventEmitter<void> = new EventEmitter<void>();
-  @Output() onSiteTagsUpdated: EventEmitter<void> = new EventEmitter<void>();
-  @Input() availableTags: Array<CommonDictionaryModel> = [];
-  selectedSite: SiteNameDto = new SiteNameDto();
-  selectedSiteTagsIds: Array<number> = [];
-  tagForRemoval: number;
+export class SiteTagsComponent implements OnInit, OnDestroy {
+  @ViewChild('tagsModal') tagsModal: SharedTagsComponent;
+  @Input() availableTags: CommonDictionaryModel[] = [];
+  @Output() tagsChanged: EventEmitter<void> = new EventEmitter<void>();
+  deleteTag$: Subscription;
+  createTag$: Subscription;
+  updateTag$: Subscription;
 
-  constructor(private siteTagService: SiteTagsService) {
+  constructor(private eFormTagService: EformTagService) {}
+
+  show() {
+    this.tagsModal.show();
   }
 
-  ngOnInit() {
+  hide() {
+    this.tagsModal.hide();
   }
 
-  show(selectedSite: SiteNameDto) {
-    this.selectedSite = selectedSite;
-    this.tagForRemoval = null;
-    this.selectedSiteTagsIds = selectedSite.tags ? this.selectedSite.tags.map(x => x.key) : [];
-    this.frame.show();
-  }
+  ngOnInit() {}
 
-  createNewTag(name: string) {
-    if (name) {
-      this.siteTagService.createTag(name).subscribe((operation => {
-        if (operation && operation.success) {
-          this.onTagAdded.emit();
+  ngOnDestroy(): void {}
+
+  onTagUpdate(model: SharedTagModel) {
+    this.updateTag$ = this.eFormTagService
+      .updateTag(model)
+      .subscribe((data) => {
+        if (data && data.success) {
+          this.tagsModal.tagEditModal.hide();
+          this.tagsModal.show();
+          this.tagsChanged.emit();
         }
-      }));
-    }
+      });
   }
 
-  updateSiteTags() {
-    const siteTagsUpdateModel = new SiteTagsUpdateModel();
-    siteTagsUpdateModel.siteId = this.selectedSite.id;
-    siteTagsUpdateModel.tagsIds = this.selectedSiteTagsIds;
-    this.siteTagService.updateSiteTags(siteTagsUpdateModel).subscribe((operation => {
-      if (operation && operation.success) {
-        this.onSiteTagsUpdated.emit();
-        this.frame.hide();
-      }
-    }));
+  onTagCreate(model: SharedTagCreateModel) {
+    this.createTag$ = this.eFormTagService
+      .createTag(model)
+      .subscribe((data) => {
+        if (data && data.success) {
+          this.tagsModal.tagCreateModal.hide();
+          this.tagsModal.show();
+          this.tagsChanged.emit();
+        }
+      });
   }
 
-  removeSiteTag() {
-    this.siteTagService.deleteTag(this.tagForRemoval).subscribe((operation => {
-      if (operation && operation.success) {
-        this.onTagAdded.emit();
-        this.tagForRemoval = null;
-      }
-    }));
+  onTagDelete(model: SharedTagModel) {
+    this.deleteTag$ = this.eFormTagService
+      .deleteTag(model.id)
+      .subscribe((data) => {
+        if (data && data.success) {
+          this.tagsModal.tagDeleteModal.hide();
+          this.tagsModal.show();
+          this.tagsChanged.emit();
+        }
+      });
   }
 }

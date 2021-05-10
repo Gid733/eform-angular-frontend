@@ -1,17 +1,12 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import {
-  AdvEntitySearchableGroupListModel,
-  AdvEntitySearchableGroupListRequestModel,
   AdvEntitySearchableGroupModel,
-  PageSettingsModel,
+  Paged,
   TableHeaderElementModel,
 } from 'src/app/common/models';
-import { EntitySearchService } from 'src/app/common/services/advanced';
-import { AuthService } from 'src/app/common/services/auth';
-import { EntitySearchStateService } from 'src/app/modules/advanced/components/entity-search/state/entity-search-state.service';
-import { EntitySearchQuery } from 'src/app/modules/advanced/components/entity-search/state/entity-search.query';
-import { EntitySearchStore } from 'src/app/modules/advanced/components/entity-search/state/entity-search.store';
-import { updateTableSorting } from 'src/app/common/helpers';
+import { EntitySearchService } from 'src/app/common/services';
+import { EntitySearchStateService } from '../store';
+import { AuthStateService } from 'src/app/common/store';
 
 @Component({
   selector: 'app-searchable-list',
@@ -21,26 +16,26 @@ import { updateTableSorting } from 'src/app/common/helpers';
 export class EntitySearchComponent implements OnInit {
   @ViewChild('modalSearchRemove', { static: true }) modalSearchRemove;
   selectedAdvGroup: AdvEntitySearchableGroupModel = new AdvEntitySearchableGroupModel();
-  advEntitySearchableGroupListModel: AdvEntitySearchableGroupListModel = new AdvEntitySearchableGroupListModel();
+  advEntitySearchableGroupListModel: Paged<AdvEntitySearchableGroupModel> = new Paged<AdvEntitySearchableGroupModel>();
 
   get userClaims() {
-    return this.authService.userClaims;
+    return this.authStateService.currentUserClaims;
   }
 
   tableHeaders: TableHeaderElementModel[] = [
     { name: 'Id', elementId: 'idTableHeader', sortable: true },
-    { name: 'Name', elementId: 'nameTableHeader', sortable: false },
+    { name: 'Name', elementId: 'nameTableHeader', sortable: true },
     {
       name: 'Description',
       elementId: 'descriptionTableHeader',
-      sortable: false,
+      sortable: true,
     },
     { name: 'Actions', elementId: '', sortable: false },
   ];
 
   constructor(
     private entitySearchService: EntitySearchService,
-    private authService: AuthService,
+    private authStateService: AuthStateService,
     public entitySearchStateService: EntitySearchStateService
   ) {}
 
@@ -59,7 +54,7 @@ export class EntitySearchComponent implements OnInit {
   }
 
   changePage(offset: number) {
-    this.entitySearchStateService.updatePageIndex(offset);
+    this.entitySearchStateService.changePage(offset);
     this.getEntitySearchableGroupList();
   }
 
@@ -70,24 +65,21 @@ export class EntitySearchComponent implements OnInit {
 
   onSearchChanged(name: string) {
     this.entitySearchStateService.updateNameFilter(name);
-    this.changePage(0);
     this.getEntitySearchableGroupList();
   }
 
   sortTable(sort: string) {
-    const localPageSettings = updateTableSorting(sort, {
-      sort: this.entitySearchStateService.sort,
-      isSortDsc: this.entitySearchStateService.isSortDsc,
-      pageSize: 0,
-      additional: [],
-    });
-    this.entitySearchStateService.updateSort(localPageSettings.sort);
-    this.entitySearchStateService.updateIsSortDsc(localPageSettings.isSortDsc);
+    this.entitySearchStateService.onSortTable(sort);
     this.getEntitySearchableGroupList();
   }
 
   onPageSizeChanged(pageSize: number) {
     this.entitySearchStateService.updatePageSize(pageSize);
+    this.getEntitySearchableGroupList();
+  }
+
+  onEntityRemoved() {
+    this.entitySearchStateService.onDelete();
     this.getEntitySearchableGroupList();
   }
 }
