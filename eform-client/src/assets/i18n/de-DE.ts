@@ -367,4 +367,8 @@ export const deDE = {
   'Security groups': 'Beveiligingsgroepen',
   Custom: 'Op maat',
   Add: 'Toevoegen',
+  'Generate report': 'Bericht {{value}} generieren',
+  'Select date range': 'Datumsbereich auswählen',
+  'Edit headers': 'Kopfzeilen bearbeiten',
+  'Generate': 'Bericht generieren'
 };

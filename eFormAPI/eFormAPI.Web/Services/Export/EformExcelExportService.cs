@@ -1,7 +1,7 @@
 ﻿/*
 The MIT License (MIT)
 
-Copyright (c) 2007 - 2020 Microting A/S
+Copyright (c) 2007 - 2021 Microting A/S
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -67,8 +67,7 @@ namespace eFormAPI.Web.Services.Export
                 var core = await _coreHelper.GetCore();
                 var cultureInfo = new CultureInfo("de-DE");
 
-                var locale = await _userService.GetCurrentUserLocale();
-                var language = core.DbContextHelper.GetDbContext().Languages.Single(x => x.LanguageCode.ToLower() == locale.ToLower());
+                var language = await _userService.GetCurrentUserLanguage();
                 var timeZoneInfo = await _userService.GetCurrentUserTimeZoneInfo();
 
                 var customPathForUploadedData = $"{await core.GetSdkSetting(Settings.httpServerAddress)}/" +
@@ -87,7 +86,7 @@ namespace eFormAPI.Web.Services.Export
                     "",
                     false,
                     cultureInfo,
-                    timeZoneInfo, language).ConfigureAwait(false);
+                    timeZoneInfo, language, true).ConfigureAwait(false);
 
                 if (dataSet == null)
                 {

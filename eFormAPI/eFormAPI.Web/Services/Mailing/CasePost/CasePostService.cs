@@ -1,7 +1,7 @@
 ﻿/*
 The MIT License (MIT)
 
-Copyright (c) 2007 - 2020 Microting A/S
+Copyright (c) 2007 - 2021 Microting A/S
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,10 +22,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using System.Security.Claims;
-using Microsoft.AspNetCore.Http;
-using Microting.eForm.Infrastructure.Data.Entities;
-
 namespace eFormAPI.Web.Services.Mailing.CasePost
 {
     using System;
@@ -39,21 +35,21 @@ namespace eFormAPI.Web.Services.Mailing.CasePost
     using Abstractions;
     using EmailService;
     using Hosting.Helpers.DbOptions;
-    using Infrastructure.Const;
-    using Infrastructure.Database;
-    using Infrastructure.Database.Entities.Mailing;
     using Infrastructure.Models;
     using Infrastructure.Models.Mailing;
     using Microsoft.EntityFrameworkCore;
     using Microsoft.Extensions.Logging;
     using Microting.eForm.Dto;
     using Microting.eForm.Infrastructure.Constants;
+    using Microting.EformAngularFrontendBase.Infrastructure.Const;
+    using Microting.EformAngularFrontendBase.Infrastructure.Data;
+    using Microting.EformAngularFrontendBase.Infrastructure.Data.Entities.Mailing;
     using Microting.eFormApi.BasePn.Abstractions;
-    using Microting.eFormApi.BasePn.Infrastructure.Extensions;
     using Microting.eFormApi.BasePn.Infrastructure.Models.API;
     using Microting.eFormApi.BasePn.Infrastructure.Models.Application;
     using Microting.eFormApi.BasePn.Infrastructure.Models.Application.CasePosts;
     using OpenStack.NetCoreSwiftClient.Extensions;
+    using Microting.eFormApi.BasePn.Infrastructure.Helpers;
 
     public class CasePostService : ICasePostService, ICasePostBaseService
     {
@@ -62,7 +58,6 @@ namespace eFormAPI.Web.Services.Mailing.CasePost
         private readonly ILocalizationService _localizationService;
         private readonly IEFormCoreService _coreService;
         private readonly IEmailService _emailService;
-        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly BaseDbContext _dbContext;
         private readonly IDbOptions<EmailSettings> _emailSettings;
 
@@ -72,14 +67,12 @@ namespace eFormAPI.Web.Services.Mailing.CasePost
             ILocalizationService localizationService,
             IEFormCoreService coreService,
             BaseDbContext dbContext,
-            IHttpContextAccessor httpContextAccessor,
             IEmailService emailService,
             IDbOptions<EmailSettings> emailSettings)
         {
             _logger = logger;
             _userService = userService;
             _coreService = coreService;
-            _httpContextAccessor = httpContextAccessor;
             _localizationService = localizationService;
             _dbContext = dbContext;
             _emailService = emailService;
@@ -91,30 +84,12 @@ namespace eFormAPI.Web.Services.Mailing.CasePost
         {
             try
             {
-                var value = _httpContextAccessor?.HttpContext.User?.FindFirstValue(ClaimTypes.NameIdentifier);
                 var core = await _coreService.GetCore();
-                var localeString = _dbContext.Users.Single(x => x.Id == int.Parse(value)).Locale;
-                Language language = core.DbContextHelper.GetDbContext().Languages.Single(x => x.LanguageCode.ToLower() == localeString.ToLower());
+                var language = await _userService.GetCurrentUserLanguage();
                 var casePostsListModel = new CasePostsListModel();
                 var casePostsQuery = _dbContext.CasePosts.AsQueryable();
-                if (!string.IsNullOrEmpty(requestModel.Sort))
-                {
-                    if (requestModel.IsSortDsc)
-                    {
-                        casePostsQuery = casePostsQuery
-                            .CustomOrderByDescending(requestModel.Sort);
-                    }
-                    else
-                    {
-                        casePostsQuery = casePostsQuery
-                            .CustomOrderBy(requestModel.Sort);
-                    }
-                }
-                else
-                {
-                    casePostsQuery = casePostsQuery
-                        .OrderBy(x => x.Id);
-                }
+
+                casePostsQuery = QueryHelper.AddSortToQuery(casePostsQuery, requestModel.Sort, requestModel.IsSortDsc);
 
                 casePostsQuery = casePostsQuery
                     .Where(x => x.CaseId == requestModel.CaseId);
@@ -132,7 +107,7 @@ namespace eFormAPI.Web.Services.Mailing.CasePost
                     throw new InvalidOperationException("caseDto not found");
                 }
 
-                var replyElement = await core.CaseRead((int) caseDto.MicrotingUId, (int) caseDto.CheckUId, language).ConfigureAwait(false);
+                var replyElement = await core.CaseRead((int)caseDto.MicrotingUId, (int)caseDto.CheckUId, language).ConfigureAwait(false);
                 if (replyElement.DocxExportEnabled || replyElement.JasperExportEnabled)
                 {
                     casePostsListModel.PdfReportAvailable = true;
@@ -161,127 +136,125 @@ namespace eFormAPI.Web.Services.Mailing.CasePost
 
                     }).ToListAsync();
 
-                using (var dbContext = core.DbContextHelper.GetDbContext())
+                await using var dbContext = core.DbContextHelper.GetDbContext();
+                var caseEntity = await dbContext.Cases
+                    .AsNoTracking()
+                    .Include(x => x.Site)
+                    .SingleOrDefaultAsync(x => x.Id == requestModel.CaseId);
+
+                if (caseEntity == null)
                 {
-                    var caseEntity = await dbContext.Cases
-                        .AsNoTracking()
-                        .Include(x => x.Site)
-                        .SingleOrDefaultAsync(x => x.Id == requestModel.CaseId);
+                    return new OperationDataResult<CasePostsListModel>(
+                        false,
+                        _localizationService.GetString("CaseNotFound"));
+                }
 
-                    if (caseEntity == null)
-                    {
-                        return new OperationDataResult<CasePostsListModel>(
-                            false,
-                            _localizationService.GetString("CaseNotFound"));
-                    }
+                if (caseEntity.Site?.MicrotingUid != null)
+                {
+                    var site = await core.SiteRead((int)caseEntity.Site.MicrotingUid);
+                    casePostsListModel.WorkerName = site.SiteName;
+                }
 
-                    if (caseEntity.Site?.MicrotingUid != null)
-                    {
-                        var site = await core.SiteRead((int) caseEntity.Site.MicrotingUid);
-                        casePostsListModel.WorkerName = site.SiteName;
-                    }
+                casePostsListModel.EFormName = templateDto.Label;
 
-                    casePostsListModel.EFormName = templateDto.Label;
+                if (templateDto.Field1 != null)
+                {
+                    casePostsListModel.AdditionalFields.Add(
+                        new KeyValueStringModel
+                        {
+                            Key = templateDto.Field1.Label,
+                            Value = caseEntity.FieldValue1 == "null" ? "" : caseEntity.FieldValue1
+                        });
+                }
 
-                    if (templateDto.Field1 != null)
-                    {
-                        casePostsListModel.AdditionalFields.Add(
-                            new KeyValueStringModel
-                            {
-                                Key = templateDto.Field1.Label,
-                                Value = caseEntity.FieldValue1 == "null" ? "" : caseEntity.FieldValue1
-                            });
-                    }
+                if (templateDto.Field2 != null)
+                {
+                    casePostsListModel.AdditionalFields.Add(
+                        new KeyValueStringModel
+                        {
+                            Key = templateDto.Field2.Label,
+                            Value = caseEntity.FieldValue2 == "null" ? "" : caseEntity.FieldValue2
+                        });
+                }
 
-                    if (templateDto.Field2 != null)
-                    {
-                        casePostsListModel.AdditionalFields.Add(
-                            new KeyValueStringModel
-                            {
-                                Key = templateDto.Field2.Label,
-                                Value = caseEntity.FieldValue2 == "null" ? "" : caseEntity.FieldValue2
-                            });
-                    }
+                if (templateDto.Field3 != null)
+                {
+                    casePostsListModel.AdditionalFields.Add(
+                        new KeyValueStringModel
+                        {
+                            Key = templateDto.Field3.Label,
+                            Value = caseEntity.FieldValue3 == "null" ? "" : caseEntity.FieldValue3
+                        });
+                }
 
-                    if (templateDto.Field3 != null)
-                    {
-                        casePostsListModel.AdditionalFields.Add(
-                            new KeyValueStringModel
-                            {
-                                Key = templateDto.Field3.Label,
-                                Value = caseEntity.FieldValue3 == "null" ? "" : caseEntity.FieldValue3
-                            });
-                    }
+                if (templateDto.Field4 != null)
+                {
+                    casePostsListModel.AdditionalFields.Add(
+                        new KeyValueStringModel
+                        {
+                            Key = templateDto.Field4.Label,
+                            Value = caseEntity.FieldValue4 == "null" ? "" : caseEntity.FieldValue4
+                        });
+                }
 
-                    if (templateDto.Field4 != null)
-                    {
-                        casePostsListModel.AdditionalFields.Add(
-                            new KeyValueStringModel
-                            {
-                                Key = templateDto.Field4.Label,
-                                Value = caseEntity.FieldValue4 == "null" ? "" : caseEntity.FieldValue4
-                            });
-                    }
+                if (templateDto.Field5 != null)
+                {
+                    casePostsListModel.AdditionalFields.Add(
+                        new KeyValueStringModel
+                        {
+                            Key = templateDto.Field5.Label,
+                            Value = caseEntity.FieldValue5 == "null" ? "" : caseEntity.FieldValue5
+                        });
+                }
 
-                    if (templateDto.Field5 != null)
-                    {
-                        casePostsListModel.AdditionalFields.Add(
-                            new KeyValueStringModel
-                            {
-                                Key = templateDto.Field5.Label,
-                                Value = caseEntity.FieldValue5 == "null" ? "" : caseEntity.FieldValue5
-                            });
-                    }
+                if (templateDto.Field6 != null)
+                {
+                    casePostsListModel.AdditionalFields.Add(
+                        new KeyValueStringModel
+                        {
+                            Key = templateDto.Field6.Label,
+                            Value = caseEntity.FieldValue6 == "null" ? "" : caseEntity.FieldValue6
+                        });
+                }
 
-                    if (templateDto.Field6 != null)
-                    {
-                        casePostsListModel.AdditionalFields.Add(
-                            new KeyValueStringModel
-                            {
-                                Key = templateDto.Field6.Label,
-                                Value = caseEntity.FieldValue6 == "null" ? "" : caseEntity.FieldValue6
-                            });
-                    }
+                if (templateDto.Field7 != null)
+                {
+                    casePostsListModel.AdditionalFields.Add(
+                        new KeyValueStringModel
+                        {
+                            Key = templateDto.Field7.Label,
+                            Value = caseEntity.FieldValue7 == "null" ? "" : caseEntity.FieldValue7
+                        });
+                }
 
-                    if (templateDto.Field7 != null)
-                    {
-                        casePostsListModel.AdditionalFields.Add(
-                            new KeyValueStringModel
-                            {
-                                Key = templateDto.Field7.Label,
-                                Value = caseEntity.FieldValue7 == "null" ? "" : caseEntity.FieldValue7
-                            });
-                    }
+                if (templateDto.Field8 != null)
+                {
+                    casePostsListModel.AdditionalFields.Add(
+                        new KeyValueStringModel
+                        {
+                            Key = templateDto.Field8.Label,
+                            Value = caseEntity.FieldValue8 == "null" ? "" : caseEntity.FieldValue8
+                        });
+                }
 
-                    if (templateDto.Field8 != null)
-                    {
-                        casePostsListModel.AdditionalFields.Add(
-                            new KeyValueStringModel
-                            {
-                                Key = templateDto.Field8.Label,
-                                Value = caseEntity.FieldValue8 == "null" ? "" : caseEntity.FieldValue8
-                            });
-                    }
+                if (templateDto.Field9 != null)
+                {
+                    casePostsListModel.AdditionalFields.Add(
+                        new KeyValueStringModel
+                        {
+                            Key = templateDto.Field9.Label,
+                            Value = caseEntity.FieldValue9 == "null" ? "" : caseEntity.FieldValue9
+                        });
+                }
 
-                    if (templateDto.Field9 != null)
-                    {
-                        casePostsListModel.AdditionalFields.Add(
-                            new KeyValueStringModel
-                            {
-                                Key = templateDto.Field9.Label,
-                                Value = caseEntity.FieldValue9 == "null" ? "" : caseEntity.FieldValue9
-                            });
-                    }
-
-                    if (templateDto.Field10 != null)
-                    {
-                        casePostsListModel.AdditionalFields.Add(
-                            new KeyValueStringModel
-                            {
-                                Key = templateDto.Field10.Label,
-                                Value = caseEntity.FieldValue10 == "null" ? "" : caseEntity.FieldValue10
-                            });
-                    }
+                if (templateDto.Field10 != null)
+                {
+                    casePostsListModel.AdditionalFields.Add(
+                        new KeyValueStringModel
+                        {
+                            Key = templateDto.Field10.Label,
+                            Value = caseEntity.FieldValue10 == "null" ? "" : caseEntity.FieldValue10
+                        });
                 }
 
                 casePostsListModel.CasePostsList = casePostList;
@@ -339,183 +312,172 @@ namespace eFormAPI.Web.Services.Mailing.CasePost
         public async Task<OperationResult> CreatePost(CasePostCreateModel requestModel)
         {
             //using (var transaction = await _dbContext.Database.BeginTransactionAsync())
-//                {
-                try
+            //                {
+            try
+            {
+                if (string.IsNullOrEmpty(_emailSettings.Value.SendGridKey))
                 {
-                    if (string.IsNullOrEmpty(_emailSettings.Value.SendGridKey))
-                    {
-                        //transaction.Rollback();
-                        return new OperationResult(false,
-                            _localizationService.GetString("SendGridKeyShouldBeAddedToSettings"));
-                    }
+                    //transaction.Rollback();
+                    return new OperationResult(false,
+                        _localizationService.GetString("SendGridKeyShouldBeAddedToSettings"));
+                }
 
-                    var casePost = new CasePost
+                var casePost = new CasePost
+                {
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    Version = 1,
+                    CreatedByUserId = _userService.UserId,
+                    UpdatedByUserId = _userService.UserId,
+                    AttachPdf = requestModel.AttachReport,
+                    LinkToCase = requestModel.AttachLinkToCase,
+                    Text = requestModel.Text,
+                    Subject = requestModel.Subject,
+                    CaseId = requestModel.CaseId,
+                    PostDate = DateTime.UtcNow,
+                    WorkflowState = Constants.WorkflowStates.Created,
+                };
+
+                await _dbContext.CasePosts.AddAsync(casePost);
+                await _dbContext.SaveChangesAsync();
+
+                foreach (var tagsId in requestModel.ToTagsIds)
+                {
+                    var casePostEmailTag = new CasePostEmailTag
                     {
                         CreatedAt = DateTime.UtcNow,
                         UpdatedAt = DateTime.UtcNow,
                         Version = 1,
                         CreatedByUserId = _userService.UserId,
                         UpdatedByUserId = _userService.UserId,
-                        AttachPdf = requestModel.AttachReport,
-                        LinkToCase = requestModel.AttachLinkToCase,
-                        Text = requestModel.Text,
-                        Subject = requestModel.Subject,
-                        CaseId = requestModel.CaseId,
-                        PostDate = DateTime.UtcNow,
+                        CasePostId = casePost.Id,
+                        EmailTagId = tagsId,
                         WorkflowState = Constants.WorkflowStates.Created,
                     };
 
-                    await _dbContext.CasePosts.AddAsync(casePost);
-                    await _dbContext.SaveChangesAsync();
+                    await _dbContext.CasePostEmailTags.AddAsync(casePostEmailTag);
+                }
 
-                    foreach (var tagsId in requestModel.ToTagsIds)
+                foreach (var recipientId in requestModel.ToRecipientsIds)
+                {
+                    var casePostEmailRecipient = new CasePostEmailRecipient()
                     {
-                        var casePostEmailTag = new CasePostEmailTag
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow,
+                        Version = 1,
+                        CreatedByUserId = _userService.UserId,
+                        UpdatedByUserId = _userService.UserId,
+                        CasePostId = casePost.Id,
+                        EmailRecipientId = recipientId,
+                        WorkflowState = Constants.WorkflowStates.Created,
+                    };
+
+                    await _dbContext.CasePostEmailRecipients.AddAsync(casePostEmailRecipient);
+                }
+
+                await _dbContext.SaveChangesAsync();
+
+                // Send email
+                var currentUser = await _userService.GetCurrentUserAsync();
+
+                var casePostRecipientResult = await _dbContext.CasePosts
+                    .AsNoTracking()
+                    .Where(x => x.Id == casePost.Id)
+                    .Select(x => new
+                    {
+                        Recipients = x.Recipients
+                            .Select(y => y.EmailRecipient)
+                            .ToList(),
+                        EmailTags = x.Tags
+                            .Select(y => y.EmailTagId)
+                            .ToList()
+                    })
+                    .FirstOrDefaultAsync();
+
+                var emailTagsRecipients = await _dbContext.EmailTagRecipients
+                    .Where(x => casePostRecipientResult.EmailTags.Contains(x.EmailTagId))
+                    .Select(x => x.EmailRecipient)
+                    .ToListAsync();
+
+                var recipients = new List<EmailRecipient>();
+                recipients.AddRange(casePostRecipientResult.Recipients);
+                recipients.AddRange(emailTagsRecipients);
+
+                var core = await _coreService.GetCore();
+                var caseDto = await core.CaseLookupCaseId(casePost.CaseId);
+                if (caseDto?.MicrotingUId == null || caseDto.CheckUId == null)
+                {
+                    //transaction.Rollback();
+                    throw new InvalidOperationException("caseDto not found");
+                }
+                var language = await _userService.GetCurrentUserLanguage();
+                var replyElement = await core.CaseRead((int)caseDto.MicrotingUId, (int)caseDto.CheckUId, language).ConfigureAwait(false);
+                var assembly = Assembly.GetExecutingAssembly();
+                var assemblyName = assembly.GetName().Name;
+                var stream = assembly.GetManifestResourceStream($"{assemblyName}.Resources.Email.html");
+                string html;
+                if (stream == null)
+                {
+                    //transaction.Rollback();
+                    throw new InvalidOperationException("Resource not found");
+                }
+                using (var reader = new StreamReader(stream, Encoding.UTF8))
+                {
+                    html = await reader.ReadToEndAsync();
+                }
+
+                if (casePost.LinkToCase)
+                {
+                    html = html
+                        .Replace("{{link}}",
+                            $"{await core.GetSdkSetting(Settings.httpServerAddress)}/cases/edit/{casePost.CaseId}/{caseDto.CheckListId}")
+                        .Replace("{{text}}", casePost.Text);
+                }
+                else
+                {
+                    html = casePost.Text;
+                }
+
+                foreach (var recipient in recipients
+                    .Where(r => r.WorkflowState != Constants.WorkflowStates.Removed)
+                    .GroupBy(x => new { x.Email, x.Name })
+                    .Select(x => x.Key)
+                    .ToList())
+                {
+                    if (casePost.AttachPdf)
+                    {
+                        try
                         {
-                            CreatedAt = DateTime.UtcNow,
-                            UpdatedAt = DateTime.UtcNow,
-                            Version = 1,
-                            CreatedByUserId = _userService.UserId,
-                            UpdatedByUserId = _userService.UserId,
-                            CasePostId = casePost.Id,
-                            EmailTagId = tagsId,
-                            WorkflowState = Constants.WorkflowStates.Created,
-                        };
+                            // Fix for broken SDK not handling empty customXmlContent well
+                            var customXmlContent = new XElement("FillerElement",
+                                new XElement("InnerElement", "SomeValue")).ToString();
 
-                        await _dbContext.CasePostEmailTags.AddAsync(casePostEmailTag);
-                    }
+                            // get report file
+                            var filePath = await core.CaseToPdf(
+                                casePost.CaseId,
+                                replyElement.Id.ToString(),
+                                DateTime.Now.ToString("yyyyMMddHHmmssffff"),
+                                $"{await core.GetSdkSetting(Settings.httpServerAddress)}/" +
+                                "api/template-files/get-image/",
+                                "pdf",
+                                customXmlContent, language);
 
-                    foreach (var recipientId in requestModel.ToRecipientsIds)
-                    {
-                        var casePostEmailRecipient = new CasePostEmailRecipient()
-                        {
-                            CreatedAt = DateTime.UtcNow,
-                            UpdatedAt = DateTime.UtcNow,
-                            Version = 1,
-                            CreatedByUserId = _userService.UserId,
-                            UpdatedByUserId = _userService.UserId,
-                            CasePostId = casePost.Id,
-                            EmailRecipientId = recipientId,
-                            WorkflowState = Constants.WorkflowStates.Created,
-                        };
-
-                        await _dbContext.CasePostEmailRecipients.AddAsync(casePostEmailRecipient);
-                    }
-
-                    await _dbContext.SaveChangesAsync();
-
-                    // Send email
-                    var currentUser = await _userService.GetCurrentUserAsync();
-
-                    var casePostRecipientResult = await _dbContext.CasePosts
-                        .AsNoTracking()
-                        .Where(x => x.Id == casePost.Id)
-                        .Select(x => new
-                        {
-                            Recipients = x.Recipients
-                                .Select(y => y.EmailRecipient)
-                                .ToList(),
-                            EmailTags = x.Tags
-                                .Select(y => y.EmailTagId)
-                                .ToList()
-                        })
-                        .FirstOrDefaultAsync();
-
-                    var emailTagsRecipients = await _dbContext.EmailTagRecipients
-                        .Where(x => casePostRecipientResult.EmailTags.Contains(x.EmailTagId))
-                        .Select(x => x.EmailRecipient)
-                        .ToListAsync();
-
-                    var recipients = new List<EmailRecipient>();
-                    recipients.AddRange(casePostRecipientResult.Recipients);
-                    recipients.AddRange(emailTagsRecipients);
-
-                    var core = await _coreService.GetCore();
-                    var caseDto = await core.CaseLookupCaseId(casePost.CaseId);
-                    if (caseDto?.MicrotingUId == null || caseDto.CheckUId == null)
-                    {
-                        //transaction.Rollback();
-                        throw new InvalidOperationException("caseDto not found");
-                    }
-                    var locale = await _userService.GetCurrentUserLocale();
-                    Language language = core.DbContextHelper.GetDbContext().Languages.Single(x => x.LanguageCode.ToLower() == locale.ToLower());
-                    var replyElement = await core.CaseRead((int) caseDto.MicrotingUId, (int) caseDto.CheckUId, language).ConfigureAwait(false);
-                    var assembly = Assembly.GetExecutingAssembly();
-                    var assemblyName = assembly.GetName().Name;
-                    var stream = assembly.GetManifestResourceStream($"{assemblyName}.Resources.Email.html");
-                    string html;
-                    if (stream == null)
-                    {
-                        //transaction.Rollback();
-                        throw new InvalidOperationException("Resource not found");
-                    }
-                    using (var reader = new StreamReader(stream, Encoding.UTF8))
-                    {
-                        html = await reader.ReadToEndAsync();
-                    }
-
-                    if (casePost.LinkToCase)
-                    {
-                        html = html
-                            .Replace("{{link}}",
-                                $"{await core.GetSdkSetting(Settings.httpServerAddress)}/cases/edit/{casePost.CaseId}/{caseDto.CheckListId}")
-                            .Replace("{{text}}", casePost.Text);
-                    }
-                    else
-                    {
-                        html = casePost.Text;
-                    }
-
-                    foreach (var recipient in recipients
-                        .Where(r => r.WorkflowState != Constants.WorkflowStates.Removed)
-                        .GroupBy(x => new { x.Email, x.Name})
-                        .Select(x=> x.Key)
-                        .ToList())
-                    {
-                        if (casePost.AttachPdf)
-                        {
-                            try
+                            if (!File.Exists(filePath))
                             {
-                                // Fix for broken SDK not handling empty customXmlContent well
-                                var customXmlContent = new XElement("FillerElement",
-                                    new XElement("InnerElement", "SomeValue")).ToString();
-
-                                // get report file
-                                var filePath = await core.CaseToPdf(
-                                    casePost.CaseId,
-                                    replyElement.Id.ToString(),
-                                    DateTime.Now.ToString("yyyyMMddHHmmssffff"),
-                                    $"{await core.GetSdkSetting(Settings.httpServerAddress)}/" +
-                                    "api/template-files/get-image/",
-                                    "pdf",
-                                    customXmlContent, language);
-
-                                if (!File.Exists(filePath))
-                                {
-                                    throw new Exception("Error while creating report file");
-                                }
-
-                                await _emailService.SendFileAsync(
-                                    EformEmailConst.FromEmail,
-                                    $"{currentUser.FirstName} {currentUser.LastName}",
-                                    casePost.Subject.IsNullOrEmpty() ? "-" : casePost.Subject,
-                                    recipient.Email,
-                                    filePath,
-                                    html: html);
+                                throw new Exception("Error while creating report file");
                             }
-                            catch (Exception e)
-                            {
-                                Console.WriteLine(e);
-                                await _emailService.SendAsync(
-                                    EformEmailConst.FromEmail,
-                                    $"{currentUser.FirstName} {currentUser.LastName}",
-                                    casePost.Subject.IsNullOrEmpty() ? "-" : casePost.Subject,
-                                    recipient.Email,
-                                    html: html);
-                            }
+
+                            await _emailService.SendFileAsync(
+                                EformEmailConst.FromEmail,
+                                $"{currentUser.FirstName} {currentUser.LastName}",
+                                casePost.Subject.IsNullOrEmpty() ? "-" : casePost.Subject,
+                                recipient.Email,
+                                filePath,
+                                html: html);
                         }
-                        else
+                        catch (Exception e)
                         {
+                            Console.WriteLine(e);
                             await _emailService.SendAsync(
                                 EformEmailConst.FromEmail,
                                 $"{currentUser.FirstName} {currentUser.LastName}",
@@ -524,20 +486,30 @@ namespace eFormAPI.Web.Services.Mailing.CasePost
                                 html: html);
                         }
                     }
+                    else
+                    {
+                        await _emailService.SendAsync(
+                            EformEmailConst.FromEmail,
+                            $"{currentUser.FirstName} {currentUser.LastName}",
+                            casePost.Subject.IsNullOrEmpty() ? "-" : casePost.Subject,
+                            recipient.Email,
+                            html: html);
+                    }
+                }
 
-                    //transaction.Commit();
-                    return new OperationResult(
-                        true,
-                        _localizationService.GetString("PostCreatedSuccessfully"));
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                    _logger.LogError(e.Message);
-                    //transaction.Rollback();
-                    return new OperationResult(false,
-                        _localizationService.GetString("ErrorWhileCreatingPost"));
-                }
+                //transaction.Commit();
+                return new OperationResult(
+                    true,
+                    _localizationService.GetString("PostCreatedSuccessfully"));
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                _logger.LogError(e.Message);
+                //transaction.Rollback();
+                return new OperationResult(false,
+                    _localizationService.GetString("ErrorWhileCreatingPost"));
+            }
             //}
         }
 

@@ -1,7 +1,7 @@
 ﻿/*
 The MIT License (MIT)
 
-Copyright (c) 2007 - 2020 Microting A/S
+Copyright (c) 2007 - 2021 Microting A/S
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,34 +21,38 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-using System.Security.Claims;
-using System.Threading.Tasks;
-using eFormAPI.Web.Infrastructure.Database;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microting.eFormApi.BasePn.Infrastructure.Consts;
-using Microting.eFormApi.BasePn.Infrastructure.Database.Entities;
 
 namespace eFormAPI.Web.Services
 {
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.Identity;
+    using Microsoft.EntityFrameworkCore;
+    using Microting.eFormApi.BasePn.Abstractions;
+    using Microting.eFormApi.BasePn.Infrastructure.Consts;
+    using Microting.eFormApi.BasePn.Infrastructure.Database.Entities;
     using System;
     using System.Linq;
-    using Microting.eFormApi.BasePn.Abstractions;
+    using System.Security.Claims;
+    using System.Threading.Tasks;
+    using Microting.eForm.Infrastructure.Data.Entities;
+    using Microting.EformAngularFrontendBase.Infrastructure.Data;
 
     public class UserService : IUserService
     {
         private readonly UserManager<EformUser> _userManager;
         private readonly IHttpContextAccessor _httpAccessor;
         private readonly BaseDbContext _dbContext;
+        private readonly IEFormCoreService _coreHelper;
 
         public UserService(BaseDbContext dbContext,
             UserManager<EformUser> userManager,
-            IHttpContextAccessor httpAccessor)
+            IHttpContextAccessor httpAccessor,
+            IEFormCoreService coreHelper)
         {
             _userManager = userManager;
             _httpAccessor = httpAccessor;
             _dbContext = dbContext;
+            _coreHelper = coreHelper;
         }
 
         public async Task<EformUser> GetByIdAsync(int id)
@@ -65,12 +69,12 @@ namespace eFormAPI.Web.Services
         {
             get
             {
-                var value = _httpAccessor?.HttpContext.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+                var value = _httpAccessor?.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
                 return value == null ? 0 : int.Parse(value);
             }
         }
 
-        public string Role => _httpAccessor.HttpContext.User.FindFirstValue(ClaimTypes.Role);
+        public string Role => _httpAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.Role);
 
         public bool IsInRole(string role) => _httpAccessor.HttpContext.User.IsInRole(role);
 
@@ -193,6 +197,39 @@ namespace eFormAPI.Web.Services
                 .Where(x => x.Id == userId)
                 .Select(x => $"{x.FirstName} {x.LastName}")
                 .FirstOrDefaultAsync();
+        }
+
+        public async Task<string> GetCurrentUserFullName()
+        {
+            if (UserId < 1)
+            {
+                throw new Exception("User not authorized!");
+            }
+
+            return await GetFullNameUserByUserIdAsync(UserId);
+        }
+
+        public async Task<Language> GetLanguageByUserIdAsync(int userId)
+        {
+            var core = await _coreHelper.GetCore();
+            var locale = await GetUserLocale(userId);
+            var sdkDbContext = core.DbContextHelper.GetDbContext();
+            var language = await sdkDbContext.Languages
+                .AsNoTracking()
+                .Where(x => x.LanguageCode.ToLower() == locale.ToLower())
+                .FirstAsync();
+
+            return language;
+        }
+
+        public async Task<Language> GetCurrentUserLanguage()
+        {
+            if (UserId < 1)
+            {
+                throw new Exception("User not authorized!");
+            }
+
+            return await GetLanguageByUserIdAsync(UserId);
         }
     }
 }

@@ -3,7 +3,7 @@ import { persistState, Store, StoreConfig } from '@datorama/akita';
 import { UserClaimsModel } from 'src/app/common/models';
 
 export interface AuthState {
-  auth: {
+  token: {
     accessToken: string;
     expiresIn: any;
     tokenType: string;
@@ -22,9 +22,8 @@ export interface AuthState {
 }
 
 export function createInitialState(): AuthState {
-  console.log('AuthState.createInitialState()');
   return {
-    auth: {
+    token: {
       accessToken: '',
       expiresIn: '',
       tokenType: '',
@@ -85,6 +84,7 @@ export function createInitialState(): AuthState {
         eformsGetCsv: false,
         eformsReadJasperReport: false,
         eformsUpdateJasperReport: false,
+        eformAllowManagingEformTags: false,
       },
     },
   };
@@ -94,10 +94,9 @@ const authPersistStorage = persistState({
   include: ['auth'],
   key: 'mainStore',
   preStorageUpdate(storeName, state: AuthState): AuthState {
-    console.log({ method: 'AuthStateService.preStorageUpdate()', state });
     return {
       currentUser: state.currentUser,
-      auth: state.auth,
+      token: state.token,
     };
   },
 });
@@ -110,9 +109,7 @@ export class AuthStore extends Store<AuthState> {
   }
 
   reset(): void {
-    console.log({ method: 'before AuthState.reset()', value: this.getValue() });
     super.reset();
-    console.log({ method: 'after AuthState.reset()', value: this.getValue() });
   }
 }
 

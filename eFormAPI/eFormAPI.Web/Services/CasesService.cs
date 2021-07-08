@@ -1,7 +1,7 @@
 ﻿/*
 The MIT License (MIT)
 
-Copyright (c) 2007 - 2020 Microting A/S
+Copyright (c) 2007 - 2021 Microting A/S
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,69 +21,44 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
-using eFormAPI.Web.Abstractions;
-using eFormAPI.Web.Abstractions.Eforms;
-using eFormAPI.Web.Infrastructure.Database;
-using eFormAPI.Web.Infrastructure.Helpers;
-using eFormAPI.Web.Infrastructure.Models.Cases.Request;
-using eFormAPI.Web.Infrastructure.Models.Cases.Response;
-using Microsoft.AspNetCore.Http;
-using Microting.eForm.Infrastructure.Constants;
-using Microting.eForm.Infrastructure.Data.Entities;
-using Microting.eForm.Infrastructure.Models;
-using Microting.eFormApi.BasePn.Abstractions;
-using Microting.eFormApi.BasePn.Infrastructure.Models.API;
-using Microting.eFormApi.BasePn.Infrastructure.Delegates.CaseUpdate;
-using Microting.eFormApi.BasePn.Infrastructure.Helpers;
 
 namespace eFormAPI.Web.Services
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
+    using Abstractions;
+    using Abstractions.Eforms;
+    using Infrastructure.Models.Cases.Request;
+    using Infrastructure.Models.Cases.Response;
+    using Microting.eForm.Infrastructure.Constants;
+    using Microting.eForm.Infrastructure.Models;
+    using Microting.eFormApi.BasePn.Abstractions;
+    using Microting.eFormApi.BasePn.Infrastructure.Models.API;
+    using Microting.eFormApi.BasePn.Infrastructure.Delegates.CaseUpdate;
+    using Microting.eFormApi.BasePn.Infrastructure.Helpers;
+    using Microting.eFormApi.BasePn.Infrastructure.Models.Application.Case.CaseEdit;
+
     public class CasesService : ICasesService
     {
         private readonly IEFormCoreService _coreHelper;
         private readonly ILocalizationService _localizationService;
-        private readonly BaseDbContext _dbContext;
         private readonly IUserService _userService;
-        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public CasesService(IEFormCoreService coreHelper,
             IUserService userService,
-            ILocalizationService localizationService, BaseDbContext dbContext,
-            IHttpContextAccessor httpContextAccessor)
+            ILocalizationService localizationService)
         {
             _coreHelper = coreHelper;
-            _dbContext = dbContext;
             _userService = userService;
             _localizationService = localizationService;
-            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<OperationDataResult<CaseListModel>> Index(CaseRequestModel requestModel)
         {
             try
             {
-                var value = _httpContextAccessor?.HttpContext.User?.FindFirstValue(ClaimTypes.NameIdentifier);
-                var timeZone = _dbContext.Users.Single(x => x.Id == int.Parse(value)).TimeZone;
-                if (string.IsNullOrEmpty(timeZone))
-                {
-                    timeZone = "Europe/Copenhagen";
-                }
-
-                TimeZoneInfo timeZoneInfo;
-
-                try
-                {
-                    timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(timeZone);
-                }
-                catch
-                {
-                    timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById("E. Europe Standard Time");
-                }
+                var timeZoneInfo = await _userService.GetCurrentUserTimeZoneInfo();
                 var core = await _coreHelper.GetCore();
                 var caseList = await core.CaseReadAll(requestModel.TemplateId, null, null,
                     Constants.WorkflowStates.NotRemoved, requestModel.NameFilter,
@@ -113,8 +88,7 @@ namespace eFormAPI.Web.Services
                 var caseDto = await core.CaseReadByCaseId(id);
                 var microtingUId = caseDto.MicrotingUId;
                 var microtingCheckUId = caseDto.CheckUId;
-                var locale = await _userService.GetCurrentUserLocale();
-                Language language = core.DbContextHelper.GetDbContext().Languages.Single(x => x.LanguageCode.ToLower() == locale.ToLower());
+                var language = await _userService.GetCurrentUserLanguage();
                 var theCase = await core.CaseRead((int)microtingUId, (int)microtingCheckUId, language);
                 theCase.Id = id;
 
@@ -144,7 +118,7 @@ namespace eFormAPI.Web.Services
             {
                 Log.LogException(ex.Message);
                 Log.LogException(ex.StackTrace);
-                return new OperationResult(false, _localizationService.GetString("CaseCouldNotBeRemoved") + $" Exception: {ex.Message}");
+                return new OperationResult(false, $"{_localizationService.GetString("CaseCouldNotBeRemoved")} Exception: {ex.Message}");
             }
         }
 
@@ -153,8 +127,7 @@ namespace eFormAPI.Web.Services
             var checkListValueList = new List<string>();
             var fieldValueList = new List<string>();
             var core = await _coreHelper.GetCore();
-            var locale = await _userService.GetCurrentUserLocale();
-            var language = core.DbContextHelper.GetDbContext().Languages.Single(x => x.LanguageCode.ToLower() == locale.ToLower());
+            var language = await _userService.GetCurrentUserLanguage();
             try
             {
                 model.ElementList.ForEach(element =>
@@ -167,7 +140,7 @@ namespace eFormAPI.Web.Services
             {
                 Log.LogException(ex.Message);
                 Log.LogException(ex.StackTrace);
-                return new OperationResult(false, _localizationService.GetString("CaseCouldNotBeUpdated") + $" Exception: {ex.Message}");
+                return new OperationResult(false, $"{_localizationService.GetString("CaseCouldNotBeUpdated")} Exception: {ex.Message}");
             }
 
             try

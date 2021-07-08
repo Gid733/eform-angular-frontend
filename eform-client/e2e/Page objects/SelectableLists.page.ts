@@ -1,4 +1,5 @@
-import {PageWithNavbarPage} from './PageWithNavbar.page';
+import { PageWithNavbarPage } from './PageWithNavbar.page';
+import { generateRandmString } from '../Helpers/helper-functions';
 
 export class SelectableListsPage extends PageWithNavbarPage {
   constructor() {
@@ -6,11 +7,7 @@ export class SelectableListsPage extends PageWithNavbarPage {
   }
 
   public get selectableListCount(): number {
-    let i = 0;
-    while ($(`#entitySelectMicrotingUUID_${i}`).isExisting()) {
-      i++;
-    }
-    return i;
+    return $$('#tableBodyEntitySelect > tr').length;
   }
 
   public get itemsEditPageCount(): number {
@@ -27,98 +24,98 @@ export class SelectableListsPage extends PageWithNavbarPage {
 
   public get entitySelectCreateBtn() {
     const ele = $('#entitySelectCreateBtn');
-    ele.waitForDisplayed({timeout: 20000});
-    ele.waitForClickable({timeout: 20000});
+    ele.waitForDisplayed({ timeout: 40000 });
+    ele.waitForClickable({ timeout: 40000 });
     return ele;
   }
 
   public get entitySelectCreateName() {
     const ele = $('#createName');
-    ele.waitForDisplayed({timeout: 20000});
+    ele.waitForDisplayed({ timeout: 40000 });
     return ele;
   }
 
   public get entitySelectCreateDescription() {
     const ele = $('#createDescription');
-    ele.waitForDisplayed({timeout: 20000});
+    ele.waitForDisplayed({ timeout: 40000 });
     return ele;
   }
 
   public get entitySelectCreateImportListBtn() {
     const ele = $('#importEntitySelectBtn');
-    ele.waitForDisplayed({timeout: 20000});
+    ele.waitForDisplayed({ timeout: 40000 });
     return ele;
   }
 
   public get entitySelectCreateSingleItemBtn() {
     const ele = $('#addSingleEntitySelectableItem');
-    ele.waitForDisplayed({timeout: 20000});
+    ele.waitForDisplayed({ timeout: 40000 });
     return ele;
   }
 
   public get entitySelectCreateSaveBtn() {
     const ele = $('#createEntitySelectSaveBtn');
-    ele.waitForDisplayed({timeout: 20000});
-    ele.waitForClickable({timeout: 20000});
+    ele.waitForDisplayed({ timeout: 40000 });
+    ele.waitForClickable({ timeout: 40000 });
     return ele;
   }
 
   public get entitySelectCreateCancelBtn() {
     const ele = $('#createEntitySelectCancelBtn');
-    ele.waitForDisplayed({timeout: 20000});
-    ele.waitForClickable({timeout: 20000});
+    ele.waitForDisplayed({ timeout: 40000 });
+    ele.waitForClickable({ timeout: 40000 });
     return ele;
   }
 
   public get entitySelectEditName() {
     const ele = $('#editName');
-    ele.waitForDisplayed({timeout: 20000});
+    ele.waitForDisplayed({ timeout: 40000 });
     return ele;
   }
 
   public get entitySelectEditDescription() {
     const ele = $('#editDescription');
-    ele.waitForDisplayed({timeout: 20000});
+    ele.waitForDisplayed({ timeout: 40000 });
     return ele;
   }
 
   public get entitySelectEditImportListBtn() {
     const ele = $('#editEntitySelectImportBtn');
-    ele.waitForDisplayed({timeout: 20000});
+    ele.waitForDisplayed({ timeout: 40000 });
     return ele;
   }
 
   public get entitySelectEditSingleItemBtn() {
     const ele = $('#editEntitySelectCreateItem');
-    ele.waitForDisplayed({timeout: 20000});
-    ele.waitForClickable({timeout: 20000});
+    ele.waitForDisplayed({ timeout: 40000 });
+    ele.waitForClickable({ timeout: 40000 });
     return ele;
   }
 
   public get entitySelectEditSaveBtn() {
     const ele = $('#editEntitySelectSaveBtn');
-    ele.waitForDisplayed({timeout: 20000});
-    ele.waitForClickable({timeout: 20000});
+    ele.waitForDisplayed({ timeout: 40000 });
+    ele.waitForClickable({ timeout: 40000 });
     return ele;
   }
 
   public get entitySelectEditCancelBtn() {
     const ele = $('#editEntitySelectCancelBtn');
-    ele.waitForDisplayed({timeout: 20000});
-    ele.waitForClickable({timeout: 20000});
+    ele.waitForDisplayed({ timeout: 40000 });
+    ele.waitForClickable({ timeout: 40000 });
     return ele;
   }
 
   public get entitySelectImportTextArea() {
     const ele = $('#entityImportTextArea');
-    ele.waitForDisplayed({timeout: 20000});
+    ele.waitForDisplayed({ timeout: 40000 });
     return ele;
   }
 
   public get entitySelectImportSaveBtn() {
     const ele = $(`#entityImportSaveBtn`);
-    ele.waitForDisplayed({timeout: 20000});
-    ele.waitForClickable({timeout: 20000});
+    ele.waitForDisplayed({ timeout: 40000 });
+    ele.waitForClickable({ timeout: 40000 });
     return ele;
   }
 
@@ -128,32 +125,32 @@ export class SelectableListsPage extends PageWithNavbarPage {
 
   public get entitySelectDeleteDeleteBtn() {
     const ele = $('#entitySelectDeleteDeleteBtn');
-    ele.waitForDisplayed({timeout: 20000});
+    ele.waitForDisplayed({ timeout: 40000 });
     return ele;
   }
 
   public get entitySelectDeleteCancelBtn() {
     const ele = $('#entitySelectDeleteCancelBtn');
-    ele.waitForDisplayed({timeout: 20000});
-    ele.waitForClickable({timeout: 20000});
+    ele.waitForDisplayed({ timeout: 40000 });
+    ele.waitForClickable({ timeout: 40000 });
     return ele;
   }
 
   public get entitySelectEditItemNameBox() {
     const ele = $('#entitySelectItemEditNameBox');
-    ele.waitForDisplayed({timeout: 20000});
+    ele.waitForDisplayed({ timeout: 40000 });
     return ele;
   }
 
   public get entitySelectEditItemSaveBtn() {
     const ele = $('#entitySelectItemSaveBtn');
-    ele.waitForDisplayed({timeout: 20000});
+    ele.waitForDisplayed({ timeout: 40000 });
     return ele;
   }
 
   public get entitySelectEditItemCancelBtn() {
     const ele = $('#entitySelectItemCancelBtn');
-    ele.waitForDisplayed({timeout: 20000});
+    ele.waitForDisplayed({ timeout: 40000 });
     return ele;
   }
 
@@ -162,7 +159,30 @@ export class SelectableListsPage extends PageWithNavbarPage {
     return new EntitySelectItemEditRowObject(1);
   }
 
-  public getEntitySelectItemEditRowObjectByIndex(index: number): EntitySelectItemEditRowObject {
+  public get idTableHeader() {
+    const ele = $('#idTableHeader');
+    ele.waitForDisplayed({ timeout: 40000 });
+    ele.waitForClickable({ timeout: 40000 });
+    return ele;
+  }
+
+  public get nameTableHeader() {
+    const ele = $('#nameTableHeader');
+    ele.waitForDisplayed({ timeout: 40000 });
+    ele.waitForClickable({ timeout: 40000 });
+    return ele;
+  }
+
+  public get descriptionTableHeader() {
+    const ele = $('#descriptionTableHeader');
+    ele.waitForDisplayed({ timeout: 40000 });
+    ele.waitForClickable({ timeout: 40000 });
+    return ele;
+  }
+
+  public getEntitySelectItemEditRowObjectByIndex(
+    index: number
+  ): EntitySelectItemEditRowObject {
     return new EntitySelectItemEditRowObject(index);
   }
 
@@ -186,11 +206,22 @@ export class SelectableListsPage extends PageWithNavbarPage {
     return new EntitySelectItemCreateRowObject(this.itemsCreatePageCount);
   }
 
-  public createSelectableList(data: { name: string, description?: string, items?: string[] },
-                              multipleImport = false,
-                              clickCancel = false) {
+  public createDummySelectableLists(count = 3) {
+    for (let i = 0; i < count; i++) {
+      this.createSelectableList({
+        name: generateRandmString(),
+        description: generateRandmString(),
+      });
+    }
+  }
+
+  public createSelectableList(
+    data: { name: string; description?: string; items?: string[] },
+    multipleImport = false,
+    clickCancel = false
+  ) {
     this.entitySelectCreateBtn.click();
-    this.entitySelectCreateName.waitForDisplayed({timeout: 20000});
+    this.entitySelectCreateName.waitForDisplayed({ timeout: 40000 });
     this.entitySelectCreateName.setValue(data.name);
     if (data.description) {
       this.entitySelectCreateDescription.setValue(data.description);
@@ -198,7 +229,7 @@ export class SelectableListsPage extends PageWithNavbarPage {
     if (data.items != null) {
       if (multipleImport) {
         this.entitySelectCreateImportListBtn.click();
-        this.entitySelectImportTextArea.waitForDisplayed({timeout: 20000});
+        this.entitySelectImportTextArea.waitForDisplayed({ timeout: 40000 });
         for (let i = 0; i < data.items.length; i++) {
           let item = data.items[i];
           if (!item.includes('\n') && i !== data.items.length - 1) {
@@ -216,10 +247,16 @@ export class SelectableListsPage extends PageWithNavbarPage {
     }
     if (!clickCancel) {
       this.entitySelectCreateSaveBtn.click();
-      $('#spinner-animation').waitForDisplayed({timeout: 90000, reverse: true});
+      $('#spinner-animation').waitForDisplayed({
+        timeout: 90000,
+        reverse: true,
+      });
     } else {
       this.entitySelectCreateCancelBtn.click();
-      $('#spinner-animation').waitForDisplayed({timeout: 90000, reverse: true});
+      $('#spinner-animation').waitForDisplayed({
+        timeout: 90000,
+        reverse: true,
+      });
     }
     this.entitySelectCreateBtn.waitForDisplayed();
   }
@@ -236,39 +273,39 @@ export default selectableLists;
 
 export class SelectableListRowObject {
   constructor(rowNumber) {
-    const id = $('#entitySelectMicrotingUUID_' + (rowNumber - 1));
-    if (id) {
-      this.id = +id.getText();
+    this.element = $$('#tableBodyEntitySelect > tr')[rowNumber - 1];
+    if (this.element) {
+      this.id = +this.element.$('#entitySelectMicrotingUUID').getText();
       try {
-        this.name = $('#entitySelectName_' + (rowNumber - 1)).getText();
-      } catch (e) {
-      }
+        this.name = this.element.$('#entitySelectName').getText();
+      } catch (e) {}
       try {
-        this.description = $('#entitySelectDescription_' + (rowNumber - 1)).getText();
-      } catch (e) {
-      }
+        this.description = this.element.$('#entitySelectDescription').getText();
+      } catch (e) {}
       try {
-        this.deleteBtn = $('#entitySelectDeleteBtn_' + (rowNumber - 1));
-      } catch (e) {
-      }
+        this.deleteBtn = this.element.$('#entitySelectDeleteBtn');
+      } catch (e) {}
       try {
-        this.editBtn = $('#entitySelectEditBtn_' + (rowNumber - 1));
-      } catch (e) {
-      }
+        this.editBtn = this.element.$('#entitySelectEditBtn');
+      } catch (e) {}
     }
   }
 
+  element: WebdriverIO.Element;
   id: number;
   name: string;
   description: string;
-  editBtn;
-  deleteBtn;
+  editBtn: WebdriverIO.Element;
+  deleteBtn: WebdriverIO.Element;
 
   delete(clickCancel = false) {
     this.deleteBtn.click();
     if (!clickCancel) {
       selectableLists.entitySelectDeleteDeleteBtn.click();
-      $('#spinner-animation').waitForDisplayed({timeout: 90000, reverse: true});
+      $('#spinner-animation').waitForDisplayed({
+        timeout: 90000,
+        reverse: true,
+      });
     } else {
       selectableLists.entitySelectDeleteCancelBtn.click();
     }
@@ -277,25 +314,30 @@ export class SelectableListRowObject {
 
   openEdit() {
     this.editBtn.click();
-    $('#spinner-animation').waitForDisplayed({timeout: 90000, reverse: true});
+    $('#spinner-animation').waitForDisplayed({ timeout: 90000, reverse: true });
     selectableLists.entitySelectEditCancelBtn.waitForDisplayed();
   }
 
   closeEdit(clickCancel = false) {
     if (!clickCancel) {
       selectableLists.entitySelectEditSaveBtn.click();
-      $('#spinner-animation').waitForDisplayed({timeout: 90000, reverse: true});
+      $('#spinner-animation').waitForDisplayed({
+        timeout: 90000,
+        reverse: true,
+      });
     } else {
       selectableLists.entitySelectEditCancelBtn.click();
     }
     selectableLists.entitySelectCreateBtn.waitForDisplayed();
   }
 
-  edit(data: { name?: string, description?: string, items?: string[] },
-       multipleImport = false,
-       clearItems = false,
-       clickCancel = false,
-       editItems = false) {
+  edit(
+    data: { name?: string; description?: string; items?: string[] },
+    multipleImport = false,
+    clearItems = false,
+    clickCancel = false,
+    editItems = false
+  ) {
     this.openEdit();
     if (data.name != null) {
       selectableLists.entitySelectEditName.setValue(data.name);
@@ -311,7 +353,9 @@ export class SelectableListRowObject {
     if (data.items != null) {
       if (multipleImport) {
         selectableLists.entitySelectEditImportListBtn.click();
-        selectableLists.entitySelectImportTextArea.waitForDisplayed({timeout: 20000});
+        selectableLists.entitySelectImportTextArea.waitForDisplayed({
+          timeout: 40000,
+        });
         for (let i = 0; i < data.items.length; i++) {
           let item = data.items[i];
           if (!item.includes('\n') && i !== data.items.length - 1) {
@@ -346,16 +390,13 @@ export class EntitySelectItemEditRowObject {
     if (name) {
       try {
         this.name = name.getText();
-      } catch (e) {
-      }
+      } catch (e) {}
       try {
         this.editBtn = $('#entitySelectEditItemEditBtn_' + (rowNumber - 1));
-      } catch (e) {
-      }
+      } catch (e) {}
       try {
         this.deleteBtn = $('#entitySelectEditItemDeleteBtn_' + (rowNumber - 1));
-      } catch (e) {
-      }
+      } catch (e) {}
     } else {
       return null;
     }
@@ -388,16 +429,15 @@ export class EntitySelectItemCreateRowObject {
     if ($$('#createEntityItemName')[rowNumber - 1]) {
       try {
         this.name = $$('#createEntityItemName')[rowNumber - 1].getText();
-      } catch (e) {
-      }
+      } catch (e) {}
       try {
         this.editBtn = $$('#entitySelectCreateSingleItemEdit')[rowNumber - 1];
-      } catch (e) {
-      }
+      } catch (e) {}
       try {
-        this.deleteBtn = $$('#entitySelectCreateSingleItemDelete')[rowNumber - 1];
-      } catch (e) {
-      }
+        this.deleteBtn = $$('#entitySelectCreateSingleItemDelete')[
+          rowNumber - 1
+        ];
+      } catch (e) {}
     }
   }
 

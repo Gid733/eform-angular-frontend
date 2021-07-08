@@ -363,4 +363,8 @@ export const da = {
   'Security groups': 'Sikkerhedsgrupper',
   Custom: 'Brugerdefinerede',
   Add: 'Tilføje',
+  'Generate report': 'Generer {{value}} rapport',
+  'Select date range': 'Vælg periode',
+  'Edit headers': 'Redigér overskrifter',
+  'Generate': 'Vis rapport'
 };

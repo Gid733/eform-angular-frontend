@@ -359,4 +359,8 @@ export const enUS = {
   'Security groups': 'Security groups',
   Custom: 'Custom',
   Add: 'Add',
+  'Generate report': 'Generate {{value}} report',
+  'Select date range': 'Select date range',
+  'Edit headers': 'Edit headers',
+  'Generate': 'Generate rapport'
 };

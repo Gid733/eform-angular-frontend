@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2007 - 2020 Microting A/S
+Copyright (c) 2007 - 2021 Microting A/S
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -64,8 +64,7 @@ namespace eFormAPI.Web.Services
             {
                 var core = await _coreHelper.GetCore();
                 await using var dbContext = core.DbContextHelper.GetDbContext();
-                var locale = await _userService.GetCurrentUserLocale();
-                var language = dbContext.Languages.Single(x => x.LanguageCode == locale);
+                var language = await _userService.GetCurrentUserLanguage();
                 var folderQuery = dbContext.Folders
                     .Where(x => x.WorkflowState != Constants.WorkflowStates.Removed)
                     .Where(x => x.FolderTranslations.Any(y =>
@@ -92,8 +91,7 @@ namespace eFormAPI.Web.Services
             {
                 var core = await _coreHelper.GetCore();
                 await using var dbContext = core.DbContextHelper.GetDbContext();
-                var locale = await _userService.GetCurrentUserLocale();
-                var language = dbContext.Languages.Single(x => x.LanguageCode == locale);
+                var language = await _userService.GetCurrentUserLanguage();
                 var folderQuery = dbContext.Folders
                     .Where(x => x.WorkflowState != Constants.WorkflowStates.Removed)
                     .Where(x => x.FolderTranslations.Any(y =>

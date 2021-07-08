@@ -1,6 +1,7 @@
-import { ActivatedRoute } from '@angular/router';
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { UserClaimsEnum } from 'src/app/common/const';
+import { composeCasesTableHeaders } from 'src/app/common/helpers';
 import {
   PageSettingsModel,
   EformPermissionsSimpleModel,
@@ -16,48 +17,51 @@ import {
 } from 'src/app/common/services';
 import { saveAs } from 'file-saver';
 import { CasesStateService } from '../store';
-import { AuthStateService } from 'src/app/common/store';
+import { AppMenuStateService, AuthStateService } from 'src/app/common/store';
+import { AutoUnsubscribe } from 'ngx-auto-unsubscribe';
+import { Subscription } from 'rxjs';
 
+@AutoUnsubscribe()
 @Component({
   selector: 'app-cases-table',
   templateUrl: './cases-table.component.html',
 })
-export class CasesTableComponent implements OnInit {
-  @ViewChild('modalRemoveCase', { static: true }) modalRemoveCase;
-  currentTemplate: TemplateDto = new TemplateDto();
-  eformPermissionsSimpleModel: EformPermissionsSimpleModel = new EformPermissionsSimpleModel();
-  caseListModel: CaseListModel = new CaseListModel();
-  localPageSettings: PageSettingsModel = new PageSettingsModel();
-
+export class CasesTableComponent implements OnInit, OnDestroy {
   get userClaims() {
     return this.authStateService.currentUserClaims;
   }
-
-  // get userRole(): string {
-  //   return this.authStateService.currentRole;
-  // }
 
   get userClaimsEnum() {
     return UserClaimsEnum;
   }
 
-  tableHeaders: TableHeaderElementModel[];
-
   constructor(
     private activateRoute: ActivatedRoute,
     private casesService: CasesService,
     private eFormService: EFormService,
-    private authStateService: AuthStateService,
+    public authStateService: AuthStateService,
     private securityGroupEformsService: SecurityGroupEformsPermissionsService,
-    public caseStateService: CasesStateService
-  ) {
-    this.activateRoute.params.subscribe((params) => {
-      this.caseStateService.setTemplateId(+params['id']);
-    });
-  }
+    public caseStateService: CasesStateService,
+    private router: Router,
+    private appMenuStateService: AppMenuStateService
+  ) {}
+  @ViewChild('modalRemoveCase', { static: true }) modalRemoveCase;
+  currentTemplate: TemplateDto = new TemplateDto();
+  eformPermissionsSimpleModel: EformPermissionsSimpleModel = new EformPermissionsSimpleModel();
+  caseListModel: CaseListModel = new CaseListModel();
+  localPageSettings: PageSettingsModel = new PageSettingsModel();
+  title: string;
+
+  tableHeaders: TableHeaderElementModel[];
+  appMenuSub$: Subscription;
+
+  ngOnDestroy() {}
 
   ngOnInit() {
-    this.loadTemplateData();
+    this.activateRoute.params.subscribe((params) => {
+      this.caseStateService.setTemplateId(+params['id']);
+      this.loadTemplateData();
+    });
   }
 
   onLabelInputChanged(label: string) {
@@ -78,7 +82,10 @@ export class CasesTableComponent implements OnInit {
     this.caseStateService.getCases().subscribe((operation) => {
       if (operation && operation.success) {
         this.caseListModel = operation.model;
-        this.addTableHeaders();
+        composeCasesTableHeaders(
+          this.currentTemplate,
+          this.authStateService.isAdmin
+        );
       }
     });
   }
@@ -87,9 +94,10 @@ export class CasesTableComponent implements OnInit {
     this.caseStateService.loadTemplateData().subscribe((operation) => {
       if (operation && operation.success) {
         this.currentTemplate = operation.model;
-        debugger;
         this.loadEformPermissions(this.currentTemplate.id);
         this.loadAllCases();
+        this.setTitle();
+        this.setTableHeaders();
       }
     });
   }
@@ -151,87 +159,101 @@ export class CasesTableComponent implements OnInit {
     this.loadAllCases();
   }
 
-  private addTableHeaders() {
+  private setTableHeaders() {
     this.tableHeaders = [
       { name: 'Id', elementId: '', sortable: true },
       { name: 'done_at', elementId: '', sortable: true },
       this.authStateService.isAdmin
-        ? { name: 'created_at', elementId: '', sortable: true }
-        : null,
+          ? { name: 'created_at', elementId: '', sortable: true }
+          : null,
       { name: 'worker_name', elementId: '', sortable: true },
       this.currentTemplate.field1 && this.currentTemplate.field1.label
-        ? {
+          ? {
             name: 'field1',
             elementId: '',
             sortable: true,
             visibleName: this.currentTemplate.field1.label,
           }
-        : null,
+          : null,
       this.currentTemplate.field2 && this.currentTemplate.field2.label
-        ? {
+          ? {
             name: 'field2',
             elementId: '',
             sortable: true,
             visibleName: this.currentTemplate.field2.label,
           }
-        : null,
+          : null,
       this.currentTemplate.field3 && this.currentTemplate.field3.label
-        ? {
+          ? {
             name: 'field3',
             elementId: '',
             sortable: true,
             visibleName: this.currentTemplate.field3.label,
           }
-        : null,
+          : null,
       this.currentTemplate.field4 && this.currentTemplate.field4.label
-        ? {
+          ? {
             name: 'field4',
             elementId: '',
             sortable: true,
             visibleName: this.currentTemplate.field4.label,
           }
-        : null,
+          : null,
       this.currentTemplate.field5 && this.currentTemplate.field5.label
-        ? {
+          ? {
             name: 'field5',
             elementId: '',
             sortable: true,
             visibleName: this.currentTemplate.field5.label,
           }
-        : null,
+          : null,
       this.currentTemplate.field6 && this.currentTemplate.field6.label
-        ? {
+          ? {
             name: 'field6',
             elementId: '',
             sortable: true,
             visibleName: this.currentTemplate.field6.label,
           }
-        : null,
+          : null,
       this.currentTemplate.field7 && this.currentTemplate.field7.label
-        ? {
+          ? {
             name: 'field7',
             elementId: '',
             sortable: true,
             visibleName: this.currentTemplate.field7.label,
           }
-        : null,
+          : null,
       this.currentTemplate.field8 && this.currentTemplate.field8.label
-        ? {
+          ? {
             name: 'field8',
             elementId: '',
             sortable: true,
             visibleName: this.currentTemplate.field8.label,
           }
-        : null,
+          : null,
       this.currentTemplate.field9 && this.currentTemplate.field9.label
-        ? {
+          ? {
             name: 'field9',
             elementId: '',
             sortable: true,
             visibleName: this.currentTemplate.field9.label,
           }
-        : null,
+          : null,
       { name: 'Actions', elementId: '', sortable: false },
     ];
+  }
+
+  private setTitle() {
+    const href = this.router.url;
+    this.appMenuSub$ = this.appMenuStateService.appMenuObservable.subscribe(
+      (appMenu) => {
+        if (appMenu) {
+          this.title = this.appMenuStateService.getTitleByUrl(href);
+          if (!this.title) {
+            this.title = this.currentTemplate.label;
+          }
+        }
+      }
+    );
   }
 }

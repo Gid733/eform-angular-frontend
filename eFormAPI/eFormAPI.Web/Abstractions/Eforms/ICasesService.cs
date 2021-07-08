@@ -1,7 +1,7 @@
 ﻿/*
 The MIT License (MIT)
 
-Copyright (c) 2007 - 2020 Microting A/S
+Copyright (c) 2007 - 2021 Microting A/S
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,14 +22,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using System.Threading.Tasks;
-using eFormAPI.Web.Infrastructure.Models.Cases.Request;
-using eFormAPI.Web.Infrastructure.Models.Cases.Response;
-using Microting.eForm.Infrastructure.Models;
-using Microting.eFormApi.BasePn.Infrastructure.Models.API;
 
 namespace eFormAPI.Web.Abstractions.Eforms
 {
+    using Microting.eFormApi.BasePn.Infrastructure.Models.Application.Case.CaseEdit;
+    using System.Threading.Tasks;
+    using Infrastructure.Models.Cases.Request;
+    using Infrastructure.Models.Cases.Response;
+    using Microting.eForm.Infrastructure.Models;
+    using Microting.eFormApi.BasePn.Infrastructure.Models.API;
+
     public interface ICasesService
     {
         Task<OperationDataResult<CaseListModel>> Index(CaseRequestModel requestModel);
