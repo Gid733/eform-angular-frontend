@@ -1,0 +1,20 @@
+<mat-card>
+  <mat-card-content>
+    <mat-form-field>
+      <mat-label>{{'Selected entity group select' | translate}}</mat-label>
+      <mtx-select
+        appendTo="body"
+        [dropdownPosition]="'bottom'"
+        [clearable]="false"
+        [bindLabel]="'name'"
+        [bindValue]="'id'"
+        [typeahead]="typeahead"
+        [(ngModel)]="field.entityGroupId"
+        id="entityGroupSelectSelector"
+        [items]="entitySelectableGroups"
+      >
+      </mtx-select>
+    </mat-form-field>
+  </mat-card-content>
+</mat-card>
+

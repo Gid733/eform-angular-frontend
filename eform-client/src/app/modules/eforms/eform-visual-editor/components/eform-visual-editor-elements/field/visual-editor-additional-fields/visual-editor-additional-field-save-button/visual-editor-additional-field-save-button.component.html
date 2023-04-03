@@ -1,0 +1,21 @@
+<ng-container *ngFor="let translation of field.translations; let translationIndex = index">
+  <mat-card
+    *ngIf="isLanguageSelected(translation.languageId)"
+  >
+    <mat-card-title>{{
+      getLanguage(translation.languageId) | translate
+      }}</mat-card-title>
+    <mat-card-content>
+      <mat-form-field>
+        <mat-label>{{'Value' | translate }}</mat-label>
+        <input
+          matInput
+          [required]="true"
+          type="text"
+          id="defaultValueEdit{{ translationIndex }}"
+          [(ngModel)]="translation.defaultValue"
+        />
+      </mat-form-field>
+    </mat-card-content>
+  </mat-card>
+</ng-container>

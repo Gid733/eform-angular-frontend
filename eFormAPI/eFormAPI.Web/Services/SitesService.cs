@@ -69,7 +69,9 @@ namespace eFormAPI.Web.Services
                     {
                         Id = x.Id,
                         Name = x.Name,
-                    }).ToListAsync();
+                    })
+                    .OrderBy(x => x.Name)
+                    .ToListAsync();
 
                 return new OperationDataResult<List<CommonDictionaryModel>>(true, sites);
             }
@@ -109,6 +111,7 @@ namespace eFormAPI.Web.Services
                             .Where(y => y.WorkflowState != Constants.WorkflowStates.Removed)
                             .Where(y => y.Tag.WorkflowState != Constants.WorkflowStates.Removed)
                             .Select(t => (int)t.TagId).ToList(),
+                        IsLocked = x.IsLocked,
                     }).ToListAsync();
 
                 return new OperationDataResult<List<SiteModel>>(true, sites);
@@ -179,7 +182,8 @@ namespace eFormAPI.Web.Services
                         _localizationService.GetStringWithFormat("SiteParamNotFound", updateModel.Id));
                 }
 
-                var language = await dbContext.Languages.SingleAsync(x => x.Id == site.LanguageId);
+                var language = await dbContext.Languages.SingleAsync(x => x.Id ==
+                                                                          (site.LanguageId == 0 ? 1 : site.LanguageId));
 
                 await core.Advanced_SiteItemUpdate((int)site.MicrotingUid, updateModel.SiteName, language.LanguageCode);
 

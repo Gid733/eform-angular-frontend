@@ -1,4 +1,4 @@
-﻿/*
+/*
 The MIT License (MIT)
 
 Copyright (c) 2007 - 2021 Microting A/S
@@ -34,8 +34,10 @@ namespace eFormAPI.Web.Controllers
     using Microsoft.AspNetCore.Mvc;
     using Microting.eFormApi.BasePn.Infrastructure.Models.API;
     using Microting.EformAngularFrontendBase.Infrastructure.Const;
+    using Microting.eFormApi.BasePn.Infrastructure.Models.Common;
 
     [Authorize]
+    [Route("api/device-users")]
     public class DeviceUsersController : Controller
     {
         private readonly IDeviceUsersService _deviceUsersService;
@@ -48,36 +50,36 @@ namespace eFormAPI.Web.Controllers
             _localizationService = localizationService;
         }
 
-        [HttpGet]
-        [Route("api/device-users/index")]
+        [HttpPost]
+        [Route("index")]
         [Authorize(Policy = AuthConsts.EformPolicies.DeviceUsers.Read)]
-        public async Task<OperationDataResult<List<DeviceUser>>> Index()
+        public async Task<OperationDataResult<List<DeviceUser>>> Index([FromBody] DeviceUserSearchRequestModel requestModel)
         {
-            return await _deviceUsersService.Index();
+            return await _deviceUsersService.Index(requestModel);
         }
 
         [HttpPut]
-        [Route("api/device-users/create")]
+        [Route("create")]
         [Authorize(Policy = AuthConsts.EformPolicies.DeviceUsers.Create)]
-        public async Task<OperationResult> Create([FromBody] DeviceUserModel deviceUserModel)
+        public async Task<OperationDataResult<int>> Create([FromBody] DeviceUserModel deviceUserModel)
         {
             if (!ModelState.IsValid)
-                return new OperationResult(false,
+                return new OperationDataResult<int>(false,
                     _localizationService.GetString("DeviceUserCouldNotBeCreated"));
 
             return await _deviceUsersService.Create(deviceUserModel);
         }
 
         [HttpGet]
-        [Route("api/device-users/{id}")]
+        [Route("read/{id}")]
         [Authorize(Policy = AuthConsts.EformPolicies.DeviceUsers.Update)]
         public async Task<OperationDataResult<DeviceUser>> Read(int id)
         {
-            return await _deviceUsersService.Edit(id);
+            return await _deviceUsersService.Read(id);
         }
 
         [HttpPost]
-        [Route("api/device-users/update")]
+        [Route("update")]
         [Authorize(Policy = AuthConsts.EformPolicies.DeviceUsers.Update)]
         public async Task<OperationResult> Update([FromBody] DeviceUserModel deviceUserModel)
         {
@@ -85,11 +87,19 @@ namespace eFormAPI.Web.Controllers
         }
 
         [HttpDelete]
-        [Route("api/device-users/delete/{id}")]
+        [Route("delete/{id}")]
         [Authorize(Policy = AuthConsts.EformPolicies.DeviceUsers.Delete)]
         public async Task<OperationResult> Delete(int id)
         {
             return await _deviceUsersService.Delete(id);
+        }
+
+        [HttpGet]
+        [Route("common-dictionary")]
+        [Authorize(Policy = AuthConsts.EformPolicies.DeviceUsers.Update)]
+        public async Task<OperationDataResult<List<CommonDictionaryModel>>> ReadCommonDictionary()
+        {
+            return await _deviceUsersService.ReadCommonDictionary();
         }
     }
 }

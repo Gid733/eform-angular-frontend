@@ -1,0 +1,113 @@
+<!-- Nested checklists level rendering -->
+<div id="checkListSection{{ checklistIndex }}" *ngIf="checklist">
+  <mat-card class="mb-4 mt-4">
+    <mat-card-title>
+      <div class="d-flex justify-content-between align-items-center">
+        <div style="display: flex; flex-grow: 2; align-items: center;">
+          <mat-icon
+            class="dragula-handle align-middle"
+            style="cursor: pointer"
+            id="moveBtn"
+          >
+            menu
+          </mat-icon>
+          {{ ('eForm' | translate) + ' - ' + translationChecklistName }}
+        </div>
+        <div style="display: flex; flex-grow: 1; align-items: center; justify-content: flex-end;">
+          <mat-icon
+            style="margin-right: 1rem;"
+            *ngIf="!isChecklistComplete"
+            [matTooltip]="'eForm is not complete' | translate"
+            class="text-warning"
+          >info</mat-icon>
+          <button
+            *ngIf="checklist.fields.length == 0"
+            mat-icon-button
+            [matTooltip]="'New sub eForm' | translate"
+            color="accent"
+            id="addNewNestedChecklist{{ checklistIndex }}"
+            (click)="onAddNewNestedChecklist()"
+          >
+            <mat-icon>create_new_folder</mat-icon>
+          </button>
+          <button
+            *ngIf="checklist.checkLists.length == 0"
+            mat-icon-button
+            color="accent"
+            [matTooltip]="'New nested field' | translate"
+            id="addNewNestedField{{ checklistIndex }}"
+            (click)="onAddNewNestedField()"
+          >
+            <mat-icon>add</mat-icon>
+          </button>
+          <button
+            mat-icon-button
+            color="primary"
+            [matTooltip]="'Edit eForm' | translate"
+            id="editChecklistBtn{{ checklistIndex }}"
+            (click)="onEditChecklist()"
+          >
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button
+            mat-icon-button
+            [matTooltip]="'Delete eForm' | translate"
+            color="warn"
+            id="deleteChecklistBtn{{ checklistIndex }}"
+            (click)="onDeleteChecklist()"
+          >
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      </div>
+    </mat-card-title>
+    <div class="card-body">
+      <div
+        dragula="FIELDS"
+        [dragulaModel]="checklist.fields"
+        (dragulaModelChange)="onNestedFieldPositionChanged($event)"
+        id="fields_{{ checklistIndex }}"
+        class="editor-fields"
+      >
+        <!--<div class="drop-zone-for-fields" *ngIf="!checklist.fields || checklist.fields.length === 0">
+          {{'Example field' | translate}}
+        </div>-->
+        <app-visual-editor-field
+          *ngFor="let field of checklist.fields; let fieldIndex = index"
+          [fieldIndex]="fieldIndex"
+          [field]="field"
+          [checklistRecursionIndexes]="checklistRecursionIndexes"
+          (fieldPositionChanged)="onFieldPositionChangedInNestedChecklist($event)"
+          (addNewField)="onAddNestedFieldInNestedChecklist($event)"
+          (deleteField)="onDeleteNestedFieldInNestedChecklist($event)"
+          (editField)="onEditNestedFieldInNestedChecklist($event)"
+          (changeColor)="onChangeColorInNestedFieldInNestedChecklist($event)"
+          (copyField)="onCopyNestedFieldInNestedChecklist($event)"
+          [class.field-group]="field.fieldType == fieldTypes.FieldGroup"
+        ></app-visual-editor-field>
+      </div>
+      <ng-container *ngIf="checklist && checklist.checkLists">
+        <app-visual-editor-checklist
+          *ngFor="let elem of checklist.checkLists; let checklistIndex = index"
+          [checklist]="elem"
+          [checklistRecursionIndex]="checklistRecursionIndex + 1"
+          [checklistIndex]="checklistIndex + 1"
+          [checklistRecursionIndexes]="composeIndexes(checklistIndex)"
+          (editNestedChecklist)="onEditNestedChecklistInNestedChecklist($event)"
+          (addNewNestedChecklist)="
+            onAddNewNestedChecklistInNestedChecklist($event)
+          "
+          (addNewNestedField)="onAddNestedFieldInNestedChecklist($event)"
+          (editNestedField)="onEditNestedFieldInNestedChecklist($event)"
+          (nestedFieldPositionChanged)="
+            onFieldPositionChangedInNestedChecklist($event)
+          "
+          (deleteNestedChecklist)="onDeleteNestedChecklist($event)"
+          (deleteNestedField)="onDeleteNestedFieldInNestedChecklist($event)"
+          (changeColorField)="onChangeColorInNestedFieldInNestedChecklist($event)"
+          (copyNestedField)="onCopyNestedFieldInNestedChecklist($event)"
+        ></app-visual-editor-checklist>
+      </ng-container>
+    </div>
+  </mat-card>
+</div>

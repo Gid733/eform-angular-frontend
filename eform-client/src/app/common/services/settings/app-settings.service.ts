@@ -5,7 +5,7 @@ import {
   HeaderSettingsModel,
   LoginPageSettingsModel,
   OperationDataResult,
-  OperationResult,
+  OperationResult, UserbackWidgetSettingModel,
 } from 'src/app/common/models';
 import { SettingsModel } from 'src/app/common/models/settings';
 import { ApiBaseService } from 'src/app/common/services';
@@ -23,6 +23,7 @@ const SettingsMethods = {
   GetHeaderSettings: '/api/settings/page-header',
   GetAnonymousImage: 'api/images/login-page-images',
   GetAuthorizedImage: 'api/images/eform-images',
+  UserbackWidget: 'api/settings/userback-widget',
 };
 
 @Injectable()
@@ -42,7 +43,7 @@ export class AppSettingsService {
   }
 
   getAdminSettings(): Observable<OperationDataResult<AdminSettingsModel>> {
-    return this.apiBaseService.get<AdminSettingsModel>(
+    return this.apiBaseService.getNoToast<AdminSettingsModel>(
       SettingsMethods.GetAdminSettings
     );
   }
@@ -78,12 +79,18 @@ export class AppSettingsService {
   }
 
   getApplicationHostOs(): Observable<OperationDataResult<string>> {
-    return this.apiBaseService.get<string>(
-      SettingsMethods.GetApplicationHostOs
-    );
+    return this.apiBaseService.getNoToast<string>(SettingsMethods.GetApplicationHostOs);
   }
 
   getLatestVersion(): Observable<OperationDataResult<string>> {
     return this.apiBaseService.get<string>(SettingsMethods.GetLatestVersion);
+  }
+
+  getUserbackWidgetIsEnabled(): Observable<OperationDataResult<UserbackWidgetSettingModel>> {
+    return this.apiBaseService.getNoToast(SettingsMethods.UserbackWidget);
+  }
+
+  updateUserbackWidgetIsEnabled(isEnableWidget: boolean): Observable<OperationResult> {
+    return this.apiBaseService.put(SettingsMethods.UserbackWidget, isEnableWidget);
   }
 }

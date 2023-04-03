@@ -1,4 +1,3 @@
-import { HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -13,6 +12,7 @@ import {
 import { normalizeUserClaimNames } from 'src/app/common/helpers';
 import { ApiBaseService } from 'src/app/common/services';
 import { AuthQuery } from 'src/app/common/store';
+import {HttpParams} from '@angular/common/http';
 
 export let AuthMethods = {
   Login: 'api/auth/token',
@@ -61,6 +61,7 @@ export class AuthService {
       body = body.append('code', loginInfo.code);
     }
     return this.apiBaseService.postUrlEncoded(AuthMethods.Login, body).pipe(
+    // return this.apiBaseService.post(AuthMethods.Login, loginInfo).pipe(
       map((result) => {
         return result.model;
       })

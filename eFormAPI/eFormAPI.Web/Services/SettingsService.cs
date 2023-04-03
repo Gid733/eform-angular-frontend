@@ -22,6 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+using Microting.eForm.Infrastructure;
+
 namespace eFormAPI.Web.Services
 {
     using Microting.EformAngularFrontendBase.Infrastructure.Data;
@@ -185,8 +187,7 @@ namespace eFormAPI.Web.Services
             try
             {
                 dbContextOptionsBuilder.UseMySql(angularConnectionString,
-                    new MariaDbServerVersion(
-                    new Version(10, 4, 0)),
+                    new MariaDbServerVersion(ServerVersion.AutoDetect(angularConnectionString)),
                     b =>
                     b.EnableRetryOnFailure());
 
@@ -266,6 +267,25 @@ namespace eFormAPI.Web.Services
             return new OperationResult(true);
         }
 
+        public async Task<OperationResult> IntegrityCheck()
+        {
+            Core core = await _coreHelper.GetCore();
+            MicrotingDbContext dbContext = core.DbContextHelper.GetDbContext();
+
+            _logger.LogInformation("Checking uploaded data");
+            var uploadedDatas =
+                await dbContext.UploadedDatas.Where(x => x.FileLocation.Contains("https://")).ToListAsync();
+
+            _logger.LogInformation($"Found {uploadedDatas.Count} uploaded data items, which needs download");
+            foreach (UploadedData uploadedData in uploadedDatas)
+            {
+                _logger.LogInformation($"Trying to download from {uploadedData.FileLocation}");
+                await core.DownloadUploadedData(uploadedData.Id);
+            }
+
+            return new OperationResult(true);
+        }
+
         public OperationDataResult<LoginPageSettingsModel> GetLoginPageSettings()
         {
             try
@@ -278,8 +298,9 @@ namespace eFormAPI.Web.Services
                     MainTextVisible = _loginPageSettings.Value.MainTextVisible,
                     SecondaryText = _loginPageSettings.Value.SecondaryText,
                     SecondaryTextVisible = _loginPageSettings.Value.SecondaryTextVisible,
-                    IsSMTPExists = !_emailSettings.Value.SmtpHost.IsNullOrEmpty() &&
-                                   !_emailSettings.Value.SmtpPort.ToString().IsNullOrEmpty()
+                    IsSMTPExists = string.IsNullOrEmpty(_emailSettings.Value.SmtpHost) &&
+                                   string.IsNullOrEmpty(_emailSettings.Value.SmtpPort.ToString()),
+                    IsSendGridExists = !string.IsNullOrEmpty(_emailSettings.Value.SendGridKey),
                 };
                 return new OperationDataResult<LoginPageSettingsModel>(true, model);
             }
@@ -304,67 +325,6 @@ namespace eFormAPI.Web.Services
                     SecondaryText = _headerSettings.Value.SecondaryText,
                     SecondaryTextVisible = _headerSettings.Value.SecondaryTextVisible,
                 };
-
-                var core = _coreHelper.GetCore().GetAwaiter().GetResult();
-                var dbContext = core.DbContextHelper.GetDbContext();
-                var folders = dbContext.Folders.Where(x => !string.IsNullOrEmpty(x.Name) && x.WorkflowState != Microting.eForm.Infrastructure.Constants.Constants.WorkflowStates.Removed).ToList();
-                foreach (Folder folder in folders)
-                {
-                    List<string> nameTexts = folder.Name.Split("|").ToList();
-                    List<string> descriptionTexts = folder.Description.Split("|").ToList();
-
-
-                    List<KeyValuePair<string, string>> names = new List<KeyValuePair<string, string>>();
-                    List<KeyValuePair<string, string>> descriptions = new List<KeyValuePair<string, string>>();
-
-                    names.Add(new KeyValuePair<string, string> ("da", nameTexts[0]));
-                    descriptions.Add(new KeyValuePair<string, string>("da",descriptionTexts[0].Replace("&nbsp;", " ")));
-                    if (descriptionTexts.Count > 1)
-                    {
-                        descriptions.Add(new KeyValuePair<string, string>("en-US",descriptionTexts[1].Replace("&nbsp;", " ")));
-                    }
-                    else
-                    {
-                        descriptions.Add(new KeyValuePair<string, string>("en-US", " "));
-                    }
-                    if (descriptionTexts.Count > 2)
-                    {
-                        descriptions.Add(new KeyValuePair<string, string>("de-DE",descriptionTexts[2].Replace("&nbsp;", " ")));
-                    }
-                    else
-                    {
-                        descriptions.Add(new KeyValuePair<string, string>("de-DE", " "));
-                    }
-                    if (nameTexts.Count > 1)
-                    {
-                        if (descriptions.Count != 2)
-                        {
-                            descriptions.Add(new KeyValuePair<string, string>("en-US", " "));
-                        }
-                        names.Add(new KeyValuePair<string, string> ("en-US", nameTexts[1]));
-                    }
-                    else
-                    {
-                        names.Add(new KeyValuePair<string, string>("en-US", " "));
-                    }
-                    if (nameTexts.Count > 2)
-                    {
-                        if (descriptions.Count != 3)
-                        {
-                            descriptions.Add(new KeyValuePair<string, string>("de-DE", " "));
-                        }
-                        names.Add(new KeyValuePair<string, string> ("de-DE", nameTexts[2]));
-                    }
-                    else
-                    {
-                        names.Add(new KeyValuePair<string, string>("de-DE", " "));
-                    }
-
-                    core.FolderUpdate(folder.Id, names, descriptions, folder.ParentId).GetAwaiter().GetResult();
-                    folder.Name = null;
-                    folder.Description = null;
-                    folder.Update(dbContext).GetAwaiter().GetResult();
-                }
 
                 return new OperationDataResult<HeaderSettingsModel>(true, model);
             }
@@ -432,6 +392,7 @@ namespace eFormAPI.Web.Services
                         MainTextVisible = _loginPageSettings.Value.MainTextVisible,
                         SecondaryText = _loginPageSettings.Value.SecondaryText,
                         SecondaryTextVisible = _loginPageSettings.Value.SecondaryTextVisible,
+                        IsSendGridExists = !string.IsNullOrEmpty(_emailSettings.Value.SendGridKey),
                     },
                     SwiftSettingsModel = new SwiftSettingsModel()
                     {

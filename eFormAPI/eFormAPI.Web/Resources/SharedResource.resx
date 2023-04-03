@@ -310,7 +310,7 @@
     <value>"{0}" paired successfully</value>
   </data>
   <data name="ParamUpdatedSuccessfully" xml:space="preserve">
-    <value>{0} updated successfully</value>
+    <value>{0} updated</value>
   </data>
   <data name="PleaseSetupSecurityCode" xml:space="preserve">
     <value>Please setup security code on server</value>
@@ -737,5 +737,14 @@
   </data>
   <data name="ErrorWhileUpdateTag" xml:space="preserve">
     <value>Error while update tag</value>
+  </data>
+  <data name="ImageUpdatedSuccessfully" xml:space="preserve">
+    <value>Image updated successfully</value>
+  </data>
+  <data name="Folders" xml:space="preserve">
+    <value>Folders</value>
+  </data>
+  <data name="EformSuccessfullyUpdated" xml:space="preserve">
+    <value>eForm updated</value>
   </data>
 </root>

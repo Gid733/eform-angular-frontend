@@ -1,0 +1,37 @@
+<h3 mat-dialog-title>{{ 'Are you sure you want to duplicate eForm' | translate }}?</h3>
+<div mat-dialog-content>
+  <div class="d-flex flex-row justify-content-between">
+    <p>ID</p>
+    <strong>{{ selectedTemplateDto.id }}</strong>
+  </div>
+  <div class="d-flex flex-row justify-content-between">
+    <p>{{ 'Creation Date' | translate }}</p>
+    <strong>
+      <date-formatter
+        [date]="selectedTemplateDto.createdAt"
+        [Format]="'datetime'"
+      ></date-formatter>
+    </strong>
+  </div>
+  <div class="d-flex flex-row justify-content-between">
+    <p>{{ 'Name' | translate }}</p>
+    <strong>{{ selectedTemplateDto.label }}</strong>
+  </div>
+</div>
+<div mat-dialog-actions class="d-flex flex-row justify-content-end">
+  <button
+    mat-raised-button
+    color="accent"
+    id="eFormDuplicateDuplicateBtn"
+    (click)="duplicateEfrom()"
+  >
+    {{ 'Duplicate' | translate }}
+  </button>
+  <button
+    mat-raised-button
+    id="eFormDuplicateCancelBtn"
+    (click)="hide()"
+  >
+    {{ 'Close' | translate }}
+  </button>
+</div>

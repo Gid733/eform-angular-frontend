@@ -4,4 +4,6 @@ export class DeviceUserModel {
   userLastName: string;
   language: number;
   languageCode: string;
+  normalId: number;
+  isLocked: boolean;
 }

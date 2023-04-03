@@ -14,31 +14,34 @@ const folderName = [
 ];
 
 describe('Create folder', function () {
-  before(function () {
-    loginPage.open('/');
-    loginPage.login();
-    myEformsPage.Navbar.goToFolderPage();
-    foldersPage.newFolderBtn.waitForDisplayed({ timeout: 40000 });
+  before(async () => {
+    await loginPage.open('/');
+    await loginPage.login();
+    await myEformsPage.Navbar.goToFolderPage();
+    await (await foldersPage.newFolderBtn()).waitForDisplayed({
+      timeout: 40000,
+    });
   });
-  it('With name and with description', function () {
+  it('With name and with description', async () => {
     const description = generateRandmString();
-    const rowCountBeforeCreation = foldersPage.rowNum;
-    foldersPage.createNewFolder(folderName[0], description);
-    const rowCountAfterCreation = foldersPage.rowNum;
+    const rowCountBeforeCreation = await foldersPage.rowNum();
+    await foldersPage.createNewFolder(folderName[0], description);
+    const rowCountAfterCreation = await foldersPage.rowNum();
     expect(
       rowCountAfterCreation,
       `Number of rows hasn't changed after creating new folder`
     ).equal(rowCountBeforeCreation + 1);
-    const folder = foldersPage.getFolderByName(folderName[0]);
+    const folder = await foldersPage.getFolderByName(folderName[0]);
     expect(folder.name, 'Name of created user is incorrect').equal(
       folderName[0]
     );
     expect(
-      folder.getDescription().find((x) => x.language === 'Danish').description,
+      (await folder.getDescription()).find((x) => x.language === 'Danish')
+        .description,
       'Description of created folder is incorrect'
     ).equal(description);
   });
-  // it('should not be created without description', function () {
+  // it('should not be created without description', async () => {
   //   const name = generateRandmString();
   //   foldersPage.openCreateFolder(name);
   //   expect(
@@ -47,7 +50,7 @@ describe('Create folder', function () {
   //   ).equal(false);
   //   foldersPage.closeCreateFolder(true);
   // });
-  // it('should not be created without name', function () {
+  // it('should not be created without name', async () => {
   //   const description = generateRandmString();
   //   foldersPage.openCreateFolder(null, description);
   //   expect(
@@ -56,7 +59,7 @@ describe('Create folder', function () {
   //   ).equal(false);
   //   foldersPage.closeCreateFolder(true);
   // });
-  // it('should not be created without name and description', function () {
+  // it('should not be created without name and description', async () => {
   //   foldersPage.openCreateFolder();
   //   expect(
   //     foldersPage.saveCreateBtn.isEnabled(),
@@ -64,7 +67,7 @@ describe('Create folder', function () {
   //   ).equal(false);
   //   foldersPage.closeCreateFolder(true);
   // });
-  // it('should not be created if the description has only spaces', function () {
+  // it('should not be created if the description has only spaces', async () => {
   //   foldersPage.openCreateFolder(generateRandmString(), '    ');
   //   expect(
   //     foldersPage.saveCreateBtn.isEnabled(),
@@ -72,7 +75,7 @@ describe('Create folder', function () {
   //   ).equal(false);
   //   foldersPage.closeCreateFolder(true);
   // });
-  // it('should not be created if the name has only spaces', function () {
+  // it('should not be created if the name has only spaces', async () => {
   //   foldersPage.openCreateFolder('    ', generateRandmString());
   //   expect(
   //     foldersPage.saveCreateBtn.isEnabled(),
@@ -80,7 +83,7 @@ describe('Create folder', function () {
   //   ).equal(false);
   //   foldersPage.closeCreateFolder(true);
   // });
-  // it('should not be created if the name and description has only spaces', function () {
+  // it('should not be created if the name and description has only spaces', async () => {
   //   foldersPage.openCreateFolder('    ', '  ');
   //   expect(
   //     foldersPage.saveCreateBtn.isEnabled(),
@@ -88,181 +91,221 @@ describe('Create folder', function () {
   //   ).equal(false);
   //   foldersPage.closeCreateFolder(true);
   // });
-  it('should not be created if cancel was clicked', function () {
-    const rowCountBeforeCreation = foldersPage.rowNum;
-    foldersPage.createNewFolder(
+  it('should not be created if cancel was clicked', async () => {
+    const rowCountBeforeCreation = await foldersPage.rowNum();
+    await foldersPage.createNewFolder(
       generateRandmString(),
       generateRandmString(),
       true
     );
-    const rowCountAfterCreation = foldersPage.rowNum;
+    const rowCountAfterCreation = await foldersPage.rowNum();
     expect(
       rowCountAfterCreation,
       'Number of rows has changed after cancel'
     ).equal(rowCountBeforeCreation);
   });
-  it('should create new folder with bold description', function () {
-    foldersPage.openCreateFolder(folderName[1]);
+  it('should create new folder with bold description', async () => {
+    await foldersPage.openCreateFolder(folderName[1]);
     const description = generateRandmString();
 
     const da = applicationLanguages[0];
-    foldersPage.createLanguageSelector.$('input').setValue(da.text);
-    let value = foldersPage.createLanguageSelector.$(`.ng-option=${da.text}`);
-    value.waitForDisplayed({ timeout: 40000 });
-    value.click();
-    foldersPage
-      .createDescriptionInput(
+    await (
+      await (await foldersPage.createLanguageSelector()).$('input')
+    ).setValue(da.text);
+    let value = await (await $('ng-dropdown-panel')).$(
+      `.ng-option=${da.text}`
+    );
+    await value.waitForDisplayed({ timeout: 40000 });
+    await value.click();
+    await (
+      await foldersPage.createDescriptionInput(
         applicationLanguages.findIndex((x) => x.text === da.text)
       )
-      .addValue(description);
+    ).addValue(description);
 
-    browser.keys(['Control', 'KeyA', 'Control']);
-    foldersPage
-      .createDescriptionInputPellBold(
+    await browser.keys(['Control', 'KeyA', 'Control']);
+    await (
+      await foldersPage.createDescriptionInputPellBold(
         applicationLanguages.findIndex((x) => x.text === da.text)
       )
-      .click();
-    foldersPage.closeCreateFolder();
-    const foldersRowObject = foldersPage.getFolderByName(folderName[1]);
-    foldersRowObject.openEditModal();
+    ).click();
+    await foldersPage.closeCreateFolder();
+    const foldersRowObject = await foldersPage.getFolderByName(folderName[1]);
+    await foldersRowObject.openEditModal();
 
-    foldersPage.editLanguageSelector.$('input').setValue(da.text);
-    value = foldersPage.editLanguageSelector.$(`.ng-option=${da.text}`);
-    value.waitForDisplayed({ timeout: 40000 });
-    value.click();
-    const html = foldersPage
-      .editDescriptionInput(
+    await (
+      await (await foldersPage.editLanguageSelector()).$('input')
+    ).setValue(da.text);
+    value = await (await $('ng-dropdown-panel')).$(
+      `.ng-option=${da.text}`
+    );
+    await value.waitForDisplayed({ timeout: 40000 });
+    await value.click();
+    const html = await (
+      await foldersPage.editDescriptionInput(
         applicationLanguages.findIndex((x) => x.text === da.text)
       )
-      .getHTML(false);
-
-    expect(html, 'save description incorrect').eq(`<b>${description}</b>`);
-    foldersRowObject.closeEditModal(true);
-  });
-  it('should create new folder with underline description', function () {
-    foldersPage.openCreateFolder(folderName[2]);
-    const description = generateRandmString();
-
-    const da = applicationLanguages[0];
-    foldersPage.createLanguageSelector.$('input').setValue(da.text);
-    let value = foldersPage.createLanguageSelector.$(`.ng-option=${da.text}`);
-    value.waitForDisplayed({ timeout: 40000 });
-    value.click();
-    foldersPage
-      .createDescriptionInput(
-        applicationLanguages.findIndex((x) => x.text === da.text)
-      )
-      .addValue(description);
-
-    browser.keys(['Control', 'KeyA', 'Control']);
-    foldersPage
-      .createDescriptionInputPellUnderline(
-        applicationLanguages.findIndex((x) => x.text === da.text)
-      )
-      .click();
-    foldersPage.closeCreateFolder();
-    const foldersRowObject = foldersPage.getFolderByName(folderName[2]);
-    foldersRowObject.openEditModal();
-
-    foldersPage.editLanguageSelector.$('input').setValue(da.text);
-    value = foldersPage.editLanguageSelector.$(`.ng-option=${da.text}`);
-    value.waitForDisplayed({ timeout: 40000 });
-    value.click();
-    const html = foldersPage
-      .editDescriptionInput(
-        applicationLanguages.findIndex((x) => x.text === da.text)
-      )
-      .getHTML(false);
-
-    expect(html, 'save description incorrect').eq(`<u>${description}</u>`);
-    foldersRowObject.closeEditModal(true);
-  });
-  it('should create new folder with italic description', function () {
-    foldersPage.openCreateFolder(folderName[3]);
-    const description = generateRandmString();
-
-    const da = applicationLanguages[0];
-    foldersPage.createLanguageSelector.$('input').setValue(da.text);
-    let value = foldersPage.createLanguageSelector.$(`.ng-option=${da.text}`);
-    value.waitForDisplayed({ timeout: 40000 });
-    value.click();
-    foldersPage
-      .createDescriptionInput(
-        applicationLanguages.findIndex((x) => x.text === da.text)
-      )
-      .addValue(description);
-
-    browser.keys(['Control', 'KeyA', 'Control']);
-    foldersPage
-      .createDescriptionInputPellItalic(
-        applicationLanguages.findIndex((x) => x.text === da.text)
-      )
-      .click();
-    foldersPage.closeCreateFolder();
-    const foldersRowObject = foldersPage.getFolderByName(folderName[3]);
-    foldersRowObject.openEditModal();
-
-    foldersPage.editLanguageSelector.$('input').setValue(da.text);
-    value = foldersPage.editLanguageSelector.$(`.ng-option=${da.text}`);
-    value.waitForDisplayed({ timeout: 40000 });
-    value.click();
-    const html = foldersPage
-      .editDescriptionInput(
-        applicationLanguages.findIndex((x) => x.text === da.text)
-      )
-      .getHTML(false);
-
-    expect(html, 'save description incorrect').eq(`<i>${description}</i>`);
-    foldersRowObject.closeEditModal(true);
-  });
-  it('should create new folder with strike-through description', function () {
-    foldersPage.openCreateFolder(folderName[4]);
-    const description = generateRandmString();
-
-    const da = applicationLanguages[0];
-    foldersPage.createLanguageSelector.$('input').setValue(da.text);
-    let value = foldersPage.createLanguageSelector.$(`.ng-option=${da.text}`);
-    value.waitForDisplayed({ timeout: 40000 });
-    value.click();
-    foldersPage
-      .createDescriptionInput(
-        applicationLanguages.findIndex((x) => x.text === da.text)
-      )
-      .addValue(description);
-
-    browser.keys(['Control', 'KeyA', 'Control']);
-    foldersPage
-      .createDescriptionInputPellStrikeThrough(
-        applicationLanguages.findIndex((x) => x.text === da.text)
-      )
-      .click();
-    foldersPage.closeCreateFolder();
-    const foldersRowObject = foldersPage.getFolderByName(folderName[4]);
-    foldersRowObject.openEditModal();
-
-    foldersPage.editLanguageSelector.$('input').setValue(da.text);
-    value = foldersPage.editLanguageSelector.$(`.ng-option=${da.text}`);
-    value.waitForDisplayed({ timeout: 40000 });
-    value.click();
-    const html = foldersPage
-      .editDescriptionInput(
-        applicationLanguages.findIndex((x) => x.text === da.text)
-      )
-      .getHTML(false);
+    ).getHTML(false);
 
     expect(html, 'save description incorrect').eq(
-      `<strike>${description}</strike>`
+      `<div><b>${description}</b></div>`
     );
-    foldersRowObject.closeEditModal(true);
+    await foldersRowObject.closeEditModal(true);
   });
-  after('should delete folders', function () {
-    const rowCountBeforeCreation = foldersPage.rowNum;
-    for (let i = 0; i < folderName.length; i++) {
-      foldersPage.getFolderByName(folderName[i]).delete();
+  it('should create new folder with underline description', async () => {
+    await foldersPage.openCreateFolder(folderName[2]);
+    const description = generateRandmString();
+
+    const da = applicationLanguages[0];
+    await (await foldersPage.createLanguageSelector())
+      .$('input')
+      .setValue(da.text);
+    let value = await (await $('ng-dropdown-panel')).$(
+      `.ng-option=${da.text}`
+    );
+    await value.waitForDisplayed({ timeout: 40000 });
+    await value.click();
+    await (
+      await foldersPage.createDescriptionInput(
+        applicationLanguages.findIndex((x) => x.text === da.text)
+      )
+    ).addValue(description);
+
+    await browser.keys(['Control', 'KeyA', 'Control']);
+    await (
+      await foldersPage.createDescriptionInputPellUnderline(
+        applicationLanguages.findIndex((x) => x.text === da.text)
+      )
+    ).click();
+    await foldersPage.closeCreateFolder();
+    const foldersRowObject = await foldersPage.getFolderByName(folderName[2]);
+    await foldersRowObject.openEditModal();
+
+    await (
+      await (await foldersPage.editLanguageSelector()).$('input')
+    ).setValue(da.text);
+    value = await (await $('ng-dropdown-panel')).$(
+      `.ng-option=${da.text}`
+    );
+    await value.waitForDisplayed({ timeout: 40000 });
+    await value.click();
+    const html = await (
+      await foldersPage.editDescriptionInput(
+        applicationLanguages.findIndex((x) => x.text === da.text)
+      )
+    ).getHTML(false);
+
+    expect(html, 'save description incorrect').eq(
+      `<div><u>${description}</u></div>`
+    );
+    await foldersRowObject.closeEditModal(true);
+  });
+  it('should create new folder with italic description', async () => {
+    await foldersPage.openCreateFolder(folderName[3]);
+    const description = generateRandmString();
+
+    const da = applicationLanguages[0];
+    await (
+      await (await foldersPage.createLanguageSelector()).$('input')
+    ).setValue(da.text);
+    let value = await (await $('ng-dropdown-panel')).$(
+      `.ng-option=${da.text}`
+    );
+    await value.waitForDisplayed({ timeout: 40000 });
+    await value.click();
+    await (
+      await foldersPage.createDescriptionInput(
+        applicationLanguages.findIndex((x) => x.text === da.text)
+      )
+    ).addValue(description);
+
+    await browser.keys(['Control', 'KeyA', 'Control']);
+    await (
+      await foldersPage.createDescriptionInputPellItalic(
+        applicationLanguages.findIndex((x) => x.text === da.text)
+      )
+    ).click();
+    await foldersPage.closeCreateFolder();
+    const foldersRowObject = await foldersPage.getFolderByName(folderName[3]);
+    await foldersRowObject.openEditModal();
+
+    await (
+      await (await foldersPage.editLanguageSelector()).$('input')
+    ).setValue(da.text);
+    value = await (await $('ng-dropdown-panel')).$(
+      `.ng-option=${da.text}`
+    );
+    await value.waitForDisplayed({ timeout: 40000 });
+    await value.click();
+    const html = await (
+      await foldersPage.editDescriptionInput(
+        applicationLanguages.findIndex((x) => x.text === da.text)
+      )
+    ).getHTML(false);
+
+    expect(html, 'save description incorrect').eq(
+      `<div><i>${description}</i></div>`
+    );
+    await foldersRowObject.closeEditModal(true);
+  });
+  it('should create new folder with strike-through description', async () => {
+    await foldersPage.openCreateFolder(folderName[4]);
+    const description = generateRandmString();
+
+    const da = applicationLanguages[0];
+    await (
+      await (await foldersPage.createLanguageSelector()).$('input')
+    ).setValue(da.text);
+    let value = await (await $('ng-dropdown-panel')).$(
+      `.ng-option=${da.text}`
+    );
+    await value.waitForDisplayed({ timeout: 40000 });
+    await value.click();
+    await (
+      await foldersPage.createDescriptionInput(
+        applicationLanguages.findIndex((x) => x.text === da.text)
+      )
+    ).addValue(description);
+
+    await browser.keys(['Control', 'KeyA', 'Control']);
+    await (
+      await foldersPage.createDescriptionInputPellStrikeThrough(
+        applicationLanguages.findIndex((x) => x.text === da.text)
+      )
+    ).click();
+    await foldersPage.closeCreateFolder();
+    const foldersRowObject = await foldersPage.getFolderByName(folderName[4]);
+    await foldersRowObject.openEditModal();
+
+    await (
+      await (await foldersPage.editLanguageSelector()).$('input')
+    ).setValue(da.text);
+    value = await (await $('ng-dropdown-panel')).$(
+      `.ng-option=${da.text}`
+    );
+    await value.waitForDisplayed({ timeout: 40000 });
+    await value.click();
+    const html = await (
+      await foldersPage.editDescriptionInput(
+        applicationLanguages.findIndex((x) => x.text === da.text)
+      )
+    ).getHTML(false);
+
+    expect(html, 'save description incorrect').eq(
+      `<div><s>${description}</s></div>`
+    );
+    await foldersRowObject.closeEditModal(true);
+  });
+  after('should delete folders', async () => {
+    const rowCountBeforeCreation = await foldersPage.rowNum();
+    for (let i = 0; i < rowCountBeforeCreation; i++) {
+      const folder = await foldersPage.getFolder(1);
+      await folder.delete();
+      await browser.pause(500);
     }
-    const rowCountAfterCreation = foldersPage.rowNum;
+    const rowCountAfterCreation = await foldersPage.rowNum();
     expect(
-      rowCountBeforeCreation - folderName.length,
+      0,
       'Folder not delete'
     ).equal(rowCountAfterCreation);
   });

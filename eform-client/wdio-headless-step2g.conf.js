@@ -1,3 +1,4 @@
+const path = require("path");
 exports.config = {
   runner: 'local',
   path: '/',
@@ -17,11 +18,6 @@ exports.config = {
     'e2e/Tests/folders/folder-tree/folder-tree.add.spec.ts',
     'e2e/Tests/folders/folder-tree/folder-tree.delete.spec.ts',
     'e2e/Tests/folders/folder-tree/folder-tree.edit.spec.ts',
-    'e2e/Tests/navigation-menu/navigation-menu.create-item.spec.ts',
-    'e2e/Tests/navigation-menu/navigation-menu.edit-item.spec.ts',
-    'e2e/Tests/navigation-menu/navigation-menu.drag-item.spec.ts',
-    'e2e/Tests/navigation-menu/navigation-menu.delete-item.spec.ts',
-    'e2e/Tests/navigation-menu/subheader.spec.ts',
   ],
   suites: {
     settings: ['e2e/Tests/application-settings/**/*.spec.ts'],
@@ -61,7 +57,10 @@ exports.config = {
       //
       browserName: 'chrome',
       'goog:chromeOptions': {
-        args: ['headless', 'window-size=1920,1080', 'disable-gpu'],
+        args: [
+          'headless',
+          'window-size=1920,1080',
+          'disable-gpu'],
       },
       // If outputDir is provided WebdriverIO can capture driver session logs
       // it is possible to configure which logTypes to include/exclude.
@@ -78,7 +77,7 @@ exports.config = {
   // By default WebdriverIO commands are executed in a synchronous way using
   // the wdio-sync package. If you still want to run your Tests in an async way
   // e.g. using promises you can set the sync option to false.
-  sync: true,
+  sync: false,
   //
   // Level of logging verbosity: silent | verbose | command | data | result | error
   logLevel: 'silent',
@@ -247,29 +246,25 @@ exports.config = {
      * const date = (new Date()).toString().replace(/\s/g, '-').replace(/-\(\w+\)/, '');
      */
     //const { browserName } = browser.desiredCapabilities;
-    const timestamp = new Date()
-      .toLocaleString('iso', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-      })
-      .replace(/[ ]/g, '--')
-      .replace(':', '-');
+    const timestamp = new Date().toLocaleString('iso', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }).replace(/[ ]/g, '--').replace(':', '-');
 
     // get current test title and clean it, to use it as file name
     const filename = encodeURIComponent(
-      `${test.fullTitle.replace(/\s+/g, '-')}-chrome-${timestamp}`.replace(
-        /[/]/g,
-        '__'
-      )
+      `chrome-${timestamp}`.replace(/[/]/g, '__')
     ).replace(/%../, '.');
 
     const filePath = path.resolve(this.screenshotPath, `${filename}.png`);
 
+    console.log('Saving screenshot to:', filePath);
     browser.saveScreenshot(filePath);
+    console.log('Saved screenshot to:', filePath);
   },
   /**
    * Hook that gets executed after the suite has ended

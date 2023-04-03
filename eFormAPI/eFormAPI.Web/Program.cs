@@ -22,6 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+using Microting.EformAngularFrontendBase.Infrastructure.Data.Entities.Menu;
+
 namespace eFormAPI.Web
 {
     using Services.PluginsManagement.MenuItemsLoader;
@@ -177,6 +179,32 @@ namespace eFormAPI.Web
                     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
                     logger.LogError(e, "Error while migrating db");
                 }
+
+                try
+                {
+                    // add missing admin settings to all menu items
+                    var menuItems = dbContext.MenuItems.ToList();
+                    foreach (var menuItem in menuItems)
+                    {
+                        if (!dbContext.MenuItemSecurityGroups.Any(x => x.MenuItemId == menuItem.Id && x.SecurityGroupId == 1))
+                        {
+                            var securityGroup = new MenuItemSecurityGroup
+                            {
+                                MenuItemId = menuItem.Id,
+                                SecurityGroupId = 1
+                            };
+
+                            dbContext.MenuItemSecurityGroups.Add(securityGroup);
+                            dbContext.SaveChanges();
+                            Console.WriteLine($"Adding missing admin settings to menu item {menuItem.Name}");
+                        }
+
+                    }
+                } catch (Exception e)
+                {
+                    //var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+                    //logger.LogError(e, "Error while adding missing admin settings to all menu items");
+                }
             }
         }
 
@@ -255,7 +283,7 @@ namespace eFormAPI.Web
                 }
                 else if (args.Any())
                 {
-                    Log.LogEvent("Try initialize from args");
+                    Log.LogEvent("Try initializing from args");
                     var defaultConfig = new ConfigurationBuilder()
                         .AddCommandLine(args)
                         .AddEnvironmentVariables(prefix: "ASPNETCORE_")
@@ -323,8 +351,12 @@ namespace eFormAPI.Web
             var port = defaultConfig.GetValue("port", 5000);
             var connectionString = defaultConfig.GetValue("ConnectionString", "");
             return WebHost.CreateDefaultBuilder(args)
+                .ConfigureKestrel(serverOptions =>
+                {
+                    serverOptions.Limits.MaxRequestBodySize = 100 * 1024 * 1024;// 100Mb
+                })
                 .UseUrls($"http://0.0.0.0:{port}")
-                .UseIISIntegration()
+                // .UseIISIntegration()
                 .ConfigureAppConfiguration((hostContext, config) =>
                 {
                     Log.LogEvent("Delete all default configuration providers");
@@ -342,6 +374,7 @@ namespace eFormAPI.Web
 
                     if (!string.IsNullOrEmpty(connectionString))
                     {
+                        Log.LogEvent($"Creating ConnectionString file with the ConnectionString: {connectionString}");
                         ConnectionStringManager.CreateWithConnectionString(filePath, connectionString);
                     }
 
@@ -355,17 +388,15 @@ namespace eFormAPI.Web
                     var contextFactory = new BaseDbContextFactory();
                     if (_defaultConnectionString != "...")
                     {
-                        using (var dbContext = contextFactory.CreateDbContext(new[] {_defaultConnectionString}))
+                        using var dbContext = contextFactory.CreateDbContext(new[] {_defaultConnectionString});
+                        foreach (var plugin in EnabledPlugins)
                         {
-                            foreach (var plugin in EnabledPlugins)
-                            {
-                                var pluginEntity = dbContext.EformPlugins
-                                    .FirstOrDefault(x => x.PluginId == plugin.PluginId);
+                            var pluginEntity = dbContext.EformPlugins
+                                .FirstOrDefault(x => x.PluginId == plugin.PluginId);
 
-                                if (pluginEntity != null && !string.IsNullOrEmpty(pluginEntity.ConnectionString))
-                                {
-                                    plugin.AddPluginConfig(config, pluginEntity.ConnectionString);
-                                }
+                            if (pluginEntity != null && !string.IsNullOrEmpty(pluginEntity.ConnectionString))
+                            {
+                                plugin.AddPluginConfig(config, pluginEntity.ConnectionString);
                             }
                         }
                     }

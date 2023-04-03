@@ -1,0 +1,28 @@
+<h3 mat-dialog-title>{{ 'Edit element' | translate}}</h3>
+<div mat-dialog-content>
+  <mat-form-field>
+    <mat-label>{{'Name' | translate}}</mat-label>
+    <input
+      matInput
+      [(ngModel)]="selectedEntityItemModel.name"
+      type="text"
+      id="entityItemEditNameBox">
+  </mat-form-field>
+</div>
+<div mat-dialog-actions class="d-flex flex-row justify-content-end">
+  <button
+    mat-raised-button
+    color="accent"
+    (click)="hide(true)"
+    id="entityItemSaveBtn"
+  >
+    {{'Save' | translate}}
+  </button>
+  <button
+    mat-raised-button
+    id="entityItemCancelBtn"
+    (click)="hide()"
+  >
+    {{'Cancel' | translate}}
+  </button>
+</div>

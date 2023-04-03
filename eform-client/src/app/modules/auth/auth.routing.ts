@@ -28,7 +28,7 @@ const routes: Routes = [
       },
       {
         path: 'restore-password-confirmation',
-        component: RestorePasswordConfirmationComponent
+        component: RestorePasswordConfirmationComponent,
       },
       {
         path: 'reset-admin-password',
@@ -43,7 +43,7 @@ const routes: Routes = [
   {
     path: 'sign-out',
     component: SignOutComponent
-  }
+  },
 ];
 
 

@@ -5,6 +5,7 @@ import { AppMenuStateService } from 'src/app/common/store';
 
 @AutoUnsubscribe()
 @Component({
+  // eslint-disable-next-line @angular-eslint/component-selector
   selector: 'eform-subheader',
   templateUrl: './eform-subheader.component.html',
   styleUrls: ['./eform-subheader.component.scss'],
@@ -14,27 +15,28 @@ export class EformSubheaderComponent implements OnInit, OnDestroy {
   @Input() subtitle = '';
   @Input() heandingSizeRem = 2.5;
   @Input() forceStaticTitle = false;
-  @Input() prioritizeMenuTitle = false;
+  @Input() breadcrumbs: { name: string; href?: string }[] = null;
+  href = this.router.url;
 
   // internalTitle = '';
 
   constructor(
     private router: Router,
-    private appMenuStateService: AppMenuStateService
+    public appMenuStateService: AppMenuStateService
   ) {}
 
   ngOnDestroy() {}
 
   ngOnInit() {
-    if (!this.forceStaticTitle || !this.title) {
-      const href = this.router.url;
-      this.appMenuStateService.getAppMenu().subscribe((_) => {
-        const foundTitle = this.appMenuStateService.getTitleByUrl(href);
-        if (foundTitle) {
-          // this.internalTitle = foundTitle;
-          this.title = foundTitle;
-        }
-      });
-    }
+    // if (!this.forceStaticTitle || !this.title) {
+    //   const href = this.router.url;
+    //   this.appMenuStateService.getAppMenu().subscribe((_) => {
+    //     const foundTitle = this.appMenuStateService.getTitleByUrl(href);
+    //     if (foundTitle) {
+    //       // this.internalTitle = foundTitle;
+    //       this.title = foundTitle;
+    //     }
+    //   });
+    // }
   }
 }

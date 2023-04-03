@@ -1,43 +1,56 @@
 @import "../../../scss/utilities/colors";
 
-.navbar-bg {
-  background-color: $eform-gray;
-  color: white;
-}
+mat-tree {
+  mat-tree-node {
+    display: inline-flex;
 
-.nav-item {
-  & a {
-    padding: 0.5rem 0.8rem !important;
+    .nav-link {
+      width: 100%;
+      text-align: inherit;
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+
+      span {
+        white-space: initial;
+        line-height: 1.4em;
+      }
+    }
+  }
+
+  mat-nested-tree-node { // styles for nested tree nodes
+    mat-accordion {
+      mat-expansion-panel {
+        &:not([class*=mat-elevation-z]) {
+          box-shadow: none !important;
+        }
+
+        .mat-expansion-panel-header {
+          padding-left: 1rem;
+        }
+
+        .mat-expansion-panel-content {
+          .mat-expansion-panel-body {
+            mat-tree-node {
+              display: inline-flex;
+
+              span {
+                white-space: initial;
+                line-height: 1.4em;
+              }
+            }
+          }
+        }
+      }
+    }
   }
 }
 
-.dropdown-item a {
-  color: $eform-red-dark;
-}
-
-.dropdown-menu {
-  padding-top: 0;
-  padding-bottom: 0;
-}
-
-.nav-item a {
-  color: white !important;
-  background-color: $eform-gray;
-  &.active {
-    background-color: $eform-red;
-  }
-  &:hover {
-    color: $eform-gray-light !important;
-  }
-}
-
-.outbounds-fix {
-  left: auto;
-  right: 0;
-}
-
-@media screen and (max-width: 991px) {
-  .dropdown-menu {
-    padding-bottom: 25px;
+.mat-menu-item, .mat-icon-button {
+  .mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+    line-height: 18px
   }
 }

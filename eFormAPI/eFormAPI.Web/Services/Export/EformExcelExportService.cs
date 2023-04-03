@@ -86,7 +86,7 @@ namespace eFormAPI.Web.Services.Export
                     "",
                     false,
                     cultureInfo,
-                    timeZoneInfo, language, true).ConfigureAwait(false);
+                    timeZoneInfo, language, true, false).ConfigureAwait(false);
 
                 if (dataSet == null)
                 {
@@ -98,16 +98,14 @@ namespace eFormAPI.Web.Services.Export
                 //var sourceFileName =
                 //    Path.Combine(await core.GetSdkSetting(Settings.fileLocationJasper),
                 //        Path.Combine("templates", $"{excelModel.TemplateId}", "compact", $"{excelModel.TemplateId}.xlsx"));
-                Directory.CreateDirectory(Path.Combine(await core.GetSdkSetting(Settings.fileLocationJasper)
-                    .ConfigureAwait(false), "results"));
+                Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "results"));
 
                 var timeStamp = $"{DateTime.UtcNow:yyyyMMdd}_{DateTime.UtcNow:hhmmss}";
 
                 var resultDocument = Path.Combine(Path.GetTempPath(), "results",
                     $"{timeStamp}_{excelModel.TemplateId}.xlsx");
 
-                Directory.CreateDirectory(Path.Combine(await core.GetSdkSetting(Settings.fileLocationJasper)
-                    .ConfigureAwait(false), "results"));
+                Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "results"));
 
                 if (core.GetSdkSetting(Settings.s3Enabled).Result.ToLower() == "true")
                 {
@@ -160,7 +158,7 @@ namespace eFormAPI.Web.Services.Export
                 var wb = new XLWorkbook(resultDocument);
                 try {
                     var workSheetToDelete = wb.Worksheets.Worksheet($"Data_{excelModel.TemplateId}");
-                    workSheetToDelete.Clear(XLClearOptions.All);
+                    workSheetToDelete.Clear();
                     //workSheetToDelete.Delete();
                 }
                 catch
@@ -187,7 +185,7 @@ namespace eFormAPI.Web.Services.Export
                             {
                                 case 0:
                                 case 10:
-                                    worksheet.Cell(x + 1, y + 1).Value = int.Parse(dataY);
+                                    worksheet.Cell(x + 1, y + 1).SetValue(int.Parse(dataY));
                                     break;
                                 case 1:
                                     worksheet.Cell(x + 1, y + 1).Value = dataY;
@@ -197,23 +195,34 @@ namespace eFormAPI.Web.Services.Export
                                     worksheet.Cell(x + 1, y + 1).Value = dataY;
                                     //worksheet.Cell(x + 1, y + 1).Style.Numberformat.Format = "HH:mm:ss";
                                     break;
+                                case 4:
+                                    worksheet.Cell(x + 1, y + 1).SetValue("'" + dataY);
+                                    //worksheet.Cell(x + 1, y + 1).DataType = XLDataType.Text;
+                                    break;
                                 case 6:
-                                    worksheet.Cell(x + 1, y + 1).Value = dataY;
+                                    worksheet.Cell(x + 1, y + 1).SetValue(dataY);
                                     //worksheet.Cell(x + 1, y + 1).Style.Numberformat.Format = "yyyy";
                                     break;
                                 case 7:
-                                    worksheet.Cell(x + 1, y + 1).Value = dataY;
+                                    worksheet.Cell(x + 1, y + 1).SetValue(dataY);
                                     //worksheet.Cell(x + 1, y + 1).Style.Numberformat.Format = "yyyy-MM-dd HH:mm:ss";
                                     break;
                                 default:
-                                    int i;
-                                    if (int.TryParse(dataY, out i))
+                                    if (dataY == "checked")
                                     {
-                                        worksheet.Cell(x + 1, y + 1).Value = i;
+                                        worksheet.Cell(x + 1, y + 1).SetValue(1);
                                     }
                                     else
                                     {
-                                        worksheet.Cell(x + 1, y + 1).Value = dataY;
+                                        if (float.TryParse(dataY, out var i))
+                                        {
+                                            worksheet.Cell(x + 1, y + 1).SetValue(dataY.Replace(",", "."));
+                                            //worksheet.Cell(x + 1, y + 1).DataType = XLDataType.Number;
+                                        }
+                                        else
+                                        {
+                                            worksheet.Cell(x + 1, y + 1).Value = dataY;
+                                        }
                                     }
 
                                     break;
@@ -222,7 +231,7 @@ namespace eFormAPI.Web.Services.Export
 
                         if (x == 0)
                         {
-                            worksheet.Cell(x + 1, y + 1).Value = dataY;
+                            worksheet.Cell(x + 1, y + 1).SetValue(dataY);
                             worksheet.Cell(x + 1, y + 1).Style.Font.Bold = true;
                         }
                     }

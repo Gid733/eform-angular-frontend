@@ -1,29 +1,37 @@
-<div class="mb-2">
-  <form [formGroup]="formLogin" (ngSubmit)="submitLoginForm()">
-    <div class="md-form">
-
-      <fa-icon class="prefix" icon="user" size="1x" [fixedWidth]="true"></fa-icon>
-
-      <input mdbInput
-             formControlName="username"
-             type="text" id="username" name="username" class="form-control">
-      <label for="username">{{'Username' | translate}}</label>
-    </div>
-    <div class="md-form">
-      <fa-icon class="prefix" icon="lock" size="1x" [fixedWidth]="true"></fa-icon>
-
-      <input mdbInput
-             formControlName="password"
-             type="password" id="password" name="password" class="form-control">
-      <label for="password">{{'Password' | translate}}</label>
-    </div>
-    <button mdbBtn type="submit"  class="btn btn-success btn-lg btn-block" id="loginBtn">
-      {{'Login' | translate}}
+<div>
+  <form [formGroup]="formLogin" (ngSubmit)="submitLoginForm()" class="d-flex flex-column align-items-center"><!--style="font-size: 1rem;"-->
+    <mat-form-field>
+      <mat-label>{{ 'Username' | translate }}</mat-label>
+      <mat-icon matPrefix>person</mat-icon>
+      <input
+        matInput
+        formControlName="username"
+        type="text"
+        id="username"
+        name="username"
+        autocomplete="username"
+      >
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>{{ 'Password' | translate }}</mat-label>
+      <mat-icon matPrefix>lock</mat-icon>
+      <input
+        matInput
+        formControlName="password"
+        type="password"
+        id="password"
+        name="password"
+        autocomplete="current-password"
+      >
+    </mat-form-field>
+    <button
+      type="submit"
+      id="loginBtn"
+      mat-raised-button
+      color="accent"
+      style="text-transform: uppercase;"
+    >
+      {{ 'Login' | translate }}
     </button>
   </form>
 </div>
-<a class="link-primary" [routerLink]="['restore-password']" *ngIf="settingsService.loginPageSettingsModel.isSMTPExists">
-  {{'Forgot password' | translate}}?
-</a>
-
-

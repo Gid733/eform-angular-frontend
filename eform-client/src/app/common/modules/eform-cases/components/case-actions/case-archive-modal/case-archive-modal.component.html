@@ -1,0 +1,34 @@
+<h3 mat-dialog-title>{{
+  (caseArchiveModel.isArchived
+    ? 'Are you sure you want to unarchive this case'
+    : 'Are you sure you want to archive this case') | translate
+  }}?</h3>
+<div mat-dialog-content>
+  <div class="d-flex flex-row justify-content-between">
+    <p>ID</p>
+    <strong>{{caseArchiveModel.id}}</strong>
+  </div>
+  <div class="d-flex flex-row justify-content-between">
+    <p>{{'Finished at' | translate}}</p>
+    <strong>
+      <date-formatter [date]="caseArchiveModel.doneAt" [Format]="'datetime'"></date-formatter>
+    </strong>
+  </div>
+  <div class="d-flex flex-row justify-content-between">
+    <p>{{ 'Done by' | translate }}</p>
+    <strong>{{caseArchiveModel.workerName}}</strong>
+  </div>
+</div>
+<div mat-dialog-actions class="d-flex flex-row justify-content-end">
+  <button
+    mat-raised-button
+    [color]="caseArchiveModel.isArchived ? 'accent' : 'warn'"
+    (click)="submitCaseToArchive()">
+    {{(caseArchiveModel.isArchived ? 'Unarchive' : 'Archive') | translate}}
+  </button>
+  <button
+    mat-raised-button
+    (click)="hide()">
+    {{'Cancel' | translate}}
+  </button>
+</div>

@@ -66,6 +66,7 @@ namespace eFormAPI.Web
     using Microsoft.Extensions.PlatformAbstractions;
     using Microting.EformAngularFrontendBase.Infrastructure.Data;
     using Microting.EformAngularFrontendBase.Infrastructure.Data.Factories;
+    using Services.Eform;
 
     public class Startup
     {
@@ -82,13 +83,17 @@ namespace eFormAPI.Web
         {
             Log.LogEvent("Startup.ConfigureServices");
             // TODO check if we need this or code needs to be updated.
-            services.AddMvc(options => options.EnableEndpointRouting = false);
+            services.AddMvc(options =>
+            {
+                options.EnableEndpointRouting = false;
+                options.MaxModelBindingCollectionSize = int.MaxValue;
+            });
 
             // Configuration
             services.AddOptions();
             services.AddLogging(loggingBuilder =>
             {
-                loggingBuilder.AddConfiguration(Configuration.GetSection("Logging"));
+                // loggingBuilder.AddConfiguration(Configuration.GetSection("Logging"));
                 loggingBuilder.AddConsole();
                 loggingBuilder.AddDebug();
             });
@@ -98,7 +103,7 @@ namespace eFormAPI.Web
                 services.AddEntityFrameworkMySql()
                     .AddDbContext<BaseDbContext>(o => o.UseMySql(
                         Configuration["ConnectionString"], new MariaDbServerVersion(
-                        new Version(10, 4, 0)), mySqlOptionsAction: builder =>
+                            ServerVersion.AutoDetect(Configuration["ConnectinString"])), mySqlOptionsAction: builder =>
                     {
                         builder.EnableRetryOnFailure();
                     }));
@@ -111,22 +116,23 @@ namespace eFormAPI.Web
                     Log.LogEvent($"We don't have a ConnectionString, so using default");
                     if (Configuration.MyConnectionString() != "...")
                     {
+                        Log.LogEvent($"ConnectionString is {Configuration.MyConnectionString()}");
                         services.AddEntityFrameworkMySql()
                             .AddDbContext<BaseDbContext>(o => o.UseMySql(
                                 Configuration.MyConnectionString(), new MariaDbServerVersion(
-                                    new Version(10, 4, 0)), mySqlOptionsAction: builder =>
+                                    ServerVersion.AutoDetect(Configuration.MyConnectionString())), mySqlOptionsAction: builder =>
                                 {
                                     builder.EnableRetryOnFailure();
                                 }));
                     }
                     else
                     {
-                        Log.LogEvent($"Setting default as active connection string.");
+                        Log.LogEvent("Setting default as active connection string.");
                         // We use this hack to get the project started and we actually don't use this connection, but it's needed for the service to start.
                         // Once we have the correct connectionstring in the connection.json, we restart the server and the above method is used.
                         services.AddEntityFrameworkMySql()
                             .AddDbContext<BaseDbContext>(o => o.UseMySql(
-                                "server=sffsfd;", new MariaDbServerVersion(
+                                "server=localhost;", new MariaDbServerVersion(
                                     new Version(10, 4, 0)), mySqlOptionsAction: builder =>
                                 {
                                     builder.EnableRetryOnFailure();
@@ -176,6 +182,7 @@ namespace eFormAPI.Web
             services.Configure<FormOptions>(x =>
             {
                 x.ValueLengthLimit = int.MaxValue;
+                x.ValueCountLimit = int.MaxValue;
                 x.MultipartBodyLengthLimit = long.MaxValue; // In case of multipart
             });
             // Register the Swagger generator, defining one or more Swagger documents
@@ -191,6 +198,8 @@ namespace eFormAPI.Web
                 var basePath = PlatformServices.Default.Application.ApplicationBasePath;
                 var xmlPath = Path.Combine(basePath, "API.doc.xml");
                 c.IncludeXmlComments(xmlPath);
+                // UseFullTypeNameInSchemaIds replacement for .NET Core
+                c.CustomSchemaIds(x => x.FullName);
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     Description =
@@ -327,6 +336,7 @@ namespace eFormAPI.Web
             services.AddTransient<IEformExcelImportService, EformExcelImportService>();
             services.AddScoped<IEformCaseReportService, EformCaseReportService>();
             services.AddScoped<IWordService, WordService>();
+            services.AddScoped<ITemplateVisualEditorService, TemplateVisualEditorService>();
         }
 
         private ICollection<PluginPermissionModel> GetPluginsPermissions()
@@ -346,7 +356,10 @@ namespace eFormAPI.Web
                         if (plugin != null)
                         {
                             var permissionsManager = plugin.GetPermissionsManager(eformPlugin.ConnectionString);
-                            permissions.AddRange(permissionsManager.GetPluginPermissions().Result);
+                            if(permissionsManager != null)
+                            {
+                                permissions.AddRange(permissionsManager.GetPluginPermissions().Result);
+                            }
                         }
                     }
                 }

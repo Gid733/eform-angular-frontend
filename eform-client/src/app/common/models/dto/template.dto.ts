@@ -11,6 +11,7 @@ export class TemplateDto {
   repeated: Number;
   folderName: String;
   workflowState: String;
+  isDoneAtEditable: boolean;
   hasCases: Boolean;
   deployedSites: Array<SiteNameDto>;
   tags: Array<KeyValueModel> = [];
@@ -27,6 +28,7 @@ export class TemplateDto {
   field9: FieldDto;
   field10: FieldDto;
   isLocked: boolean;
+  isEditable: boolean;
 
   jasperExportEnabled: boolean;
   docxExportEnabled: boolean;

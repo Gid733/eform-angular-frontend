@@ -1,0 +1,63 @@
+<mat-card>
+  <mat-card-title>{{ 'Options' | translate }}</mat-card-title>
+  <mat-card-content>
+    <mat-form-field>
+      <textarea
+        matInput
+        type="text"
+        [(ngModel)]="options"
+        name="options"
+        id="options"
+        [matTooltip]="
+            'options separated by enter, option translations separated by |.\n' +
+            'example: ' + getExampleTooltip()
+          "
+      ></textarea>
+    </mat-form-field>
+    <button
+      mat-raised-button
+      color="accent"
+      (click)="parseOptions()"
+    >
+      {{ 'Add options' | translate }}
+    </button>
+    <div *ngFor="let selectedLanguage of selectedLanguages">
+      <mat-card *ngIf="isLanguageSelected(selectedLanguage)">
+        <mat-card-header>{{
+          getLanguage(selectedLanguage) | translate
+          }}</mat-card-header>
+        <mat-card-content>
+          <mtx-grid
+            [cellTemplate]="{actions: actionsTpl}"
+            [data]="getTranslationOptionsByLanguageId(selectedLanguage)"
+            [columns]="tableHeaders"
+            [showPaginator]="false"
+            [pageOnFront]="false"
+            [rowStriped]="true"
+          >
+            <ng-template #actionsTpl let-row let-index="index">
+              <button
+                mat-icon-button
+                color="accent"
+                id="translateOptionEdit"
+                matTooltip="{{ 'Edit translate option' | translate }}"
+                (click)="openEditOptionTranslate(index, selectedLanguage)"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                id="translateOptionDelete"
+                mat-icon-button
+                color="warn"
+                matTooltip="{{ 'Delete translate option' | translate }}"
+                (click)="openDeleteOptionTranslate(index)"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </ng-template>
+          </mtx-grid>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </mat-card-content>
+</mat-card>

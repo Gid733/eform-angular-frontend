@@ -1,8 +1,8 @@
-import {Component, Input, OnInit} from '@angular/core';
-import {FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
+import {Component, Input} from '@angular/core';
 import {FieldValueDto} from 'src/app/common/models';
 
 @Component({
+  // eslint-disable-next-line @angular-eslint/component-selector
   selector: 'element-number',
   templateUrl: './element-number.component.html',
   styleUrls: ['./element-number.component.scss']
@@ -11,6 +11,7 @@ export class ElementNumberComponent {
   fieldValueObj: FieldValueDto = new FieldValueDto();
   @Input()
   get fieldValue() {
+    debugger;
     return this.fieldValueObj;
   }
 
@@ -20,26 +21,21 @@ export class ElementNumberComponent {
   }
 
   constructor() {
-
   }
 
-  validateInput(e): boolean {
-    const value = e.target.value + String.fromCharCode(e.keyCode);
-    let rgx = /^(\d+,?(?:\d+,|\d*)+)$/;
-    if (value.match(rgx)) {
-      if (value.includes(',')) {
-        rgx = /(,)/g;
-        const b = value.match(rgx);
-        if (b.length > 1) {
-          return false;
-        } else {
-          return true;
-        }
-      } else {
-        return true;
-      }
+  validateInput(e) {
+    e.target.value = this.removeNonNumeric(e.target.value);
+  }
+
+  removeNonNumeric(str: string) {
+    //Remove all none numeric characters except one comma
+    let newString = str.replace(/[^0-9,]/g, '');
+    //Check if there's more than one comma in the string
+    if (newString.match(/,/g).length > 1) {
+      newString = this.fieldValueObj.value;
     } else {
-      return false;
+      this.fieldValueObj.value = newString;
     }
+    return newString;
   }
 }

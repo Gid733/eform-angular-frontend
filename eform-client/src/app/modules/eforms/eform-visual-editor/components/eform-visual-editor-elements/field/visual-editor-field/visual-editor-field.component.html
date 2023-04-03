@@ -1,0 +1,117 @@
+<!-- First level fields render -->
+<div id="fieldSection{{ fieldIndex }}" *ngIf="field">
+  <!-- IMPORTANT TO IMPLEMENT FOR NESTING OF GROUPS -->
+
+  <!--  <div dragula="{{dragulaElementContainerName}}" [dragulaModel]="visualEditorTemplateModel.fields"-->
+  <!--       (dragulaModelChange)="onFieldChanged($event)">-->
+  <div class="mb-3 hoverable" style="width: 100%">
+    <div
+      class="d-flex align-items-center justify-content-end p-2"
+      [ngStyle]="{ 'background-color': field.color ? '#' + field.color : '' }"
+    >
+      <div style="display: flex; flex-grow: 6; align-items: center;">
+        <mat-icon
+          class="dragula-handle align-middle"
+          style="cursor: pointer"
+          [id]="fieldIsNested ? 'moveNestedFieldBtn' : 'moveFieldBtn'"
+        >
+          menu
+        </mat-icon>
+        <span [innerHTML]="fieldTranslationAndType" class="field-name-and-type"></span>
+      </div>
+
+      <div class="d-flex justify-content-end align-items-center" style="flex-grow: 3;">
+        <div id="colors">
+          <button
+            *ngFor="let color of fieldColors"
+            mat-mini-fab
+            [ngStyle]="{'background-color': '#' + color.name}"
+            [matTooltip]="color.description"
+            style="border-radius: 5em; padding: 1px 1px 1px 1px;"
+            (click)="onChangeColor(color.name)"
+          ></button>
+        </div>
+        <mat-icon
+          style="margin-right: 1rem;"
+          *ngIf="!isFieldComplete"
+          [matTooltip]="'Field is not complete' | translate"
+          class="text-warning mr-2"
+          id="isNotFieldComplete"
+        >info</mat-icon>
+        <button
+          mat-icon-button
+          color="accent"
+          *ngIf="field.fieldType == fieldTypes.FieldGroup && !fieldIsNested"
+          id="addNewNestedField"
+          (click)="onAddNewField()"
+          [matTooltip]="'Add new nested field' | translate"
+        >
+          <mat-icon>add</mat-icon>
+        </button>
+        <button
+          mat-icon-button
+          color="accent"
+          id="copyBtn"
+          (click)="onCopyField(field)"
+          [matTooltip]="'Copy field' | translate"
+        >
+          <mat-icon>content_copy</mat-icon>
+        </button>
+        <button
+          mat-icon-button
+          color="primary"
+          id="editBtn"
+          (click)="onEditField()"
+          [matTooltip]="'Edit field' | translate"
+        >
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button
+          mat-icon-button
+          color="warn"
+          id="deleteBtn"
+          (click)="onDeleteField()"
+          [matTooltip]="'Delete field' | translate"
+        >
+          <mat-icon>delete</mat-icon>
+        </button>
+        <button
+          mat-icon-button
+          *ngIf="field.fieldType == fieldTypes.FieldGroup"
+          id="collapseToggleBtn"
+          [matTooltip]="
+            (field.collapsed ? 'Expand field' : 'Collapse field') | translate
+          "
+          (click)="toggleCollapse(field)"
+        >
+          <mat-icon>{{field.collapsed ? 'chevron_right' : 'expand_more'}}</mat-icon>
+        </button>
+      </div>
+    </div>
+    <div
+      *ngIf="field.fieldType == fieldTypes.FieldGroup"
+      class="field-group-container section-collapse pl-3 nested-fields"
+      [ngClass]="{'p-1 pt-3' : !field.collapsed, 'collapsed' : field.collapsed}"
+      dragula="FIELDS"
+      [dragulaModel]="field.fields"
+      id="nestedFields"
+      (dragulaModelChange)="onFieldPositionChangedOnNestedField($event)"
+    >
+      <app-visual-editor-field
+        *ngFor="let nestedField of field.fields; let i = index"
+        [ngClass]="{'collapsed' : field.collapsed}"
+        [field]="nestedField"
+        [checklistRecursionIndexes]="checklistRecursionIndexes"
+        [fieldIndex]="i"
+        [fieldIsNested]="true"
+        [parentFieldIndex]="fieldIndex"
+        (changeColor)="onChangeColorOnNestedField($event)"
+        (copyField)="onCopyFieldOnNestedField($event)"
+        (deleteField)="onDeleteFieldOnNestedField($event)"
+        (editField)="onEditFieldOnNestedField($event)"
+      >
+      </app-visual-editor-field
+    >
+    </div>
+  </div>
+</div>

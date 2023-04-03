@@ -1,19 +1,28 @@
-import { Component, OnInit } from '@angular/core';
-import { LoaderService } from 'src/app/common/services';
+import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
+import {LoaderService} from 'src/app/common/services';
 
 @Component({
   selector: 'app-eform-spinner',
   templateUrl: './spinner.component.html',
-  styleUrls: ['./spinner.component.scss'],
+  styleUrls: ['./spinner.component.scss']
 })
 export class SpinnerComponent implements OnInit {
   loading: boolean;
 
-  constructor(private loaderService: LoaderService) {
-    this.loaderService.isLoading.subscribe((v) => {
-      // console.log(v);
-      this.loading = v;
+  constructor(
+    public loaderService: LoaderService,
+    private cdr: ChangeDetectorRef
+  ) {
+  }
+
+  ngOnInit() {
+    // Subscribes to the "isLoading" observable to get notified of changes in the loading state
+    this.loaderService.isLoading.subscribe(isLoading => {
+      // Updates the "loading" property using the current state of the "isLoading" observable
+      this.loading = isLoading;
+      // Triggers change detection to update the view with the new loading state
+      // fix error after loading state change after angular detect changes (https://angular.io/errors/NG0100)
+      this.cdr.detectChanges();
     });
   }
-  ngOnInit() {}
 }

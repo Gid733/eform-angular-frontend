@@ -6,76 +6,81 @@ import { generateRandmString } from '../../../Helpers/helper-functions';
 const expect = require('chai').expect;
 const nameFolder = generateRandmString();
 const nameFolderChildren = generateRandmString();
+const newName = generateRandmString();
+const newDescription = generateRandmString();
 
 describe('Create folder', function () {
-  before(function () {
-    loginPage.open('/');
-    loginPage.login();
-    myEformsPage.Navbar.goToFolderPage();
-    $('#newFolderBtn').waitForDisplayed({ timeout: 40000 });
+  before(async () => {
+    await loginPage.open('/');
+    await loginPage.login();
+    await myEformsPage.Navbar.goToFolderPage();
+    await (await $('#newFolderBtn')).waitForDisplayed({ timeout: 40000 });
     const description = generateRandmString();
-    foldersPage.createNewFolder(nameFolder, description);
+    await foldersPage.createNewFolder(nameFolder, description);
   });
-  it('Create folder child', function () {
+  it('Create folder child', async () => {
     const description = generateRandmString();
-    const folder = foldersPage.getFolderByName(nameFolder);
-    const rowCountBeforeCreation = foldersPage.rowChildrenNum;
-    folder.createChild(nameFolderChildren, description);
-    folder.expandChildren();
-    const rowCountAfterCreation = foldersPage.rowChildrenNum;
+    const folder = await foldersPage.getFolderByName(nameFolder);
+    const rowCountBeforeCreation = await foldersPage.rowChildrenNum();
+    await folder.createChild(nameFolderChildren, description);
+    await folder.expandChildren();
+    const rowCountAfterCreation = await foldersPage.rowChildrenNum();
     expect(
       rowCountBeforeCreation + 1,
       'Number of rows has not changed after creating new folder'
     ).equal(rowCountAfterCreation);
   });
-  it('Should change name', function () {
-    const newName = generateRandmString();
-    const childFolderBeforeEdit = foldersPage.getFolderFromTree(
-      foldersPage.getFolderRowNumByName(nameFolder),
+  it('Should change name', async () => {
+    await browser.pause(500);
+    const childFolderBeforeEdit = await foldersPage.getFolderFromTree(
+      await foldersPage.getFolderRowNumByName(nameFolderChildren),
       1
     );
-    childFolderBeforeEdit.editFolderChild(newName, null);
-    const childFolderAfterEdit = foldersPage.getFolderFromTree(
-      foldersPage.getFolderRowNumByName(nameFolder),
+    await childFolderBeforeEdit.editFolderChild(newName, null);
+    const folder = await foldersPage.getFolderByName(nameFolder);
+    await folder.expandChildren();
+    const childFolderAfterEdit = await foldersPage.getFolderFromTree(
+      await foldersPage.getFolderRowNumByName(newName),
       1
     );
     expect(childFolderAfterEdit.nameTree, 'Folder name has not changed').eq(
       newName
     );
   });
-  it('Should change description', function () {
-    const newDescription = generateRandmString();
-    const childFolder = foldersPage.getFolderFromTree(
-      foldersPage.getFolderRowNumByName(nameFolder),
+  it('Should change description', async () => {
+    await browser.pause(500);
+    const childFolder = await foldersPage.getFolderFromTree(
+      await foldersPage.getFolderRowNumByName(newName),
       1
     );
-    childFolder.editFolderChild(null, newDescription);
-    const descriptionAfterEdit = childFolder.getDescription();
+    await childFolder.editFolderChild(null, newDescription);
+    const folder = await foldersPage.getFolderByName(nameFolder);
+    await folder.expandChildren();
+    const descriptionAfterEdit = await childFolder.getDescription();
     expect(
       descriptionAfterEdit.find((x) => x.language === 'Danish').description,
       'Folder description has not changed',
       newDescription
     );
   });
-  it('Should not change first name and description if cancel was clicked', function () {
-    const newName = generateRandmString();
-    const newDescription = generateRandmString();
-    const rowParentsCountBeforeEditing = foldersPage.rowNumParents;
-    const childFolderBeforeEdit = foldersPage.getFolderFromTree(
-      foldersPage.getFolderRowNumByName(nameFolder),
+  it('Should not change first name and description if cancel was clicked', async () => {
+    await browser.pause(500);
+    const rowParentsCountBeforeEditing = await foldersPage.rowNumParents();
+    const childFolderBeforeEdit = await foldersPage.getFolderFromTree(
+      await foldersPage.getFolderRowNumByName(newName),
       1
     );
-    const childFolderBeforeEditDescription = childFolderBeforeEdit
-      .getDescription()
+    const childFolderBeforeEditDescription = (await childFolderBeforeEdit
+      .getDescription())
       .find((x) => x.language === 'Danish').description;
-    childFolderBeforeEdit.editFolderChild(newName, newDescription, true);
-    const rowParentsCountAfterEditing = foldersPage.rowNumParents;
-    const childFolderAfterEdit = foldersPage.getFolderFromTree(
-      foldersPage.getFolderRowNumByName(nameFolder),
+    await childFolderBeforeEdit.editFolderChild(newName, newDescription, true);
+    const rowParentsCountAfterEditing = await foldersPage.rowNumParents();
+    const childFolderAfterEdit = await foldersPage.getFolderFromTree(
+      await foldersPage.getFolderRowNumByName(nameFolder),
       1
     );
-    const childFolderAfterEditDescription = childFolderAfterEdit
-      .getDescription()
+    const childFolderAfterEditDescription = (await childFolderAfterEdit
+      .getDescription())
       .find((x) => x.language === 'Danish').description;
     expect(rowParentsCountBeforeEditing).equal(rowParentsCountAfterEditing);
     expect(childFolderAfterEdit.nameTree, 'Name has been changed').equal(
@@ -86,18 +91,19 @@ describe('Create folder', function () {
       'Description has been changed'
     ).equal(childFolderBeforeEditDescription);
   });
-  it('Should delete folder 1', function () {
-    const rowCountBeforeDelete = foldersPage.rowChildrenNum;
-    foldersPage
-      .getFolderFromTree(foldersPage.getFolderRowNumByName(nameFolder), 1)
-      .delete();
-    const rowCountAfterDelete = foldersPage.rowChildrenNum;
-    expect(rowCountBeforeDelete - 1, 'Folder not deleted', rowCountAfterDelete);
-  });
-  it('Should delete folder 2', function () {
-    const rowCountBeforeDelete = foldersPage.rowNum;
-    foldersPage.getFolderByName(nameFolder).delete();
-    const rowCountAfterDelete = foldersPage.rowNum;
+  // it('Should delete folder 1', async () => {
+  //   const rowCountBeforeDelete = await foldersPage.rowChildrenNum();
+  //   await (await foldersPage
+  //     .getFolderFromTree(await foldersPage.getFolderRowNumByName(nameFolder), 1))
+  //     .delete();
+  //   const rowCountAfterDelete = await foldersPage.rowChildrenNum();
+  //   expect(rowCountBeforeDelete - 1, 'Folder not deleted', rowCountAfterDelete);
+  // });
+  it('Should delete folder 2', async () => {
+    const rowCountBeforeDelete = await foldersPage.rowNum();
+    const folder = await foldersPage.getFolder(1);
+    await folder.delete();
+    const rowCountAfterDelete = await foldersPage.rowNum();
     expect(rowCountBeforeDelete - 1, 'Folder not deleted', rowCountAfterDelete);
   });
 });

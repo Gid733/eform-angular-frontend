@@ -23,6 +23,8 @@ SOFTWARE.
 */
 
 
+using System.Web;
+
 namespace eFormAPI.Web.Services
 {
     using Microsoft.EntityFrameworkCore;
@@ -36,12 +38,14 @@ namespace eFormAPI.Web.Services
     using Infrastructure.Models.Settings;
     using Infrastructure.Models.Settings.User;
     using Infrastructure.Models.Users;
+    using Mailing.EmailService;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Identity;
     using Microsoft.AspNetCore.Identity.UI.Services;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Logging;
     using Microting.eForm.Dto;
+    using Microting.EformAngularFrontendBase.Infrastructure.Const;
     using Microting.eFormApi.BasePn.Abstractions;
     using Microting.eFormApi.BasePn.Infrastructure.Database.Entities;
     using Microting.eFormApi.BasePn.Infrastructure.Models.Application;
@@ -58,6 +62,7 @@ namespace eFormAPI.Web.Services
         private readonly ILocalizationService _localizationService;
         private readonly UserManager<EformUser> _userManager;
         private readonly BaseDbContext _dbContext;
+        private readonly IEmailService _emailService;
 
         public AccountService(IEFormCoreService coreHelper,
             UserManager<EformUser> userManager,
@@ -66,7 +71,8 @@ namespace eFormAPI.Web.Services
             ILogger<AccountService> logger,
             ILocalizationService localizationService,
             IEmailSender emailSender,
-            BaseDbContext dbContext)
+            BaseDbContext dbContext,
+            IEmailService emailService)
         {
             _coreHelper = coreHelper;
             _userManager = userManager;
@@ -76,6 +82,7 @@ namespace eFormAPI.Web.Services
             _localizationService = localizationService;
             _emailSender = emailSender;
             _dbContext = dbContext;
+            _emailService = emailService;
         }
 
         public async Task<UserInfoViewModel> GetUserInfo()
@@ -192,11 +199,29 @@ namespace eFormAPI.Web.Services
                 return new OperationResult(false, $"User with {model.Email} not found");
             }
 
-            var code = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var code = HttpUtility.UrlEncode(await _userManager.GeneratePasswordResetTokenAsync(user));
             var link = await core.GetSdkSetting(Settings.httpServerAddress);
             link = $"{link}/auth/restore-password-confirmation?userId={user.Id}&code={code}";
-            await _emailSender.SendEmailAsync(user.Email, "EForm Password Reset",
-                "Please reset your password by clicking <a href=\"" + link + "\">here</a>");
+/*            await _emailSender.SendEmailAsync(user.Email, "EForm Password Reset",
+                "Please reset your password by clicking <a href=\"" + link + "\">here</a>");*/
+
+            var html = $"Hej {user.FirstName} {user.LastName}<br><br>" +
+                "Du har valgt at nulstille din adgangskode til Microting.<br>" +
+                "Klik på nedenstående link for at angive en ny adgangskode.<br><br>" +
+                $"<a href=\" {link}\">Angiv ny adgangskode</a><br><br>" +
+                "Hvis du ikke har anmodet om dette, så se venligst bort fra denne mail.<br><br>" +
+                "Din adgangskode forbliver uændret, indtil du laver en ny via linket herover.<br><br>" +
+                "Med venlig hilsen<br><br>" +
+                "Microting<br><br>" +
+                "Support: 66 11 10 66";
+
+            await _emailService.SendAsync(
+                EformEmailConst.FromEmail,
+                "no-reply@microting.com",
+                "Nulstilling af adgangskode",
+                user.Email,
+                html: html);
+
             return new OperationResult(true);
         }
 
@@ -245,7 +270,7 @@ namespace eFormAPI.Web.Services
             return new OperationResult(true, _localizationService.GetStringWithFormat("YourEmailPasswordHasBeenReset", user.Email));
         }
 
-        public async Task<OperationResult> ResetPassword(ResetPasswordModel model)
+        public async Task<OperationResult> ResetPassword(Infrastructure.Models.ResetPasswordModel model)
         {
             var user = await _userManager.FindByIdAsync(model.UserId.ToString());
             if (user == null)
@@ -253,7 +278,7 @@ namespace eFormAPI.Web.Services
                 return new OperationResult(false);
             }
 
-            var result = await _userManager.ResetPasswordAsync(user, model.Code, model.Password);
+            var result = await _userManager.ResetPasswordAsync(user, model.Code, model.NewPassword);
             if (result.Succeeded)
             {
                 return new OperationResult(true);

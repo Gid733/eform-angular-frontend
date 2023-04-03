@@ -1,0 +1,47 @@
+<h3 mat-dialog-title>{{ (isChecklistSelected ? 'Edit sub eForm' : 'New sub eForm') | translate }}</h3>
+<div mat-dialog-content class="need-wrapper">
+  <ng-container *ngFor="let translation of recursionModel.checklist.translations; let translationIndex = index">
+    <ng-container *ngIf="translation !== undefined">
+      <mat-card *ngIf="isLanguageSelected(translation.languageId)">
+        <mat-card-title>{{ getLanguage(translation.languageId) | translate }}</mat-card-title>
+        <mat-card-content>
+          <div class="d-flex flex-column">
+            <mat-form-field>
+              <mat-label>{{'Name' | translate }}</mat-label>
+              <input
+                matInput
+                type="text"
+                id="newChecklistNameTranslation_{{ translationIndex }}"
+                name="newChecklistNameTranslation_{{ translationIndex }}"
+                [(ngModel)]="translation.name"
+              />
+            </mat-form-field>
+            <formatting-text-editor
+              [(value)]="translation.description"
+              [placeholder]="'Description' | translate"
+              id="newChecklistDescriptionTranslation_{{ translationIndex }}"
+            >
+            </formatting-text-editor>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </ng-container>
+  </ng-container>
+</div>
+<div mat-dialog-actions class="d-flex flex-row justify-content-end">
+  <button
+    mat-raised-button
+    color="accent"
+    (click)="isChecklistSelected ? onUpdateChecklist() : onCreateChecklist()"
+    id="changeChecklistSaveBtn"
+  >
+    {{(isChecklistSelected ? 'Save' : 'Create') | translate}}
+  </button>
+  <button
+    mat-raised-button
+    (click)="hide()"
+    id="changeChecklistSaveCancelBtn"
+  >
+    {{'Cancel' | translate}}
+  </button>
+</div>

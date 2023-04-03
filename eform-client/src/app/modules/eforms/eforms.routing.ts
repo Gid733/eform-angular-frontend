@@ -8,16 +8,6 @@ const routes: Routes = [
     component: EformsPageComponent,
   },
   {
-    path: 'report/:eformId',
-    loadChildren: () =>
-      import('./eform-report/eform-report.module').then(
-        (m) => m.EformReportModule
-      ),
-    data: {
-      eformId: 1,
-    },
-  },
-  {
     path: 'docx-report',
     loadChildren: () =>
       import('./eform-docx-report/eform-docx-report.module').then(
@@ -29,6 +19,13 @@ const routes: Routes = [
     loadChildren: () =>
       import('./eform-xlsx-report/eform-xlsx-report.module').then(
         (m) => m.EformXlsxReportModule
+      ),
+  },
+  {
+    path: 'visual-editor',
+    loadChildren: () =>
+      import('./eform-visual-editor/eform-visual-editor.module').then(
+        (m) => m.EformVisualEditorModule
       ),
   },
 ];

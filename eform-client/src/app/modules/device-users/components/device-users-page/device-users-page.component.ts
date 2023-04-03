@@ -1,35 +1,48 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { DeviceUserModel } from 'src/app/common/models/device-users';
-import { SiteDto } from 'src/app/common/models/dto';
-import { DeviceUserService } from 'src/app/common/services/device-users';
-import { TableHeaderElementModel } from 'src/app/common/models';
-import { AuthStateService } from 'src/app/common/store';
+import {Component, OnDestroy, OnInit} from '@angular/core';
+import {DeviceUserService} from 'src/app/common/services';
+import {DeviceUsersStateService} from '../store';
+import {AuthStateService} from 'src/app/common/store';
+import {MtxGridColumn} from '@ng-matero/extensions/grid';
+import {MatDialog} from '@angular/material/dialog';
+import {Overlay} from '@angular/cdk/overlay';
+import {dialogConfigHelper} from 'src/app/common/helpers';
+import {
+  EditCreateUserModalComponent,
+  NewOtpModalComponent
+} from '../';
+import {Subscription, zip} from 'rxjs';
+import {AutoUnsubscribe} from 'ngx-auto-unsubscribe';
+import {TranslateService} from '@ngx-translate/core';
+import {DeleteModalSettingModel, SiteDto} from 'src/app/common/models';
+import {DeleteModalComponent} from 'src/app/common/modules/eform-shared/components';
 
+@AutoUnsubscribe()
 @Component({
   selector: 'app-device-users-page',
   templateUrl: './device-users-page.component.html',
 })
-export class DeviceUsersPageComponent implements OnInit {
-  @ViewChild('editDeviceUserModal', { static: true }) editDeviceUserModal;
-  @ViewChild('newOtpModal', { static: true }) newOtpModal;
-  @ViewChild('deleteDeviceUserModal', { static: true }) deleteDeviceUserModal;
-
-  selectedSimpleSiteDto: SiteDto = new SiteDto();
-  selectedSimpleSite: DeviceUserModel = new DeviceUserModel();
+export class DeviceUsersPageComponent implements OnInit, OnDestroy {
   sitesDto: Array<SiteDto>;
 
-  tableHeaders: TableHeaderElementModel[] = [
-    { name: 'Site ID', sortable: false, elementId: '' },
-    { name: 'First name', sortable: false, elementId: '' },
-    { name: 'Last name', sortable: false, elementId: '' },
-    { name: 'Device ID', sortable: false, elementId: '' },
-    { name: 'Language', sortable: false, elementId: '' },
-    { name: 'Customer no & OTP', sortable: false, elementId: '' },
-    this.authStateService.currentUserClaims.deviceUsersDelete ||
-    this.authStateService.currentUserClaims.deviceUsersDelete
-      ? { name: 'Actions', sortable: false, elementId: '' }
-      : null,
+  tableHeaders: MtxGridColumn[] = [
+    {header: this.translateService.stream('Site ID'), field: 'siteUid'},
+    {header: this.translateService.stream('First name'), field: 'firstName'},
+    {
+      header: this.translateService.stream('Last name'),
+      field: 'lastName',
+    },
+    {
+      header: this.translateService.stream('Device ID'),
+      field: 'unitId',
+    },
+    {header: this.translateService.stream('Language'), field: 'language'},
+    {header: this.translateService.stream('Customer no & OTP'), field: 'otpCode'},
   ];
+  editCreateUserModalComponentAfterClosedSub$: Subscription;
+  newOtpModalComponentAfterClosedSub$: Subscription;
+  getCurrentUserClaimsAsyncSub$: Subscription;
+  deviceUserDeletedSub$: Subscription;
+  translatesSub$: Subscription;
 
   get userClaims() {
     return this.authStateService.currentUserClaims;
@@ -37,39 +50,112 @@ export class DeviceUsersPageComponent implements OnInit {
 
   constructor(
     private deviceUsersService: DeviceUserService,
-    private authStateService: AuthStateService
-  ) {}
+    private authStateService: AuthStateService,
+    public deviceUsersStateService: DeviceUsersStateService,
+    public dialog: MatDialog,
+    private overlay: Overlay,
+    private translateService: TranslateService,
+  ) {
+  }
 
   ngOnInit() {
-    this.loadAllSimpleSites();
+    this.getDeviceUsersFiltered();
+    this.getCurrentUserClaimsAsyncSub$ = this.authStateService.currentUserClaimsAsync.subscribe(x => {
+      if (x.deviceUsersDelete || x.deviceUsersUpdate) {
+        this.tableHeaders = [...this.tableHeaders.filter(x => x.field !== 'actions'),
+          {
+            header: this.translateService.stream('Actions'),
+            field: 'actions',
+          },
+        ];
+      }
+    });
   }
 
   openEditModal(simpleSiteDto: SiteDto) {
-    this.selectedSimpleSite.userFirstName = simpleSiteDto.firstName;
-    this.selectedSimpleSite.userLastName = simpleSiteDto.lastName;
-    this.selectedSimpleSite.id = simpleSiteDto.siteUid;
-    this.selectedSimpleSite.languageCode = simpleSiteDto.languageCode;
-    this.editDeviceUserModal.show();
+    this.editCreateUserModalComponentAfterClosedSub$ = this.dialog.open(EditCreateUserModalComponent,
+      {
+        ...dialogConfigHelper(this.overlay, {
+          userFirstName: simpleSiteDto.firstName,
+          userLastName: simpleSiteDto.lastName,
+          id: simpleSiteDto.siteUid,
+          languageCode: simpleSiteDto.languageCode
+        }), minWidth: 500
+      })
+      .afterClosed().subscribe(data => data ? this.getDeviceUsersFiltered() : undefined);
+  }
+
+  openCreateModal() {
+    this.editCreateUserModalComponentAfterClosedSub$ = this.dialog.open(EditCreateUserModalComponent,
+      {...dialogConfigHelper(this.overlay), minWidth: 500})
+      .afterClosed().subscribe(data => data ? this.getDeviceUsersFiltered() : undefined);
+  }
+
+  getDeviceUsersFiltered() {
+    this.deviceUsersStateService.getDeviceUsersFiltered().subscribe((data) => {
+      if (data && data.model) {
+        this.sitesDto = data.model;
+      }
+    });
   }
 
   openOtpModal(siteDto: SiteDto) {
     if (!siteDto.unitId) {
       return;
     }
-    this.selectedSimpleSiteDto = siteDto;
-    this.newOtpModal.show();
+
+    this.newOtpModalComponentAfterClosedSub$ = this.dialog.open(NewOtpModalComponent,
+      {...dialogConfigHelper(this.overlay, siteDto)})
+      .afterClosed().subscribe(data => data ? this.getDeviceUsersFiltered() : undefined);
   }
 
   openDeleteDeviceUserModal(simpleSiteDto: SiteDto) {
-    this.selectedSimpleSiteDto = simpleSiteDto;
-    this.deleteDeviceUserModal.show();
-  }
-
-  loadAllSimpleSites() {
-    this.deviceUsersService.getAllDeviceUsers().subscribe((operation) => {
-      if (operation && operation.success) {
-        this.sitesDto = operation.model;
-      }
+    this.translatesSub$ = zip(
+      this.translateService.stream('Are you sure you want to delete'),
+      this.translateService.stream('First name'),
+      this.translateService.stream('Last name'),
+    ).subscribe(([headerText, firstName, lastName]) => {
+      const settings: DeleteModalSettingModel = {
+        model: simpleSiteDto,
+        settings: {
+          headerText: `${headerText}?`,
+          fields: [
+            {header: 'ID', field: 'siteId'},
+            {header: firstName, field: 'firstName'},
+            {header: lastName, field: 'lastName'},
+          ],
+          cancelButtonId: 'cancelDeleteBtn',
+          deleteButtonId: 'saveDeleteBtn',
+        }
+      };
+      const deviceUserDeleteModal =
+        this.dialog.open(DeleteModalComponent, {...dialogConfigHelper(this.overlay, settings)});
+      this.deviceUserDeletedSub$ = deviceUserDeleteModal.componentInstance.delete
+        .subscribe((model: SiteDto) => {
+          this.deviceUsersService.deleteSingleDeviceUser(model.siteUid)
+            .subscribe(operation => {
+              if (operation && operation.success) {
+                deviceUserDeleteModal.close();
+                this.getDeviceUsersFiltered();
+              }
+            });
+        });
     });
   }
+
+  onSearchChanged(name: string) {
+    this.deviceUsersStateService.updateNameFilter(name);
+    this.getDeviceUsersFiltered();
+  }
+
+  ngOnDestroy(): void {
+  }
+
+  // loadAllSimpleSites() {
+  //   this.deviceUsersService.getAllDeviceUsers().subscribe((operation) => {
+  //     if (operation && operation.success) {
+  //       this.sitesDto = operation.model;
+  //     }
+  //   });
+  // }
 }

@@ -11,11 +11,11 @@ namespace eFormAPI.Web.Infrastructure.Models
     public class TemplateDto
     {
         public int Id { get; set; }
-        
+
         public DateTime? CreatedAt { get; set; }
-        
+
         public DateTime? UpdatedAt { get; set; }
-        
+
         public string Label { get; set; }
 
         public string Description { get; set; }
@@ -58,10 +58,16 @@ namespace eFormAPI.Web.Infrastructure.Models
         public bool ExcelExportEnabled { get; set; }
 
         public List<KeyValuePair<int, string>> Tags { get; set; }
-        
+
         public bool IsLocked { get; set; }
 
+        public bool IsEditable { get; set; }
+
         public int? FolderId { get; set; }
+
+        public bool IsAchievable { get; set; }
+
+        public bool IsDoneAtEditable { get; set; }
 
         public static implicit operator TemplateDto(Template_Dto templateDto)
         {
@@ -92,20 +98,36 @@ namespace eFormAPI.Web.Infrastructure.Models
                 DocxExportEnabled = templateDto.DocxExportEnabled,
                 ExcelExportEnabled = templateDto.ExcelExportEnabled,
                 Tags = templateDto.Tags,
-                FolderId = templateDto.FolderId
+                FolderId = templateDto.FolderId,
+                IsLocked = templateDto.IsLocked,
+                IsEditable = templateDto.IsEditable,
+                IsAchievable = templateDto.IsAchievable,
+                IsDoneAtEditable = templateDto.IsDoneAtEditable,
             };
         }
 
-        public async Task CheckForLock(BaseDbContext dbContext)
+        public async Task CheckForLock(BaseDbContext dbContext, List<string> pluginIds = null)
         {
-            List<string> plugins = await dbContext.EformPlugins.Select(x => x.PluginId).ToListAsync();
-
-            foreach (string plugin in plugins)
+            try
             {
-                if (Label.Contains(plugin))
+                if (pluginIds == null)
                 {
-                    IsLocked = true;
+                    IsLocked = await dbContext.EformPlugins
+                        .Select(x => x.PluginId)
+                        .Where(x => x.Contains(Label))
+                        .AnyAsync();
                 }
+                else
+                {
+                    if (!IsLocked)
+                    {
+                        IsLocked = pluginIds.Any(x => x.Contains(Label));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
             }
         }
     }

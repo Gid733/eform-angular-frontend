@@ -21,6 +21,9 @@ import {
 } from '../';
 import * as R from 'ramda';
 import { AppMenuStateService, AuthStateService } from 'src/app/common/store';
+import {MatDialog} from '@angular/material/dialog';
+import {Overlay} from '@angular/cdk/overlay';
+import {dialogConfigHelper} from 'src/app/common/helpers';
 
 @AutoUnsubscribe()
 @Component({
@@ -29,10 +32,7 @@ import { AppMenuStateService, AuthStateService } from 'src/app/common/store';
   styleUrls: ['./navigation-menu-page.component.scss'],
 })
 export class NavigationMenuPageComponent implements OnInit, OnDestroy {
-  @ViewChild('deleteMenuItemModal')
-  deleteMenuItemModal: NavigationMenuItemDeleteComponent;
-  @ViewChild('editMenuItemModal')
-  editMenuItemModal: NavigationMenuItemEditComponent;
+
   @ViewChild('resetMenuModal')
   resetMenuModal: NavigationMenuResetComponent;
   securityGroups: CommonDictionaryModel[] = [];
@@ -42,7 +42,9 @@ export class NavigationMenuPageComponent implements OnInit, OnDestroy {
   updateNavigationMenuSub$: Subscription;
   securityGroupsSub$: Subscription;
   resetSub$: Subscription;
-  getAppMenuSub$: Subscription;
+  itemDeleteConfirmSub$: any;
+  itemEditConfirmSub$: any;
+  navigationMenuResetComponentAfterClosedSub$: Subscription;
 
   get menuItemTypes() {
     return NavigationMenuItemTypeEnum;
@@ -53,7 +55,9 @@ export class NavigationMenuPageComponent implements OnInit, OnDestroy {
     private navigationMenuService: NavigationMenuService,
     private securityGroupsService: SecurityGroupsService,
     private authStateService: AuthStateService,
-    private appMenuStateService: AppMenuStateService
+    private appMenuStateService: AppMenuStateService,
+    private dialog: MatDialog,
+    private overlay: Overlay,
   ) {
     dragulaService.createGroup('MENU_ITEMS', {
       moves: (el, container, handle) => {
@@ -63,7 +67,7 @@ export class NavigationMenuPageComponent implements OnInit, OnDestroy {
         return source.id === 'mainMenu' || source.id === 'pluginMenu';
       },
       copyItem: (data: NavigationMenuItemModel) => {
-        return { ...data, type: NavigationMenuItemTypeEnum.Link };
+        return { ...data, type: NavigationMenuItemTypeEnum.Link, isInternalLink: true, };
       },
       accepts: (el, target) => {
         // To avoid dragging from right to left container
@@ -76,7 +80,7 @@ export class NavigationMenuPageComponent implements OnInit, OnDestroy {
         );
       },
     });
-    this.dragulaService.drop().subscribe(({ name }) => {
+    this.dragulaService.drop('MENU_ITEMS').subscribe(({ name }) => {
       this.dragulaService.find(name).drake.cancel(true);
     });
   }
@@ -107,9 +111,7 @@ export class NavigationMenuPageComponent implements OnInit, OnDestroy {
   }
 
   getHeaderNavigationMenu() {
-    this.getAppMenuSub$ = this.appMenuStateService
-      .getAppMenu(false)
-      .subscribe();
+    this.appMenuStateService.getAppMenu();
   }
 
   updateNavigationMenu() {
@@ -136,7 +138,10 @@ export class NavigationMenuPageComponent implements OnInit, OnDestroy {
     firstLevelIndex: number,
     secondLevelIndex?: number | null
   ) {
-    this.deleteMenuItemModal.show(model, firstLevelIndex, secondLevelIndex);
+    const modalId = this.dialog.open(NavigationMenuItemDeleteComponent,
+      dialogConfigHelper(this.overlay, {model, firstLevelIndex, secondLevelIndex})).id;
+    this.itemDeleteConfirmSub$ = this.dialog.getDialogById(modalId).componentInstance.itemDeleteConfirm
+      .subscribe(x => this.onItemDeleteConfirm(x, modalId));
   }
 
   onItemEdit(
@@ -144,14 +149,13 @@ export class NavigationMenuPageComponent implements OnInit, OnDestroy {
     firstLevelIndex: number,
     secondLevelIndex?: number | null
   ) {
-    this.editMenuItemModal.show(
-      { ...model },
-      firstLevelIndex,
-      secondLevelIndex
-    );
+    const modalId = this.dialog.open(NavigationMenuItemEditComponent,
+      dialogConfigHelper(this.overlay, {model, firstLevelIndex, secondLevelIndex, securityGroups: this.securityGroups})).id;
+    this.itemEditConfirmSub$ = this.dialog.getDialogById(modalId).componentInstance.itemEditConfirm
+      .subscribe(x => this.onItemEditConfirm(x, modalId));
   }
 
-  onItemEditConfirm(model: NavigationMenuItemIndexedModel) {
+  onItemEditConfirm(model: NavigationMenuItemIndexedModel, modalId: string) {
     if (model.secondLevelIndex >= 0) {
       const updatedChildren = R.update(
         model.secondLevelIndex,
@@ -168,9 +172,10 @@ export class NavigationMenuPageComponent implements OnInit, OnDestroy {
         this.navigationMenuModel.actualMenu
       );
     }
+    this.dialog.getDialogById(modalId).close();
   }
 
-  onItemDeleteConfirm(model: NavigationMenuItemIndexedModel) {
+  onItemDeleteConfirm(model: NavigationMenuItemIndexedModel, modalId: string) {
     if (model.secondLevelIndex >= 0) {
       const updatedChildren = R.remove(
         model.secondLevelIndex,
@@ -189,6 +194,7 @@ export class NavigationMenuPageComponent implements OnInit, OnDestroy {
         this.navigationMenuModel.actualMenu
       );
     }
+    this.dialog.getDialogById(modalId).close();
   }
 
   onResetMenuConfirm() {
@@ -203,12 +209,17 @@ export class NavigationMenuPageComponent implements OnInit, OnDestroy {
   }
 
   showResetNavigationMenuModal() {
-    this.resetMenuModal.show();
+    this.navigationMenuResetComponentAfterClosedSub$ = this.dialog.open(NavigationMenuResetComponent).afterClosed()
+      .subscribe(x => x ? this.onResetMenuConfirm() : undefined);
   }
 
   getMenuTranslation(translations: NavigationMenuTranslationModel[]) {
     return translations.find(
       (x) => x.localeName === this.authStateService.currentUserLocale
     ).name;
+  }
+
+  menuItemModelChange($event: any[]) {
+    this.navigationMenuModel.actualMenu = [...$event];
   }
 }

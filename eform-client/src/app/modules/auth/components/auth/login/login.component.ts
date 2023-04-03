@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, OnDestroy, OnInit} from '@angular/core';
 import {
   AbstractControl,
   FormBuilder,
@@ -16,12 +16,18 @@ import { GoogleAuthService, LocaleService } from 'src/app/common/services/auth';
 import { AuthService } from 'src/app/common/services/auth/auth.service';
 import { UserSettingsService } from 'src/app/common/services/auth/user-settings.service';
 import { AuthStateService } from 'src/app/common/store';
+import {filter} from 'rxjs/operators';
+import {AutoUnsubscribe} from 'ngx-auto-unsubscribe';
+import {Subscription, take} from 'rxjs';
+import {TitleService} from 'src/app/common/services';
+import {TranslateService} from '@ngx-translate/core';
 
+@AutoUnsubscribe()
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
 })
-export class LoginComponent implements OnInit {
+export class LoginComponent implements OnInit, OnDestroy {
   formLogin: FormGroup;
 
   username: AbstractControl;
@@ -35,17 +41,19 @@ export class LoginComponent implements OnInit {
   showLoginForm = true;
   showAdminResetForm = false;
   error: string;
+  isAuthAsyncSub$: Subscription;
 
   constructor(
     private router: Router,
     private authService: AuthService,
     private googleAuthService: GoogleAuthService,
-    public settingsService: AppSettingsService,
     private fb: FormBuilder,
     private toastrService: ToastrService,
     private localeService: LocaleService,
     private userSettings: UserSettingsService,
-    private authStateService: AuthStateService
+    private authStateService: AuthStateService,
+    private titleService: TitleService,
+    private translateService: TranslateService,
   ) {}
 
   login() {
@@ -80,9 +88,16 @@ export class LoginComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.translateService.get('Login').pipe(take(1)).subscribe(translate => this.titleService.setTitle(translate));
     this.formLogin = this.fb.group({
       username: ['', Validators.required],
       password: ['', Validators.required],
     });
+    this.isAuthAsyncSub$ = this.authStateService.isAuthAsync.pipe(filter((isAuth: boolean) => isAuth === true)).subscribe(() => {
+      this.router.navigate(['/']).then();
+    })
+  }
+
+  ngOnDestroy(): void {
   }
 }

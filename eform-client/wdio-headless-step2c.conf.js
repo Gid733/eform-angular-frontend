@@ -1,3 +1,4 @@
+const path = require("path");
 exports.config = {
   runner: 'local',
   path: '/',
@@ -77,7 +78,7 @@ exports.config = {
   // By default WebdriverIO commands are executed in a synchronous way using
   // the wdio-sync package. If you still want to run your Tests in an async way
   // e.g. using promises you can set the sync option to false.
-  sync: true,
+  sync: false,
   //
   // Level of logging verbosity: silent | verbose | command | data | result | error
   logLevel: 'silent',
@@ -253,14 +254,14 @@ exports.config = {
 
     // get current test title and clean it, to use it as file name
     const filename = encodeURIComponent(
-      `${
-        test.fullTitle.replace(/\s+/g, '-')
-      }-chrome-${timestamp}`.replace(/[/]/g, '__')
+      `chrome-${timestamp}`.replace(/[/]/g, '__')
     ).replace(/%../, '.');
 
     const filePath = path.resolve(this.screenshotPath, `${filename}.png`);
 
+    console.log('Saving screenshot to:', filePath);
     browser.saveScreenshot(filePath);
+    console.log('Saved screenshot to:', filePath);
   },
   /**
    * Hook that gets executed after the suite has ended

@@ -43,7 +43,7 @@ namespace eFormAPI.Web.Integration.Tests
             DbContextOptionsBuilder<BaseDbContext> dbContextOptionsBuilder = new DbContextOptionsBuilder<BaseDbContext>();
             dbContextOptionsBuilder.UseMySql(connectionStr,
                     new MariaDbServerVersion(
-                    new Version(10, 4, 0)),
+                        ServerVersion.AutoDetect(connectionStr)),
                     b => b.EnableRetryOnFailure());
             DbContext = new BaseDbContext(dbContextOptionsBuilder.Options);
 
@@ -54,7 +54,7 @@ namespace eFormAPI.Web.Integration.Tests
         [SetUp]
         public async Task Setup()
         {
-            ConnectionString = @"Server = localhost; port = 3306; Database = angular-tests; user = root; password = secretpassword; Convert Zero Datetime = true;";
+            ConnectionString = @"Server = 127.0.0.1; port = 3306; Database = angular-tests; user = root; password = secretpassword; Convert Zero Datetime = true;";
 
             GetContext(ConnectionString);
 

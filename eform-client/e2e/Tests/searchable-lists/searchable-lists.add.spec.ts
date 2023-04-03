@@ -5,88 +5,83 @@ import searchableLists from '../../Page objects/SearchableLists.page';
 const expect = require('chai').expect;
 
 describe('Entity Search', function () {
-  before(function () {
-    loginPage.open('/auth');
-    loginPage.login();
+  before(async () => {
+    await loginPage.open('/auth');
+    await loginPage.login();
   });
-  it('should go to entity search page', function () {
-    searchableLists.goToEntitySearchPage();
-    $('#createEntitySearchBtn').waitForDisplayed({ timeout: 40000 });
+  it('should go to entity search page', async () => {
+    await searchableLists.goToEntitySearchPage();
+    await (await $('#createEntitySearchBtn')).waitForDisplayed({ timeout: 40000 });
   });
-  it('should create a new searchable list', function () {
+  it('should create a new searchable list', async () => {
     const name = Guid.create().toString();
-    searchableLists.createSearchableList_NoItem(name);
-    const searchableList = searchableLists.getFirstRowObject();
-    expect(searchableList.name).equal(name);
-    searchableLists.cleanup();
-    $('#spinner-animation').waitForDisplayed({ timeout: 90000, reverse: true });
+    await searchableLists.createSearchableList_NoItem(name);
+    const searchableList = await searchableLists.getFirstRowObject();
+    expect((await searchableList.name)).equal(name);
+    await searchableLists.cleanup();
+    await (await $('#spinner-animation')).waitForDisplayed({ timeout: 90000, reverse: true });
   });
-  it('should not create a new searchable list', function () {
-    loginPage.open('/');
-    searchableLists.goToEntitySearchPage();
+  it('should not create a new searchable list', async () => {
+    const numRows = await searchableLists.rowNum();
     const name = Guid.create().toString();
-    searchableLists.createSearchableList_NoItem_Cancels(name);
-    expect(searchableLists.rowNum).equal(0);
+    await searchableLists.createSearchableList_NoItem_Cancels(name);
+    expect(await searchableLists.rowNum()).equal(numRows);
   });
-  it('should create a new searchable list with one item', function () {
-    loginPage.open('/');
-    searchableLists.goToEntitySearchPage();
+  it('should create a new searchable list with one item', async () => {
     const name = Guid.create().toString();
     const itemName = Guid.create().toString();
-    searchableLists.createSearchableList_OneItem(name, itemName);
-    const searchableList = searchableLists.getFirstRowObject();
+    await searchableLists.createSearchableList_OneItem(name, itemName);
+    const searchableList = await searchableLists.getFirstRowObject();
     expect(searchableList.name).equal(name);
-    searchableList.editBtn.click();
-    $('#spinner-animation').waitForDisplayed({ timeout: 90000, reverse: true });
-    expect(searchableLists.firstEntityItemName.getText()).equal(itemName);
-    searchableLists.entitySearchEditCancelBtn.click();
-    $('#spinner-animation').waitForDisplayed({ timeout: 90000, reverse: true });
-    searchableLists.cleanup();
-    $('#spinner-animation').waitForDisplayed({ timeout: 90000, reverse: true });
+    await searchableList.editBtn.click();
+    await (await $('#spinner-animation')).waitForDisplayed({ timeout: 90000, reverse: true });
+    await browser.pause(500);
+    expect(await (await searchableLists.firstEntityItemName()).getText()).equal(itemName);
+    await (await searchableLists.entitySearchEditCancelBtn()).click();
+    await (await $('#spinner-animation')).waitForDisplayed({ timeout: 90000, reverse: true });
+    await searchableLists.cleanup();
+    await ($('#spinner-animation')).waitForDisplayed({ timeout: 90000, reverse: true });
   });
-  it('should not make a new searchable list with one item', function () {
-    loginPage.open('/');
-    searchableLists.goToEntitySearchPage();
+  it('should not make a new searchable list with one item', async () => {
+    const numRows = await searchableLists.rowNum();
     const name = Guid.create().toString();
     const itemName = Guid.create().toString();
-    searchableLists.createSearchableList_OneItem_Cancels(name, itemName);
-    expect(searchableLists.rowNum).equal(0);
+    await searchableLists.createSearchableList_OneItem_Cancels(name, itemName);
+    expect(await searchableLists.rowNum()).equal(numRows);
   });
-  it('should make a new searchable list with multiple items', function () {
-    loginPage.open('/');
-    searchableLists.goToEntitySearchPage();
+  it('should make a new searchable list with multiple items', async () => {
     const name = Guid.create().toString();
     const itemNames = ['a \n', 'b\n', 'c\n', 'd\n', 'e'];
-    searchableLists.createSearchableList_MultipleItems(name, itemNames);
-    const searchableList = searchableLists.getFirstRowObject();
+    await searchableLists.createSearchableList_MultipleItems(name, itemNames);
+    const searchableList = await searchableLists.getFirstRowObject();
     expect(searchableList.name).equal(name);
-    searchableList.editBtn.click();
-    $('#spinner-animation').waitForDisplayed({ timeout: 90000, reverse: true });
-    expect(searchableLists.firstEntityItemName.getText()).equal('a');
-    searchableLists.entitySearchItemDeleteBtn.click();
-    $('#spinner-animation').waitForDisplayed({ timeout: 90000, reverse: true });
-    expect(searchableLists.firstEntityItemName.getText()).equal('b');
-    searchableLists.entitySearchItemDeleteBtn.click();
-    $('#spinner-animation').waitForDisplayed({ timeout: 90000, reverse: true });
-    expect(searchableLists.firstEntityItemName.getText()).equal('c');
-    searchableLists.entitySearchItemDeleteBtn.click();
-    $('#spinner-animation').waitForDisplayed({ timeout: 90000, reverse: true });
-    expect(searchableLists.firstEntityItemName.getText()).equal('d');
-    searchableLists.entitySearchItemDeleteBtn.click();
-    $('#spinner-animation').waitForDisplayed({ timeout: 90000, reverse: true });
-    expect(searchableLists.firstEntityItemName.getText()).equal('e');
-    searchableLists.entitySearchItemDeleteBtn.click();
-    $('#spinner-animation').waitForDisplayed({ timeout: 90000, reverse: true });
-    searchableLists.entitySearchEditCancelBtn.click();
-    searchableLists.cleanup();
-    $('#spinner-animation').waitForDisplayed({ timeout: 90000, reverse: true });
+    await searchableList.editBtn.click();
+    await browser.pause(500);
+    await (await $('#spinner-animation')).waitForDisplayed({ timeout: 50000, reverse: true });
+    expect(await (await searchableLists.firstEntityItemName()).getText()).equal('a');
+    await (await searchableLists.entitySearchItemDeleteBtn()).click();
+    await (await $('#spinner-animation')).waitForDisplayed({ timeout: 50000, reverse: true });
+    expect(await (await searchableLists.firstEntityItemName()).getText()).equal('b');
+    await (await searchableLists.entitySearchItemDeleteBtn()).click();
+    await (await $('#spinner-animation')).waitForDisplayed({ timeout: 50000, reverse: true });
+    expect(await (await searchableLists.firstEntityItemName()).getText()).equal('c');
+    await (await searchableLists.entitySearchItemDeleteBtn()).click();
+    await (await $('#spinner-animation')).waitForDisplayed({ timeout: 50000, reverse: true });
+    expect(await (await searchableLists.firstEntityItemName()).getText()).equal('d');
+    await (await searchableLists.entitySearchItemDeleteBtn()).click();
+    await (await $('#spinner-animation')).waitForDisplayed({ timeout: 50000, reverse: true });
+    expect(await (await searchableLists.firstEntityItemName()).getText()).equal('e');
+    await (await searchableLists.entitySearchItemDeleteBtn()).click();
+    await (await $('#spinner-animation')).waitForDisplayed({ timeout: 50000, reverse: true });
+    await (await searchableLists.entitySearchEditCancelBtn()).click();
+    await searchableLists.cleanup();
+    await (await $('#spinner-animation')).waitForDisplayed({ timeout: 50000, reverse: true });
   });
-  it('should not create a searchable list with multiple items', function () {
-    loginPage.open('/');
-    searchableLists.goToEntitySearchPage();
+  it('should not create a searchable list with multiple items', async () => {
+    const numRows = await searchableLists.rowNum();
     const name = Guid.create().toString();
     const itemNames = ['a \n', 'b\n', 'c\n', 'd\n', 'e'];
-    searchableLists.createSearchableList_MultipleItems_Cancels(name, itemNames);
-    expect(searchableLists.rowNum).equal(0);
+    await searchableLists.createSearchableList_MultipleItems_Cancels(name, itemNames);
+    expect(await searchableLists.rowNum()).equal(numRows);
   });
 });

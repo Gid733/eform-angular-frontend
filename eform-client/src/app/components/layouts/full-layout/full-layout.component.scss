@@ -1,0 +1,12 @@
+.mat-drawer {
+  max-width: 15vw;
+}
+@media (max-width: 1200px) {
+  .mat-drawer {
+    max-width: 45vw;
+  }
+}
+
+#sign-out-dropdown {
+  top: -4px;
+}

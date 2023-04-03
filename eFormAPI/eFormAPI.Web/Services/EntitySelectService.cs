@@ -1,4 +1,4 @@
-﻿/*
+/*
 The MIT License (MIT)
 
 Copyright (c) 2007 - 2021 Microting A/S
@@ -25,21 +25,21 @@ SOFTWARE.
 
 namespace eFormAPI.Web.Services
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Threading.Tasks;
     using Abstractions;
     using Abstractions.Advanced;
     using Infrastructure.Models.SelectableList;
     using Microsoft.EntityFrameworkCore;
     using Microting.eForm.Infrastructure.Constants;
-    using Microting.eFormApi.BasePn.Abstractions;
-    using Microting.eFormApi.BasePn.Infrastructure.Models.API;
-    using Microting.eFormApi.BasePn.Infrastructure.Models.Common;
     using Microting.eForm.Infrastructure.Models;
     using Microting.EformAngularFrontendBase.Infrastructure.Data;
+    using Microting.eFormApi.BasePn.Abstractions;
     using Microting.eFormApi.BasePn.Infrastructure.Helpers;
+    using Microting.eFormApi.BasePn.Infrastructure.Models.API;
+    using Microting.eFormApi.BasePn.Infrastructure.Models.Common;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Threading.Tasks;
     using EntityGroup = Infrastructure.Models.EntityGroup;
 
     public class EntitySelectService : IEntitySelectService
@@ -49,14 +49,13 @@ namespace eFormAPI.Web.Services
         private readonly ILocalizationService _localizationService;
 
         public EntitySelectService(BaseDbContext dbContext,
-            ILocalizationService localizationService, 
+            ILocalizationService localizationService,
             IEFormCoreService coreHelper)
         {
             _dbContext = dbContext;
             _localizationService = localizationService;
             _coreHelper = coreHelper;
         }
-
 
         public async Task<OperationDataResult<Paged<EntityGroup>>> Index(
             AdvEntitySelectableGroupListRequestModel requestModel)
@@ -72,6 +71,7 @@ namespace eFormAPI.Web.Services
                 var entitySelectableGroupQuery = sdkDbContext.EntityGroups
                     .Where(x => x.WorkflowState != Constants.WorkflowStates.Removed)
                     .Where(x => x.Type == Constants.FieldTypes.EntitySelect)
+                    .Where(x => x.MicrotingUid != null)
                     .AsNoTracking()
                     .AsQueryable();
 
@@ -106,7 +106,8 @@ namespace eFormAPI.Web.Services
                         Type = x.Type,
                         UpdatedAt = x.UpdatedAt,
                         EntityGroupItemLst = new List<EntityItem>(),
-                        IsLocked = x.Locked
+                        IsLocked = x.Locked,
+                        IsEditable = x.Editable
                     }).ToListAsync();
 
                 entityGroupList.Entities = entityGroups;
@@ -134,12 +135,12 @@ namespace eFormAPI.Web.Services
             try
             {
                 var core = await _coreHelper.GetCore();
-                var groupCreate = await core.EntityGroupCreate(Constants.FieldTypes.EntitySelect, editModel.Name, editModel.Description);
-                if (editModel.AdvEntitySelectableItemModels.Any())
+                var groupCreate = await core.EntityGroupCreate(Constants.FieldTypes.EntitySelect, editModel.Name, editModel.Description, false, true);
+                if (editModel.EntityItemModels != null && editModel.EntityItemModels.Any())
                 {
-                    var entityGroup = await core.EntityGroupRead(groupCreate.MicrotingUUID);
+                    var entityGroup = await core.EntityGroupRead(groupCreate.MicrotingUid);
                     var nextItemUid = entityGroup.EntityGroupItemLst.Count;
-                    foreach (var entityItem in editModel.AdvEntitySelectableItemModels)
+                    foreach (var entityItem in editModel.EntityItemModels)
                     {
                         await core.EntitySelectItemCreate(entityGroup.Id, entityItem.Name, entityItem.DisplayIndex,
                             nextItemUid.ToString());
@@ -152,10 +153,11 @@ namespace eFormAPI.Web.Services
                 }
 
                 return new OperationResult(true,
-                    _localizationService.GetStringWithFormat("ParamCreatedSuccessfully", groupCreate.MicrotingUUID));
+                    _localizationService.GetStringWithFormat("ParamCreatedSuccessfully", groupCreate.MicrotingUid));
             }
-            catch (Exception)
+            catch (Exception exception)
             {
+                Console.WriteLine(exception.Message);
                 return new OperationResult(false, _localizationService.GetString("SelectableListCreationFailed"));
             }
         }
@@ -166,7 +168,7 @@ namespace eFormAPI.Web.Services
             {
                 var core = await _coreHelper.GetCore();
                 var entityGroup = await core.EntityGroupRead(editModel.GroupUid);
-                
+
                 entityGroup.Description = editModel.Description;
                 // if (entityGroup.Name != editModel.Name)
                 // {
@@ -177,7 +179,7 @@ namespace eFormAPI.Web.Services
 
                 var currentIds = new List<int>();
 
-                foreach (var entityItem in editModel.AdvEntitySelectableItemModels)
+                foreach (var entityItem in editModel.EntityItemModels)
                 {
                     if (string.IsNullOrEmpty(entityItem.MicrotingUUID))
                     {
@@ -192,7 +194,7 @@ namespace eFormAPI.Web.Services
                         currentIds.Add(entityItem.Id);
                     }
                 }
-                
+
                 foreach (var entityItem in entityGroup.EntityGroupItemLst)
                 {
                     if (!currentIds.Contains(entityItem.Id))
@@ -202,7 +204,7 @@ namespace eFormAPI.Web.Services
                 }
 
                 return new OperationResult(true,
-                    _localizationService.GetStringWithFormat("ParamUpdatedSuccessfully", editModel.GroupUid));
+                    _localizationService.GetStringWithFormat("ParamUpdatedSuccessfully", editModel.Name));
             }
             catch (Exception exception)
             {
@@ -212,28 +214,41 @@ namespace eFormAPI.Web.Services
 
         public async Task<OperationDataResult<EntityGroup>> Read(string entityGroupUid)
         {
+            var core = await _coreHelper.GetCore();
             try
             {
-                var core = await _coreHelper.GetCore();
 
                 EntityGroup entityGroup = await core.EntityGroupRead(entityGroupUid);
 
                 var plugins = await _dbContext.EformPlugins.Select(x => x.PluginId).ToListAsync();
-                
-                foreach (var plugin in plugins)
+
+                foreach (var _ in plugins.Where(plugin => entityGroup.Name.Contains(plugin)))
                 {
-                    if (entityGroup.Name.Contains(plugin))
-                    {
-                        entityGroup.IsLocked = true;
-                    }
+                    entityGroup.IsLocked = true;
                 }
-                
+
                 return new OperationDataResult<EntityGroup>(true, entityGroup);
             }
-            catch (Exception)
+            catch (NullReferenceException)
+            {
+                var sdkDbContext = core.DbContextHelper.GetDbContext();
+                var eg = await sdkDbContext.EntityGroups.SingleAsync(x => x.Id == int.Parse(entityGroupUid));
+                EntityGroup entityGroup = await core.EntityGroupRead(eg.MicrotingUid);
+
+                var plugins = await _dbContext.EformPlugins.Select(x => x.PluginId).ToListAsync();
+
+                foreach (var _ in plugins.Where(plugin => entityGroup.Name.Contains(plugin)))
+                {
+                    entityGroup.IsLocked = true;
+                }
+
+                return new OperationDataResult<EntityGroup>(true, entityGroup);
+            }
+
+            catch (Exception exception)
             {
                 return new OperationDataResult<EntityGroup>(false,
-                    _localizationService.GetString("ErrorWhileObtainSelectableList"));
+                    _localizationService.GetString("ErrorWhileObtainSelectableList") + $" {exception.Message}");
             }
         }
 
@@ -276,6 +291,41 @@ namespace eFormAPI.Web.Services
             catch (Exception)
             {
                 return new OperationResult(false, _localizationService.GetString("ErrorWhileDeletingSelectableList"));
+            }
+        }
+
+        public async Task<OperationDataResult<List<CommonDictionaryModel>>> GetEntityGroupsInDictionary(string searchString)
+        {
+            try
+            {
+                var core = await _coreHelper.GetCore();
+                var sdkDbContext = core.DbContextHelper.GetDbContext();
+
+                var query = sdkDbContext.EntityGroups
+                    .Where(x => x.Type == Constants.FieldTypes.EntitySelect)
+                    .Where(x => x.WorkflowState != Constants.WorkflowStates.Removed)
+                    .Where(x => x.MicrotingUid != null);
+
+                if (!string.IsNullOrEmpty(searchString))
+                {
+                    query = query.Where(x => x.Name.ToUpper().Contains(searchString.ToUpper()));
+                }
+
+                var entityGroups = await query
+                    .OrderBy(x => x.Name)
+                    .Select(x => new CommonDictionaryModel
+                    {
+                        Name = x.Name,
+                        Id = int.Parse(x.MicrotingUid),
+                    })
+                    .ToListAsync();
+
+                return new OperationDataResult<List<CommonDictionaryModel>>(true, entityGroups);
+            }
+            catch (Exception)
+            {
+                return new OperationDataResult<List<CommonDictionaryModel>>(false,
+                    _localizationService.GetString("ErrorWhenObtainingSearchableList"));
             }
         }
     }

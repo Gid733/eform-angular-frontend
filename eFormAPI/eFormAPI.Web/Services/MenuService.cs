@@ -75,10 +75,10 @@ namespace eFormAPI.Web.Services
             var actualMenu = await _dbContext.MenuItems.ToListAsync();
 
             _dbContext.MenuItems.RemoveRange(actualMenu);
-            _dbContext.SaveChanges();
+            await _dbContext.SaveChangesAsync();
 
-            // Step 2. Traversal collection and add to database depend on menu item type 
-            for (int i = 0; i < menuItemModels.Count; i++)
+            // Step 2. Traversal collection and add to database depend on menu item type
+            for (var i = 0; i < menuItemModels.Count; i++)
             {
                 var menuItemBuilder = new MenuItemBuilder(_dbContext, menuItemModels[i], i);
 
@@ -173,7 +173,6 @@ namespace eFormAPI.Web.Services
                 }
 
                 var securityGroupsIds = await _dbContext.MenuItemSecurityGroups
-                    .Select(p => p.SecurityGroupId)
                     .ToListAsync();
 
                 var actualMenu = menuItems
@@ -189,6 +188,7 @@ namespace eFormAPI.Web.Services
                         RelatedTemplateItemId = x.MenuTemplateId,
                         ParentId = x.ParentId,
                         Position = x.Position,
+                        IsInternalLink = x.IsInternalLink,
                         Translations = _dbContext.MenuItemTranslations
                             .Where(p => p.MenuItemId == x.Id)
                             .Select(p => new NavigationMenuTranslationModel
@@ -200,7 +200,7 @@ namespace eFormAPI.Web.Services
                             })
                             .ToList(),
                         SecurityGroupsIds = securityGroupsIds
-                            .Where(p => p == x.Id)
+                            .Where(p => p.MenuItemId == x.Id).Select(j => j.SecurityGroupId)
                             .ToList(),
                         Children = menuItems.Where(p => p.ParentId == x.Id)
                             .OrderBy(p => p.Position)
@@ -228,8 +228,9 @@ namespace eFormAPI.Web.Services
                                     .Where(k => k.MenuItemId == p.Id)
                                     .Select(k => k.SecurityGroupId)
                                     .ToList(),
+                                IsInternalLink = p.IsInternalLink,
                             })
-                            .ToList()
+                            .ToList(),
                     })
                     .ToList();
 
@@ -254,6 +255,9 @@ namespace eFormAPI.Web.Services
         {
             try
             {
+
+                // Get all user claims and filter menu for user
+                var userClaims = await _claimsService.GetUserClaimsNames(_userService.UserId);
                 var menuItemsForFilter = await _dbContext.MenuItems
                     .Include(x => x.MenuTemplate)
                         .ThenInclude(x => x.EformPlugin)
@@ -265,8 +269,6 @@ namespace eFormAPI.Web.Services
                     ? LocaleNames.English
                     : locale;
 
-                // Get all user claims and filter menu for user
-                var userClaims = await _claimsService.GetUserClaimsNames(_userService.UserId);
 
                 if (!_userService.IsInRole(EformRole.Admin))
                 {
@@ -276,39 +278,55 @@ namespace eFormAPI.Web.Services
                 var menuItems = menuItemsForFilter
                     .Where(x => x.ParentId == null)
                     .OrderBy(x => x.Position)
-                    .Select(x => new MenuItemModel()
+                    .Select(x => new MenuItemModel
                     {
-                        Name = _dbContext.MenuItemTranslations.First(d => d.MenuItemId == x.Id && d.LocaleName == currentLocale).Name,
+                        Name = _dbContext.MenuItemTranslations.Any(d => d.MenuItemId == x.Id && d.LocaleName == currentLocale)
+                            ? _dbContext.MenuItemTranslations.First(d => d.MenuItemId == x.Id && d.LocaleName == currentLocale).Name
+                            : _dbContext.MenuItemTranslations.First(d => d.MenuItemId == x.Id && d.LocaleName == "en-US").Name,
                         LocaleName = currentLocale,
                         E2EId = x.E2EId,
                         Link = x.Link,
-                        Guards = x.Type == MenuItemTypeEnum.Link
-                            ? _dbContext.MenuTemplatePermissions
+                        Guards =_dbContext.MenuTemplatePermissions
                                     .Include(y => y.Permission)
                                     .Where(d => d.MenuTemplateId == x.MenuTemplateId)
                                     .Select(y => y.Permission.ClaimName)
-                                    .ToList()
-                            : new List<string>(),
+                                    .ToList(),
+                        // Guards = x.Type == MenuItemTypeEnum.Link
+                        //     ? _dbContext.MenuTemplatePermissions
+                        //             .Include(y => y.Permission)
+                        //             .Where(d => d.MenuTemplateId == x.MenuTemplateId)
+                        //             .Select(y => y.Permission.ClaimName)
+                        //             .ToList()
+                        //     : new List<string>(),
                         Position = x.Position,
+                        IsInternalLink = x.IsInternalLink,
                         MenuItems = _dbContext.MenuItems
                         .Include(p => p.MenuTemplate)
                         .Where(p => p.ParentId == x.Id)
                         .OrderBy(p => p.Position)
-                        .Select(p => new MenuItemModel()
+                        .Select(p => new MenuItemModel
                         {
-                            Name = _dbContext.MenuItemTranslations.First(d => d.MenuItemId == p.Id && d.LocaleName == currentLocale).Name,
+                            Name = _dbContext.MenuItemTranslations.Any(d => d.MenuItemId == p.Id && d.LocaleName == currentLocale)
+                                ? _dbContext.MenuItemTranslations.First(d => d.MenuItemId == p.Id && d.LocaleName == currentLocale).Name
+                                : _dbContext.MenuItemTranslations.First(d => d.MenuItemId == p.Id && d.LocaleName == "en-US").Name,
                             //LocaleName = _dbContext.MenuItemTranslations.First(d => d.MenuItemId == p.Id && d.LocaleName == currentLocale).LocaleName,
                             LocaleName = currentLocale,
                             E2EId = p.E2EId,
                             Link = p.Link,
-                            Guards = p.Type == MenuItemTypeEnum.Link
-                            ? _dbContext.MenuTemplatePermissions
+                            Guards = _dbContext.MenuTemplatePermissions
                                     .Include(y => y.Permission)
                                     .Where(d => d.MenuTemplateId == p.MenuTemplateId)
                                     .Select(y => y.Permission.ClaimName)
-                                    .ToList()
-                            : new List<string>(),
+                                    .ToList(),
+                            // Guards = p.Type == MenuItemTypeEnum.Link
+                            // ? _dbContext.MenuTemplatePermissions
+                            //         .Include(y => y.Permission)
+                            //         .Where(d => d.MenuTemplateId == p.MenuTemplateId)
+                            //         .Select(y => y.Permission.ClaimName)
+                            //         .ToList()
+                            // : new List<string>(),
                             Position = p.Position,
+                            IsInternalLink = p.IsInternalLink,
                         })
                         .ToList()
                     })
@@ -320,33 +338,34 @@ namespace eFormAPI.Web.Services
                     LocaleName = currentLocale,
                     E2EId = x.E2EId,
                     Link = x.Link,
+                    //Guards = x.MenuTemplate.Permissions.Select(y => y.ClaimName).ToList(),
                     Guards = x.Type == MenuItemTypeEnum.Link
-                            ? x.MenuTemplate.Permissions.Select(y => y.ClaimName).ToList()
-                            : new List<string>(),
+                             ? x.MenuTemplate.Permissions.Select(y => y.ClaimName).ToList()
+                             : new List<string>(),
                     Position = x.Position,
                     MenuItems = x.ChildItems.Select(d => new MenuItemModel
                     {
-                        Name = d.Translations.First(y => y.LocaleName == currentLocale).Name,
+                        Name = d.Translations.Any(y => y.LocaleName == currentLocale)
+                            ? d.Translations.First(y => y.LocaleName == currentLocale).Name
+                            :  d.Translations.First(y => y.LocaleName == "en-US").Name,
                         LocaleName = currentLocale,
                         E2EId = d.E2EId,
                         Link = d.Link,
-                        Guards = d.Type == MenuItemTypeEnum.Link
-                            ? d.MenuTemplate.Permissions.Select(y => y.ClaimName).ToList()
-                            : new List<string>(),
+                        Guards = d.MenuTemplate.Permissions.Select(y => y.ClaimName).ToList(),
+                        // Guards = d.Type == MenuItemTypeEnum.Link
+                        //     ? d.MenuTemplate.Permissions.Select(y => y.ClaimName).ToList()
+                        //     : new List<string>(),
                         Position = d.Position,
+                        IsInternalLink = true,
                     })
-                        .ToList()
+                        .ToList(),
+                    IsInternalLink = true,
                 }).ToList();
 
                 // Add user first and last name
-                foreach (var rightMenuItem in orderedRightMenu)
-                {
-                    if (rightMenuItem.Name == "user")
-                    {
-                        var user = await _userService.GetCurrentUserAsync();
-                        rightMenuItem.Name = $"{user.FirstName} {user.LastName}";
-                    }
-                }
+                var rightMenuItem = orderedRightMenu.First(x => x.Name == "user");
+                rightMenuItem.Name = await _userService.GetCurrentUserFullName();
+
                 // Create result
                 var result = new MenuModel
                 {
@@ -355,14 +374,10 @@ namespace eFormAPI.Web.Services
                 };
 
                 // Add menu from plugins
-                if (Program.EnabledPlugins.Any())
+                foreach (var pluginMenu in Program.EnabledPlugins.Select(plugin => plugin.HeaderMenu(_serviceProvider)))
                 {
-                    foreach (var plugin in Program.EnabledPlugins)
-                    {
-                        var pluginMenu = plugin.HeaderMenu(_serviceProvider);
-                        //result.LeftMenu.AddRange(pluginMenu.LeftMenu);
-                        result.RightMenu.AddRange(pluginMenu.RightMenu);
-                    }
+                    //result.LeftMenu.AddRange(pluginMenu.LeftMenu);
+                    result.RightMenu.AddRange(pluginMenu.RightMenu);
                 }
 
                 return new OperationDataResult<MenuModel>(true, result);
@@ -382,18 +397,18 @@ namespace eFormAPI.Web.Services
             var actualMenu = await _dbContext.MenuItems.ToListAsync();
 
             _dbContext.MenuItems.RemoveRange(actualMenu);
-            _dbContext.SaveChanges();
+            await _dbContext.SaveChangesAsync();
 
             var defaultMenu = DefaultMenuStorage.GetDefaultMenu();
 
             _dbContext.MenuItems.AddRange(defaultMenu);
-            _dbContext.SaveChanges();
+            await _dbContext.SaveChangesAsync();
 
             foreach (var plugin in Program.EnabledPlugins)
             {
                 var pluginMenu = plugin.GetNavigationMenu(_serviceProvider);
 
-                int currentPosition = _dbContext.MenuItems.Where(x => x.ParentId == null).Max(x => x.Position) + 1;
+                var currentPosition = _dbContext.MenuItems.Where(x => x.ParentId == null).Max(x => x.Position) + 1;
                 foreach (var pluginMenuItem in pluginMenu)
                 {
                     AddToDatabase(pluginMenuItem, null, currentPosition);
@@ -422,16 +437,14 @@ namespace eFormAPI.Web.Services
                 _dbContext.MenuItems.Add(newMenuItem);
                 _dbContext.SaveChanges();
 
-                foreach (var menuItemTranslation in pluginMenuItem.Translations)
+                foreach (var translation in pluginMenuItem.Translations.Select(menuItemTranslation => new MenuItemTranslation
+                         {
+                             Language = menuItemTranslation.Language,
+                             LocaleName = menuItemTranslation.LocaleName,
+                             Name = menuItemTranslation.Name,
+                             MenuItemId = newMenuItem.Id,
+                         }))
                 {
-                    var translation = new MenuItemTranslation
-                    {
-                        Language = menuItemTranslation.Language,
-                        LocaleName = menuItemTranslation.LocaleName,
-                        Name = menuItemTranslation.Name,
-                        MenuItemId = newMenuItem.Id,
-                    };
-
                     _dbContext.MenuItemTranslations.Add(translation);
                     _dbContext.SaveChanges();
                 }
@@ -452,23 +465,21 @@ namespace eFormAPI.Web.Services
                 _dbContext.MenuItems.Add(newMenuItem);
                 _dbContext.SaveChanges();
 
-                foreach (var menuItemTranslation in pluginMenuItem.Translations)
+                foreach (var translation in pluginMenuItem.Translations.Select(menuItemTranslation => new MenuItemTranslation
+                         {
+                             Language = menuItemTranslation.Language,
+                             LocaleName = menuItemTranslation.LocaleName,
+                             Name = menuItemTranslation.Name,
+                             MenuItemId = newMenuItem.Id,
+                         }))
                 {
-                    var translation = new MenuItemTranslation
-                    {
-                        Language = menuItemTranslation.Language,
-                        LocaleName = menuItemTranslation.LocaleName,
-                        Name = menuItemTranslation.Name,
-                        MenuItemId = newMenuItem.Id,
-                    };
-
                     _dbContext.MenuItemTranslations.Add(translation);
                     _dbContext.SaveChanges();
                 }
 
                 if (pluginMenuItem.ChildItems.Any())
                 {
-                    int childPosition = 0;
+                    var childPosition = 0;
                     foreach (var childMenuItem in pluginMenuItem.ChildItems)
                     {
                         AddToDatabase(childMenuItem, newMenuItem.Id, childPosition);
@@ -487,27 +498,27 @@ namespace eFormAPI.Web.Services
 
             foreach (var menuItem in items)
             {
-                if (menuItem.Type == MenuItemTypeEnum.Dropdown || menuItem.Type == MenuItemTypeEnum.CustomLink)
-                {
-                    var menuItemSecurityGroups = _dbContext.MenuItemSecurityGroups
-                        .Where(x => x.MenuItemId == menuItem.Id)
-                        .Select(x => x.SecurityGroupId)
-                        .ToList();
-
-                    if (menuItemSecurityGroups.Any())
-                    {
-                        foreach (var securityGroupId in menuItemSecurityGroups)
-                        {
-                            if (_dbContext.SecurityGroupUsers.Any(x => x.SecurityGroupId == securityGroupId && x.EformUserId == currentUser.Id))
-                            {
-                                newList.Add(menuItem);
-                                break;
-                            }
-                        }
-                    }
-                }
-                else
-                {
+                // if (menuItem.Type == MenuItemTypeEnum.Dropdown || menuItem.Type == MenuItemTypeEnum.CustomLink)
+                // {
+                //     var menuItemSecurityGroups = _dbContext.MenuItemSecurityGroups
+                //         .Where(x => x.MenuItemId == menuItem.Id)
+                //         .Select(x => x.SecurityGroupId)
+                //         .ToList();
+                //
+                //     if (menuItemSecurityGroups.Any())
+                //     {
+                //         foreach (var securityGroupId in menuItemSecurityGroups)
+                //         {
+                //             if (_dbContext.SecurityGroupUsers.Any(x => x.SecurityGroupId == securityGroupId && x.EformUserId == currentUser.Id))
+                //             {
+                //                 newList.Add(menuItem);
+                //                 break;
+                //             }
+                //         }
+                //     }
+                // }
+                // else
+                // {
                     var menuItemEnglishName = menuItem.Translations
                         .FirstOrDefault(x => x.LocaleName == LocaleNames.English && x.MenuItemId == menuItem.Id)?.Name;
 
@@ -585,10 +596,30 @@ namespace eFormAPI.Web.Services
                         case "Application settings":
                             break;
                         default:
-                            newList.Add(menuItem);
+                            var menuItemSecurityGroups = _dbContext.MenuItemSecurityGroups
+                                .Where(x => x.MenuItemId == menuItem.Id)
+                                .Select(x => x.SecurityGroupId)
+                                .ToList();
+
+                            if (menuItemSecurityGroups.Any())
+                            {
+                                foreach (var securityGroupId in menuItemSecurityGroups)
+                                {
+                                    if (_dbContext.SecurityGroupUsers.Any(x => x.SecurityGroupId == securityGroupId && x.EformUserId == currentUser.Id))
+                                    {
+                                        newList.Add(menuItem);
+                                        break;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                newList.Add(menuItem);
+                            }
+                            //newList.Add(menuItem);
                             break;
                     }
-                }
+                //}
             }
 
             return newList;

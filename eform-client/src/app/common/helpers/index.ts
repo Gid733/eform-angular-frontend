@@ -11,3 +11,6 @@ export * from './table.helpers';
 export * from './forms';
 export * from './pagination.helper';
 export * from './cases.helper';
+export * from './fix-translations.helper';
+export * from './math.helper';
+export * from './dialog-config.helper';

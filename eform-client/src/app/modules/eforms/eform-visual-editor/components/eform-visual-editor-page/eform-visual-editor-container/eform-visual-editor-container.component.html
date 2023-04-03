@@ -1,0 +1,152 @@
+<eform-new-subheader
+  [forceStaticTitle]="true"
+  [title]="(selectedTemplateId ? 'eForm' : 'New eForm') | translate"
+>
+  <button
+    mat-icon-button
+    id="manageTags"
+    (click)="openTagsModal()"
+    matTooltip="{{ 'Manage tags' | translate }}"
+  >
+    <mat-icon>discount</mat-icon>
+  </button>
+  <button
+    mat-raised-button
+    color="accent"
+    (click)="
+        selectedTemplateId ? updateVisualTemplate() : createVisualTemplate()
+      "
+    matTooltip="{{ (selectedTemplateId ? 'Save' : 'Create') | translate }}"
+    id="saveCreateEformBtn"
+    [disabled]="isAllNamesEmpty"
+  >
+    {{ (selectedTemplateId ? 'Save' : 'Create') | translate }}
+  </button>
+  <button
+    mat-raised-button
+    color="primary"
+    id="cancel{{(selectedTemplateId ? 'Edit' : 'Create')}}Btn"
+    [routerLink]="['/']"
+  >
+    {{'Cancel'| translate}}
+  </button>
+</eform-new-subheader>
+
+<mat-card class="d-flex flex-column mb-3" style="padding-right: 0; padding-left: 0; padding-bottom: 0">
+  <app-eform-visual-editor-header
+    [visualEditorModel]="visualEditorTemplateModel"
+    [availableTags]="availableTags"
+    [selectedLanguages]="selectedLanguages"
+    (addOrDeleteLanguage)="onAddOrDeleteLanguage($event)"
+  ></app-eform-visual-editor-header>
+</mat-card>
+<mat-card>
+  <div
+    *ngIf="visualEditorTemplateModel.fields.length || visualEditorTemplateModel.checkLists.length"
+    class="d-flex justify-content-end"
+  >
+    <button
+      mat-icon-button
+      [matTooltip]="
+                (isItemsCollapsed ? 'Expand all' : 'Collapse all')
+                  | translate
+              "
+      (click)="toggleCollapse()"
+      id="expandAllBtn"
+    >
+      <mat-icon>
+      {{isItemsCollapsed ? 'chevron_right' : 'expand_more'}}</mat-icon>
+    </button>
+  </div>
+  <div
+    class="section-collapse"
+    [ngClass]="{'collapsed' : isItemsCollapsed}"
+  >
+    <div
+      dragula="CHECK_LISTS"
+      id="editorChecklists"
+      (dragulaModelChange)="dragulaPositionChecklistChanged($event)"
+      [dragulaModel]="visualEditorTemplateModel.checkLists"
+    >
+      <app-visual-editor-checklist
+        *ngFor="
+                  let checklist of visualEditorTemplateModel.checkLists;
+                  let i = index
+                "
+        [checklist]="checklist"
+        [checklistRecursionIndexes]="[i]"
+        [checklistIndex]="i"
+        id="checkList_{{ i }}"
+        (addNewNestedChecklist)="showChecklistModal($event)"
+        (deleteNestedChecklist)="showDeleteChecklistModal($event)"
+        (editNestedChecklist)="showChecklistModal($event)"
+        (addNewNestedField)="showFieldModal($event)"
+        (deleteNestedField)="showDeleteFieldModal($event)"
+        (editNestedField)="showFieldModal($event)"
+        [ngClass]="{ 'no-drag': !checklist.collapsed }"
+        (nestedFieldPositionChanged)="
+                  onNestedFieldPositionChanged($event)
+                "
+        (copyNestedField)="onFieldCreate($event)"
+        (changeColorField)="onFieldUpdate($event)"
+      ></app-visual-editor-checklist>
+    </div>
+    <div
+      *ngIf="
+                !visualEditorTemplateModel.checkLists ||
+                visualEditorTemplateModel.checkLists.length == 0
+              "
+      dragula="FIELDS"
+      id="editorFields"
+      class="editor-fields"
+      (dragulaModelChange)="dragulaPositionFieldChanged($event)"
+      [dragulaModel]="visualEditorTemplateModel.fields"
+    >
+      <app-visual-editor-field
+        *ngFor="
+                  let field of visualEditorTemplateModel.fields;
+                  let i = index
+                "
+        [field]="field"
+        [fieldIndex]="i"
+        id="field_{{ i }}"
+        (editField)="showFieldModal($event)"
+        (deleteField)="showDeleteFieldModal($event)"
+        (fieldPositionChanged)="onNestedFieldPositionChanged($event)"
+        (changeColor)="onFieldUpdate($event)"
+        (copyField)="onFieldCreate($event)"
+        (addNewField)="showFieldModal($event)"
+        [class.field-group]="field.fieldType == fieldTypes.FieldGroup"
+      ></app-visual-editor-field>
+    </div>
+  </div>
+  <div class="d-flex justify-content-end">
+    <button
+      *ngIf="visualEditorTemplateModel.checkLists.length === 0"
+      mat-icon-button
+      id="initialFieldCreateBtn"
+      [matTooltip]="'Add field' | translate"
+      color="accent"
+      (click)="showFieldModal()"
+    >
+      <mat-icon>add</mat-icon>
+    </button>
+    <button
+      *ngIf="visualEditorTemplateModel.fields.length === 0"
+      mat-icon-button
+      color="accent"
+      id="initialChecklistCreateBtn"
+      [matTooltip]="'Add sub eForm' | translate"
+      (click)="showChecklistModal()"
+    >
+      <mat-icon>create_new_folder</mat-icon>
+    </button>
+  </div>
+</mat-card>
+
+<app-eforms-tags
+  #tagsModal
+  [availableTags]="availableTags"
+  (tagsChanged)="getTags()"
+>
+</app-eforms-tags>
